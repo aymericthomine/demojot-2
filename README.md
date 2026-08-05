@@ -31,27 +31,29 @@ npm run lint
 
 ## The rules
 
-Two of them, and they are the whole game.
+Each ball drags a fan of threads pinned to the wall behind it, and that fan is
+its life. One rule then decides everything: **crossing somebody else's thread
+cuts it**, and a thread is never replaced. A ball at zero is out, and the round
+ends when one is left standing — so the length of a video is not a setting, it
+is the result of the fight.
 
-1. **Bouncing off the wall pins a thread there.** Left alone, a ball's fan grows
-   and drifts around the rim.
-2. **Crossing somebody else's thread cuts it.** A ball with no threads left is
-   out.
+Most land between 30 and 45 seconds; **one seed in four aims past a minute**,
+which is the line that matters for monetisation. Over sixty seeds: a quarter
+below 35 s, half below 42 s, a third past 60 s.
 
-The round ends when one ball is left standing, so the length of a video is not a
-setting — it is the result of the fight. Most land between 30 and 45 seconds and
-some run past a minute, which is the line that matters for monetisation.
+Two details do the real work, and both were found by looking rather than
+guessing:
 
-Two details stop that from collapsing into a stalemate or a bloodbath, and both
-were found by measuring, not guessing:
-
-- **Cuts are rate-limited per pair.** One attacker cannot cut faster than its
-  victim's bounces replace, so a duel settles nothing and fans keep growing; two
-  or three hunting the same ball beat the replacement rate and shred it.
-- **The fight winds up.** That per-pair limit falls over the round, so the
-  opening is about building fans and the endgame is about losing them. With a
-  fixed rate there is no video: slow enough for fans to grow means nobody ever
-  dies, fast enough to kill shaves every fan to a stub in the first ten seconds.
+- **The fan is pinned by swept angle, not by a clock.** A thread goes down each
+  time the line from the centre through the ball has turned far enough, which
+  makes every fan exactly `life × step` wide, evenly spaced, wherever the ball
+  is and however fast it is going. Pinning at each bounce cannot produce the
+  picture at all: a billiard in a circle keeps its angle of incidence for ever,
+  so its bounce points step around the rim by a fixed angle, and the last twenty
+  are either scattered all the way round or belong to a ball glued to the wall.
+- **Cuts are rate-limited per pair.** One attacker can only take so much, so a
+  duel is survivable and being surrounded is not — which is what makes the
+  endgame a scramble instead of a coin toss.
 
 ## What is fixed and what varies
 
@@ -59,9 +61,10 @@ Every video is meant to read as an episode of the same thing, so the **style is
 constant**: arena size, ball size, thread thickness, ball speed, the palette, the
 black ground and the white ring. They live as constants in `src/sim/style.ts`.
 
-What the seed varies: **how many balls** (5–9), **how many threads** they start
-with (8–16), where they stand, which way they are aimed — and therefore the whole
-fight and its length.
+What the seed varies: **how many balls** (5–9), **how many threads each one
+starts with** (16–30, and every ball gets its own share of that, so the opening
+frame is a set of different fans rather than a diagram), where they stand, which
+way they are aimed — and therefore the whole fight and its length.
 
 ## The sound
 
@@ -79,7 +82,7 @@ Nothing is borrowed, so nothing can get a video muted or demonetised.
 | --- | --- |
 | `src/sim/random.ts` | Seeded generator. `Math.random` appears nowhere in the simulation. |
 | `src/sim/style.ts` | The look and the speed, as constants. |
-| `src/sim/simulate.ts` | The fight: physics, the two rules, and the event list. |
+| `src/sim/simulate.ts` | The fight: physics, the rules, and the event list. |
 | `src/render/drawFrame.ts` | One frame from one state, on any canvas. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |

@@ -1,18 +1,27 @@
 /**
  * The round.
  *
- * Balls travel in straight lines inside a circle at a fixed speed. Two rules do
- * all the work:
+ * Balls travel in straight lines inside a circle at a fixed speed, and each one
+ * trails a fan of threads pinned to the wall behind it.
  *
- * - A ball **trails a thread** behind it, pinned to the wall it came from,
- *   several times a second. Left alone, its fan sweeps the rim and thickens.
- * - Crossing somebody else's thread **cuts it**. Threads are the only thing
- *   keeping a ball in the game, so cutting is how balls attack each other, and
- *   running through a dense fan is what kills.
+ * **How the fan is made matters, and it is not obvious.** Pinning a thread at
+ * each bounce cannot produce the picture: a billiard in a circle keeps its angle
+ * of incidence for ever, so its bounce points step around the rim by a fixed
+ * angle, and the last twenty of them are either scattered all the way round or —
+ * if the step is small enough to look like a fan — belong to a ball glued to the
+ * wall. Neither is what the reference shows. So a thread is pinned on a clock
+ * instead, at the point of the wall straight out from the ball, which sweeps
+ * smoothly as the ball crosses the arena. That gives the evenly spaced,
+ * contiguous, searchlight-shaped fan, with the ball anywhere it likes.
  *
- * A ball with no threads left is out. The round ends when one is left standing,
- * which is why the length of a video is not something you set — it is the result
- * of the fight, and therefore of the seed.
+ * The fan is a *trail*: a ball keeps exactly as many threads as it has life, and
+ * each new pin pushes out the oldest. So the length of the fan is the health
+ * bar, visible at a glance from across the room.
+ *
+ * One rule then decides everything: **crossing somebody else's thread cuts it**,
+ * costing them a thread they never get back. A ball at zero is out, the round
+ * ends when one is left standing, and the length of a video is therefore not a
+ * setting — it is the result of the fight, and so of the seed.
  *
  * Everything here is pure arithmetic on a seeded generator: same seed, same
  * fight, same file, on any machine.
@@ -24,72 +33,35 @@ import { BALL_RADIUS, COLORS, FPS, SPEED, THREAD_WIDTH } from './style';
 /** Physics substeps per rendered frame. Enough that a bounce lands cleanly. */
 const SUBSTEPS = 4;
 
-/**
- * The numbers the whole thing balances on.
- *
- * A ball gains a thread every time it hits the wall, so a ball left alone grows
- * a bigger and bigger fan. It loses one whenever somebody runs through that fan.
- * Get those two rates wrong in either direction and there is no video: cutting
- * too cheap shaves every fan to nothing in the first seconds, too dear and
- * nobody ever dies.
- *
- * What keeps both alive at once is that the cut rate is **per pair**. One
- * attacker cannot cut faster than a victim's bounces replace, so a duel settles
- * nothing and the fans keep growing; two or three hunting the same ball beat the
- * replacement rate and shred it. Rounds therefore end because the arena gets
- * crowded, not because a timer ran out — and the big fans of the reference
- * survive.
- *
- * These are measured, not guessed: a sweep over speed and cooldown, scored on
- * how long rounds last and how big the fans get.
- */
 export interface Tuning {
   /** Arena radii per second. */
   speed: number;
-  /** Seconds before the same attacker may cut the same ball again, at the start. */
+  /**
+   * Radians the anchor point must sweep before another thread is pinned.
+   *
+   * Pinning on a clock would make a fan's width depend on how fast the ball
+   * happens to be crossing the middle — wide smears near the centre, tight
+   * bundles near the wall. Pinning by angle instead makes every fan exactly
+   * `life × pinStep` wide, always evenly spaced, whatever the ball is doing.
+   * That single change is what turns a web of lines into the reference's clean
+   * searchlight beams.
+   */
+  pinStep: number;
+  /**
+   * Seconds before the same attacker may cut the same ball again. This is the
+   * clock the whole fight runs on — threads are never replaced, so it sets how
+   * fast a life can be spent, and with it how long a video lasts.
+   */
   pairCooldown: number;
-  /** The same, once the fight is fully wound up. */
-  pairCooldownEnd: number;
-  /** Seconds over which the cooldown falls from one to the other. */
-  escalation: number;
   /** How far along a thread, from its owner, a cut starts counting. 0..1 */
   hubGuard: number;
-  /**
-   * The most threads a ball can hold. At the cap a bounce still pins a thread,
-   * but the oldest one lets go — so a fan keeps drifting around the rim without
-   * growing. This is what makes a round end: once everyone is capped, any
-   * attention at all is a net loss, and the arena only gets busier.
-   */
-  maxThreads: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
-  pairCooldown: 11,
-  pairCooldownEnd: 0.25,
-  escalation: 12,
-  hubGuard: 0.35,
-  maxThreads: 18,
-};
-
-/**
- * Cutting gets easier as the round goes on.
- *
- * With a fixed rate there is no video: slow enough for fans to grow means nobody
- * ever dies, and fast enough to kill shaves every fan to a stub in the first ten
- * seconds. Both were measured, repeatedly, before this was written.
- *
- * Winding it up over the round gives the two halves the reference has — an
- * opening where fans swell and the arena fills with colour, and an endgame where
- * threads start falling faster than bounces can replace them and balls go out
- * one after another. It is also just how these videos are watched: it has to
- * build.
- */
-const windUp = (time: number, tuning: Tuning): number => Math.min(1, time / tuning.escalation);
-
-const cooldownAt = (time: number, tuning: Tuning): number => {
-  const k = windUp(time, tuning);
-  return tuning.pairCooldown + (tuning.pairCooldownEnd - tuning.pairCooldown) * k;
+  pinStep: 0.055,
+  pairCooldown: 1.5,
+  hubGuard: 0.3,
 };
 
 /** Seconds of victory lap once only one ball is left. */
@@ -103,7 +75,7 @@ export interface BallState {
   color: string;
   x: number;
   y: number;
-  /** Rim angles where this ball's threads are pinned. Immutable between changes. */
+  /** Rim angles where this ball's threads are pinned, oldest first. */
   threads: readonly number[];
   alive: boolean;
   /** Counts up from 0 to 1 over the death animation. */
@@ -131,6 +103,7 @@ export interface RoundSetup {
   /** Which re-deal of this seed produced the round — see `generateRound`. */
   attempt: number;
   ballCount: number;
+  /** Threads each ball starts with, which is also its life. */
   threadCount: number;
 }
 
@@ -151,9 +124,13 @@ interface Live {
   y: number;
   vx: number;
   vy: number;
+  /** How many threads this ball is entitled to. Only ever goes down. */
+  life: number;
   threads: number[];
   alive: boolean;
   fade: number;
+  /** The anchor angle of the newest thread, for measuring the next step. */
+  lastPin: number;
   /** When each other ball last cut this one, indexed by attacker. */
   hitBy: Float64Array;
 }
@@ -176,14 +153,14 @@ function closestOnSegment(
   return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
 }
 
-/** How many balls and threads this seed fights with. */
+/** How many balls fight, and how much life each one has. */
 export function setupFor(seed: number, attempt = 0): RoundSetup {
   const rng = createRng(seed ^ (attempt * 0x9e3779b9));
   return {
     seed,
     attempt,
     ballCount: rng.int(5, 9),
-    threadCount: rng.int(8, 16),
+    threadCount: rng.int(16, 30),
   };
 }
 
@@ -199,24 +176,27 @@ function start(setup: RoundSetup, rng: Rng, tuning: Tuning): Live[] {
 
   for (let i = 0; i < setup.ballCount; i += 1) {
     const around = phase + (i / setup.ballCount) * Math.PI * 2;
+    // Each ball gets its own length of rope around the round's figure. Equal
+    // lives make an opening frame of identical fans, which reads as a diagram
+    // rather than a fight — and it is the difference in widths that tells you at
+    // a glance who is winning.
+    const life = Math.max(6, Math.round(setup.threadCount * rng.range(0.7, 1.3)));
     const radius = 0.58;
     const x = Math.cos(around) * radius;
     const y = Math.sin(around) * radius;
-    // Not a uniform heading. A billiard in a circle keeps its angle of
-    // incidence for ever, so the shot fired at the start decides the shape of
-    // every fan that ball will ever have: aim it near the middle and the anchor
-    // point races around the rim, smearing threads over half the circle. Keeping
-    // the angle away from the diameter is what gives the reference its narrow
-    // searchlight fans.
-    const incidence = rng.range(0.85, 1.4) * (rng.next() < 0.5 ? 1 : -1);
+    // Any angle will do now. Pinning by swept angle rather than by the clock
+    // means a ball charging through the middle lays its threads down just as
+    // neatly as one skirting the wall, so the shots can be spread — which is
+    // what stops every round from being a ring of balls hugging the rim.
+    const incidence = rng.range(0.25, 1.3) * (rng.next() < 0.5 ? 1 : -1);
     const heading = around + Math.PI + incidence;
 
-    // The opening fan: threads pinned on the arc the ball is facing, so the
-    // first frame already looks like the middle of a fight.
+    // The opening fan, drawn as though the ball had already been running: the
+    // same even arc it would have swept, so the first frame looks like the
+    // middle of a fight rather than a starting grid.
     const threads: number[] = [];
-    for (let k = 0; k < setup.threadCount; k += 1) {
-      const spread = ((k + 0.5) / setup.threadCount - 0.5) * 1.1;
-      threads.push(around + spread);
+    for (let k = life - 1; k >= 0; k -= 1) {
+      threads.push(around - k * tuning.pinStep * Math.sign(incidence || 1));
     }
 
     balls.push({
@@ -226,9 +206,11 @@ function start(setup: RoundSetup, rng: Rng, tuning: Tuning): Live[] {
       y,
       vx: Math.cos(heading) * tuning.speed,
       vy: Math.sin(heading) * tuning.speed,
+      life,
       threads,
       alive: true,
       fade: 0,
+      lastPin: Math.atan2(y, x),
       hitBy: new Float64Array(setup.ballCount).fill(-99),
     });
   }
@@ -295,12 +277,19 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           ball.vy -= 2 * dot * ny;
           ball.x = nx * wall;
           ball.y = ny * wall;
-
-          const pinned = [...ball.threads, Math.atan2(ny, nx)];
-          // At the cap the oldest thread lets go, so a fan drifts around the rim
-          // instead of thickening for ever.
-          ball.threads = pinned.length > tuning.maxThreads ? pinned.slice(1) : pinned;
           events.push({ t: time, kind: 'bounce', ball: ball.index, alive: countAlive() });
+        }
+
+        // Straight out from the centre through the ball: the point that sweeps
+        // the rim as the ball travels, and lays the fan down evenly.
+        const spoke = Math.atan2(ball.y, ball.x);
+        let swept = spoke - ball.lastPin;
+        while (swept > Math.PI) swept -= Math.PI * 2;
+        while (swept < -Math.PI) swept += Math.PI * 2;
+        if (Math.abs(swept) >= tuning.pinStep) {
+          ball.lastPin = spoke;
+          const pinned = [...ball.threads, spoke];
+          ball.threads = pinned.slice(Math.max(0, pinned.length - ball.life));
         }
       }
 
@@ -310,16 +299,14 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
         if (!ball.alive) continue;
 
         let victim: Live | null = null;
-        let victimThread = -1;
 
         for (const other of balls) {
           if (other === ball || !other.alive) continue;
-          // One attacker, one thread, then a wait. Without this a single pass
-          // through a fan would take all of it — threads bunch together near the
-          // ball that owns them — and no fan could ever grow.
-          if (time - other.hitBy[ball.index] < cooldownAt(time, tuning)) continue;
-          for (let k = 0; k < other.threads.length; k += 1) {
-            const angle = other.threads[k];
+          // One attacker, one thread, then a wait. Threads are never replaced,
+          // so this clock is what decides how fast a life is spent.
+          if (time - other.hitBy[ball.index] < tuning.pairCooldown) continue;
+
+          for (const angle of other.threads) {
             const hit = closestOnSegment(
               ball.x,
               ball.y,
@@ -329,24 +316,24 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
               Math.sin(angle),
             );
             // Threads all converge on the ball that owns them, so anything that
-            // came near the hub would sever the entire fan at once — an instant
+            // came near the hub would sever the whole fan at once — an instant
             // kill on contact, which is neither fair nor watchable. Cuts only
             // count out in the open, away from the owner.
             if (hit.distanceSq < reach && hit.t > tuning.hubGuard) {
               victim = other;
-              victimThread = k;
               break;
             }
           }
           if (victim) break;
         }
 
-        if (victim && victimThread >= 0) {
+        if (victim) {
           victim.hitBy[ball.index] = time;
-          victim.threads = victim.threads.filter((_, k) => k !== victimThread);
+          victim.life -= 1;
+          victim.threads = victim.threads.slice(Math.max(0, victim.threads.length - victim.life));
           events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
 
-          if (victim.threads.length === 0) {
+          if (victim.life <= 0) {
             victim.alive = false;
             const remaining = countAlive();
             events.push({ t: time, kind: 'death', ball: victim.index, alive: remaining });
@@ -371,27 +358,49 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
   };
 }
 
-/** Where a video's length should land: long enough to watch, short enough to finish. */
-export const MIN_DURATION = 26;
-export const MAX_DURATION = 75;
+/**
+ * How long a video should run.
+ *
+ * Most want to be the length people actually watch — a little over half a
+ * minute. But a video past a minute is what monetisation asks for, so one seed
+ * in four aims there instead, and comes out a longer fight rather than the same
+ * fight padded. Which band a seed aims for is part of the seed, so it never
+ * changes under you.
+ *
+ * The wider band is the safety net: some openings simply refuse to resolve
+ * anywhere near the target, and a fight that lands in `ALLOWED` is better than
+ * one forced.
+ */
+export const SHORT = { min: 28, max: 46 };
+export const LONG = { min: 61, max: 75 };
+export const ALLOWED = { min: 26, max: 78 };
+
+/** One seed in four is a long one. */
+export const aimsLong = (seed: number): boolean => createRng(seed ^ 0x1b873593).next() < 0.25;
 
 /**
  * Rounds are found, not designed: the seed is played out, and if the fight was
  * over in eight seconds or still going at eighty, the same seed is dealt a
- * different number of balls and threads and played again. Deterministic, so a
- * seed always lands on the same round — and the lengths that come out follow the
- * fights rather than a number somebody typed.
+ * different opening and played again. Deterministic, so a seed always lands on
+ * the same round — and the lengths that come out follow the fights rather than a
+ * number somebody typed.
  */
 export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
-  let longest: Round | null = null;
+  const target = aimsLong(seed) ? LONG : SHORT;
+  let fallback: Round | null = null;
+  let closest: Round | null = null;
 
-  for (let attempt = 0; attempt < 24; attempt += 1) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
     const round = play(setupFor(seed, attempt), tuning);
-    if (round.duration >= MIN_DURATION && round.duration <= MAX_DURATION) return round;
-    if (!longest || Math.abs(round.duration - 40) < Math.abs(longest.duration - 40)) {
-      longest = round;
+    if (round.duration >= target.min && round.duration <= target.max) return round;
+    if (!fallback && round.duration >= ALLOWED.min && round.duration <= ALLOWED.max) {
+      fallback = round;
+    }
+    const aim = (target.min + target.max) / 2;
+    if (!closest || Math.abs(round.duration - aim) < Math.abs(closest.duration - aim)) {
+      closest = round;
     }
   }
 
-  return longest as Round;
+  return (fallback ?? closest) as Round;
 }
