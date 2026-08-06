@@ -17,8 +17,8 @@
  * - **Wall** — a struck note, one pitch per ball, so you learn to hear who is
  *   who. The scale is pentatonic, which is the cheap trick that makes a random
  *   sequence of notes sound deliberate.
- * - **Cut** — the same note an octave up and much shorter: the tick of a thread
- *   going.
+ * - **Take** — the same note an octave up and much shorter: the tick of a thread
+ *   changing hands.
  * - **Clash** — two balls meeting, a duller knock, low and quick.
  * - **Elimination** — a low hit with a fifth over it; and one chord at the end.
  *
@@ -97,7 +97,7 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
         // A quiet octave above gives the note its edge without raising the level.
         struck(ctx, master, t, frequency * 2, 0.05, 0.1, 'sine');
         break;
-      case 'cut':
+      case 'take':
         struck(ctx, master, t, frequency * 2, 0.12, 0.08, 'triangle');
         break;
       case 'clash':

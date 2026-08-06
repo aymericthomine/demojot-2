@@ -1,22 +1,27 @@
 /**
  * The round.
  *
- * Seven balls travel in straight lines inside a ring. Four rules, and they are
+ * Seven balls travel in straight lines inside a ring. Three rules, and they are
  * the whole game:
  *
- * 1. **Touching the wall leaves a thread there**, pinned where the ball struck.
- *    A thread once laid never moves and never fades, so a ball that keeps
- *    working the wall keeps growing its fan.
- * 2. **Running through somebody else's thread destroys it** — one thread, not
- *    the fan. That is how balls take from each other.
- * 3. **Threads are life.** A ball with none left is out, and its fan goes with
- *    it, which gives the survivors room again.
- * 4. **Balls bounce off each other.** No damage in it; it just wrecks the plans
- *    of both, and it is what keeps a duel from settling into a rhythm.
+ * 1. **The anchors never move.** The rim is divided into a fixed ring of
+ *    anchor points, set before the first frame and unchanged to the last. Every
+ *    anchor always holds a thread, so the *number* of threads in the arena is a
+ *    constant — only who owns them changes.
+ * 2. **Touch a thread and it becomes yours.** A ball that runs into somebody
+ *    else's rope does not cut it: the thread changes hands, and changes colour,
+ *    its rim end staying exactly where it was while its inner end swings across
+ *    to the ball that took it. That is the whole economy — nothing is created,
+ *    nothing is destroyed, it is all captured.
+ * 3. **Threads are life.** A ball holding none is out. Its threads are not
+ *    freed, because somebody already owns them.
+ *
+ * Balls also bounce off each other, which wrecks the plans of both and keeps a
+ * duel from settling into a rhythm.
  *
  * Everyone starts with five, so the opening is precarious for everybody. The
- * round ends with one ball left standing, so the length of a video is not a
- * setting — it is how long the fight took.
+ * round ends with one ball holding every thread in the ring, so the length of a
+ * video is not a setting — it is how long the fight took.
  *
  * **The opening is identical in every video**: same seven balls, same colours,
  * same places, same five threads each, laid out as a cut pie. The seed decides
@@ -29,7 +34,7 @@
  */
 
 import { createRng } from './random';
-import { BALL_RADIUS, COLORS, FPS, SPEED, THREAD_WIDTH } from './style';
+import { BALL_RADIUS, COLORS, FPS, SPEED } from './style';
 
 /** Physics substeps per rendered frame. Enough that a bounce lands cleanly. */
 const SUBSTEPS = 4;
@@ -39,6 +44,20 @@ export const BALL_COUNT = 7;
 
 /** Threads everybody starts with. */
 export const OPENING_THREADS = 5;
+
+/**
+ * Anchor points on the rim, fixed for the whole round.
+ *
+ * Every one of them holds a thread from the first frame to the last, so this is
+ * also the total number of threads in the arena and it never changes. Seven
+ * balls with five each divides the rim exactly, which is why the opening reads
+ * as a cut pie with no gaps.
+ */
+export const ANCHORS = BALL_COUNT * OPENING_THREADS;
+
+/** Where anchor `j` sits, so that ball `i` opens owning `j` in [5i, 5i+5). */
+const anchorAngle = (j: number): number =>
+  -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ((Math.PI * 2) / ANCHORS);
 
 /** How far from the centre the balls start — each one inside its own sector. */
 const START_RADIUS = 0.45;
@@ -57,17 +76,7 @@ const GRACE = 0.5;
 const OUTRO = 2.4;
 
 /** Nothing runs longer than this, whatever happens. */
-const HARD_CAP = 110;
-
-/**
- * Most threads a single touch of the wall can win.
- *
- * A fan should *grow* — that is the thing people are watching. Let one touch
- * take every free slot it can reach and a ball swallows a dead rival's whole
- * sector in a frame, then loses it again just as fast; the fans end up flickering
- * between four threads and twenty instead of climbing.
- */
-const CLAIM_LIMIT = 3;
+const HARD_CAP = 600;
 
 export interface Tuning {
   /** Arena radii per second. */
@@ -81,22 +90,6 @@ export interface Tuning {
    * separate lines again and every one of them can be cut.
    */
   hubGuard: number;
-  /**
-   * Radians between neighbouring threads, and so how much wall a ball takes per
-   * touch. The rim holds a whole number of these and no more: it is divided into
-   * slots, every slot is claimed at the start, and from then on the fight is over
-   * slots. Cutting a thread frees one; touching the wall is how a free one is
-   * taken. That is why the picture stays full while the fans get bigger.
-   */
-  threadStep: number;
-  /**
-   * How close a ball must come to a thread to cut it, as a fraction of its drawn
-   * radius. One, and it should stay one: a ball cannot cross a thread without
-   * cutting it, so anything the ball visibly touches goes. Below one, threads
-   * pass through the middle of a ball and survive, which is the first thing
-   * anybody notices.
-   */
-  hitRadius: number;
   /**
    * How hard rope turns the ball that snapped it. Two would be a mirror, zero a
    * thread that gives way completely; this is well below a mirror — a bend, not
@@ -115,8 +108,6 @@ export interface Tuning {
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
   hubGuard: BALL_RADIUS * 3,
-  threadStep: (Math.PI * 2) / (BALL_COUNT * OPENING_THREADS),
-  hitRadius: 1,
   threadBounce: 0.8,
 };
 
@@ -136,7 +127,7 @@ export interface Frame {
   balls: BallState[];
 }
 
-export type EventKind = 'wall' | 'clash' | 'cut' | 'death' | 'win';
+export type EventKind = 'wall' | 'clash' | 'take' | 'death' | 'win';
 
 export interface SimEvent {
   /** Seconds from the start. */
@@ -150,8 +141,6 @@ export interface SimEvent {
 
 export interface RoundSetup {
   seed: number;
-  /** Which re-deal of this seed produced the round — see `generateRound`. */
-  attempt: number;
   ballCount: number;
 }
 
@@ -177,47 +166,39 @@ interface Live {
   fade: number;
   /** When this ball last bounced off another, so one contact is not counted twice. */
   clashedAt: number;
+  /** Where it was at the start of this step. A thread is crossed, not sat on. */
+  px: number;
+  py: number;
 }
 
-/** Do two segments cross? Standard orientation test, endpoints excluded. */
-function segmentsCross(
+/**
+ * Do two segments cross, and how far along the second? Standard orientation
+ * test; `t` is the crossing point's position along c→d, which is what says how
+ * far from a thread's hub the ball went through it.
+ */
+function crossing(
   ax: number, ay: number, bx: number, by: number,
   cx: number, cy: number, dx: number, dy: number,
-): boolean {
-  const side = (px: number, py: number, qx: number, qy: number, rx: number, ry: number): number =>
-    (qx - px) * (ry - py) - (qy - py) * (rx - px);
-  const d1 = side(ax, ay, bx, by, cx, cy);
-  const d2 = side(ax, ay, bx, by, dx, dy);
-  const d3 = side(cx, cy, dx, dy, ax, ay);
-  const d4 = side(cx, cy, dx, dy, bx, by);
-  return ((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0));
+): number | null {
+  const rx = bx - ax;
+  const ry = by - ay;
+  const sx = dx - cx;
+  const sy = dy - cy;
+  const denominator = rx * sy - ry * sx;
+  if (denominator === 0) return null;
+  const u = ((cx - ax) * ry - (cy - ay) * rx) / denominator;
+  const t = ((cx - ax) * sy - (cy - ay) * sx) / denominator;
+  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
+  return u;
 }
 
-/** Closest point on a segment: how far away, and how far along. */
-function closestOnSegment(
-  px: number,
-  py: number,
-  ax: number,
-  ay: number,
-  bx: number,
-  by: number,
-): { distanceSq: number; t: number } {
-  const dx = bx - ax;
-  const dy = by - ay;
-  const lengthSq = dx * dx + dy * dy;
-  const t = lengthSq > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
-  const cx = ax + dx * t;
-  const cy = ay + dy * t;
-  return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
-}
-
-export function setupFor(seed: number, attempt = 0): RoundSetup {
-  return { seed, attempt, ballCount: BALL_COUNT };
+export function setupFor(seed: number): RoundSetup {
+  return { seed, ballCount: BALL_COUNT };
 }
 
 /** The opening, which is deliberately identical in every video. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
-  const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
+  const rng = createRng(setup.seed ^ 0x2545f491);
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / BALL_COUNT;
 
@@ -226,13 +207,12 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
     const x = Math.cos(around) * START_RADIUS;
     const y = Math.sin(around) * START_RADIUS;
 
-    // Everybody's fan covers its own slice of the rim, and the slices meet: the
-    // wall is claimed edge to edge from the first frame. Nobody can grow until
-    // somebody loses, which is what makes the opening a knife fight and the rest
-    // of the video a land grab.
+    // Ball i opens holding anchors 5i to 5i+4, so the seven fans divide the rim
+    // exactly and meet edge to edge. Nothing will be added to this ring and
+    // nothing taken away — from here on the fight is only over who holds what.
     const threads: number[] = [];
     for (let k = 0; k < OPENING_THREADS; k += 1) {
-      threads.push(around + (k - (OPENING_THREADS - 1) / 2) * tuning.threadStep);
+      threads.push(anchorAngle(i * OPENING_THREADS + k));
     }
 
     // Fired inward, and not far off it. A billiard in a circle keeps its angle
@@ -252,6 +232,8 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       alive: true,
       fade: 0,
       clashedAt: -99,
+      px: x,
+      py: y,
     });
   }
   return balls;
@@ -272,112 +254,14 @@ function snapshot(balls: Live[]): Frame {
   };
 }
 
-/** Signed angular difference in (-pi, pi]. */
-function angleDelta(a: number, b: number): number {
-  let d = a - b;
-  while (d > Math.PI) d -= Math.PI * 2;
-  while (d <= -Math.PI) d += Math.PI * 2;
-  return d;
-}
-
-/**
- * Where the new threads go.
- *
- * Not simply at the point the ball touched: threads have to stay a *contiguous*
- * fan, or they cross each other the moment two balls share ground. A fan grows
- * from whichever of its two edges faces the strike, outward, taking every free
- * slot it finds until it reaches the strike point or runs into somebody else's
- * rope. So a ball that runs into a stretch of wall nobody holds — the arc a
- * beaten ball left behind — comes away with a handful of threads at once, and a
- * ball that hits a wall already spoken for comes away with nothing.
- *
- * That single rule is what gives the picture its shape: the rim ends up divided
- * into coloured sectors that meet without ever tangling, and the sectors of the
- * survivors swallow the sectors of the dead.
- */
-function claimAt(balls: Live[], ball: Live, contact: number, step: number): number[] {
-  if (ball.threads.length === 0) return [];
-
-  // The two edges of the fan, found by walking round from the first thread.
-  const sorted = [...ball.threads].sort(
-    (a, b) => angleDelta(a, ball.threads[0]) - angleDelta(b, ball.threads[0]),
-  );
-  const first = sorted[0];
-  const last = sorted[sorted.length - 1];
-
-  // Grow from the edge the ball struck nearest, in the direction of the strike.
-  const toFirst = angleDelta(contact, first);
-  const toLast = angleDelta(contact, last);
-  const fromLast = Math.abs(toLast) < Math.abs(toFirst);
-  const edge = fromLast ? last : first;
-  const direction = fromLast ? 1 : -1;
-  // How far round the strike is, in slots. Growing past it would be claiming
-  // wall the ball never went near.
-  const span = Math.min(CLAIM_LIMIT, Math.floor(Math.abs(fromLast ? toLast : toFirst) / step));
-
-  const taken: number[] = [];
-  for (let k = 1; k <= span; k += 1) {
-    const candidate = edge + direction * step * k;
-    let free = true;
-    for (const other of balls) {
-      if (other === ball || !other.alive) continue;
-      for (const theirs of other.threads) {
-        if (Math.abs(angleDelta(candidate, theirs)) < step * 0.9) {
-          free = false;
-          break;
-        }
-      }
-      if (!free) break;
-    }
-    // Somebody else's rope is a wall: the fan stops there rather than jumping it,
-    // which is the whole reason threads never end up crossing.
-    if (!free || crossesAnyThread(balls, ball, candidate)) break;
-    taken.push(candidate);
-  }
-  return taken;
-}
-
-/**
- * Threads are rope, not light: they cannot pass through one another. Keeping
- * that true is what gives the picture its shape — each ball ends up holding a
- * contiguous slice of the wall, and the fans meet without ever tangling.
- *
- * The rule is on the laying: a thread is never pinned where it would cross rope
- * that is already there, so fans grow as contiguous sectors that meet edge to
- * edge. A thread already pinned is not moved or taken back afterwards — the rim
- * end is fixed and only the ball end travels, so late in a round, when two balls
- * are dragging fans of twenty across each other, lines do pass over lines. The
- * reference does exactly the same thing, and undoing it after the fact meant
- * deleting threads nobody had cut, which changed the fight.
- */
-function crossesAnyThread(balls: Live[], owner: Live, angle: number): boolean {
-  const ax = owner.x;
-  const ay = owner.y;
-  const bx = Math.cos(angle);
-  const by = Math.sin(angle);
-  for (const other of balls) {
-    if (!other.alive) continue;
-    for (const theirs of other.threads) {
-      if (other === owner) continue;
-      if (
-        segmentsCross(ax, ay, bx, by, other.x, other.y, Math.cos(theirs), Math.sin(theirs))
-      ) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-/** Runs one fight to the end. */
-function play(setup: RoundSetup, tuning: Tuning): Round {
+/** Runs one fight until the bell, or until only one ball is left. */
+export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
   const balls = start(setup, tuning);
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
 
   const dt = 1 / (FPS * SUBSTEPS);
   const wall = 1 - BALL_RADIUS;
-  const reach = (BALL_RADIUS * tuning.hitRadius + THREAD_WIDTH / 2) ** 2;
   const touching = (BALL_RADIUS * 2) ** 2;
 
   let time = 0;
@@ -387,6 +271,14 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
 
   for (let frame = 0; ; frame += 1) {
     frames.push(snapshot(balls));
+    if (time >= bell && endAt === Infinity) {
+      // The bell. Whoever holds the most rope has won it.
+      winner = balls
+        .filter((b) => b.alive)
+        .reduce((best, b) => (b.threads.length > best.threads.length ? b : best)).index;
+      events.push({ t: time, kind: 'win', ball: winner, alive: countAlive() });
+      endAt = time + OUTRO;
+    }
     if (time >= endAt || time > HARD_CAP) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
@@ -399,6 +291,8 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           continue;
         }
 
+        ball.px = ball.x;
+        ball.py = ball.y;
         ball.x += ball.vx * dt;
         ball.y += ball.vy * dt;
 
@@ -412,14 +306,9 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           ball.x = nx * wall;
           ball.y = ny * wall;
 
-          // Reaching the wall is how rope is earned, and it stays where it was
-          // pinned. Working the wall is therefore the only way back from a bad
-          // start — and it is also the most exposed thing a ball can do. Rope
-          // cannot pass through rope, so a thread that would cross one already
-          // there is simply not laid: the wall is territory, and it has to be
-          // free to be claimed.
-          const claimed = claimAt(balls, ball, Math.atan2(ny, nx), tuning.threadStep);
-          if (claimed.length > 0) ball.threads = [...ball.threads, ...claimed];
+          // The wall gives nothing. Threads are not earned here — every one of
+          // them was on the rim before the first frame — so a bounce is only a
+          // bounce, and a note.
           events.push({ t: time, kind: 'wall', ball: ball.index, alive: countAlive() });
         }
       }
@@ -466,49 +355,54 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
 
       if (time < GRACE) continue;
 
-      // A ball cannot cross a thread without cutting it. Every thread it is
-      // touching goes, this frame, with nothing to wait for: no per-pair timer,
-      // no one-at-a-time. A cut thread is gone from the list, so there is nothing
-      // to double-charge — and anything less than this leaves threads running
-      // straight through the middle of a ball, which is the first thing anybody
-      // notices.
+      // Touch a thread and it is yours. Everything the ball's disc is touching
+      // changes hands this frame — no timer, no one-at-a-time — and the rim end
+      // does not move an inch: the thread keeps its anchor and swaps its colour
+      // and its hub. Anything less leaves rope running through the middle of a
+      // ball untouched, which is the first thing anybody notices.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
         for (const other of balls) {
           if (other === ball || !other.alive) continue;
 
-          const survivors: number[] = [];
-          let cuts = 0;
+          const kept: number[] = [];
+          const taken: number[] = [];
           let hitAngle = 0;
           for (const angle of other.threads) {
-            const hit = closestOnSegment(
+            const rimX = Math.cos(angle);
+            const rimY = Math.sin(angle);
+            // A thread is taken by being *crossed*, not by being sat on: the
+            // step the ball just travelled has to pass through the line. Testing
+            // overlap instead lets two balls that have come to rest against each
+            // other's rope swap the same threads back and forth for ever, which
+            // is exactly what stopped a round from ever finishing.
+            const where = crossing(
+              ball.px,
+              ball.py,
               ball.x,
               ball.y,
               other.x,
               other.y,
-              Math.cos(angle),
-              Math.sin(angle),
+              rimX,
+              rimY,
             );
-            // `t` runs from the owner to the rim along a thread of length
-            // `hypot(cos - x, sin - y)`, so this is the contact's distance from
-            // the hub in arena units.
-            const fromHub = hit.t * Math.hypot(Math.cos(angle) - other.x, Math.sin(angle) - other.y);
-            if (hit.distanceSq < reach && fromHub > tuning.hubGuard) {
-              cuts += 1;
+            const fromHub =
+              where === null ? 0 : where * Math.hypot(rimX - other.x, rimY - other.y);
+            if (where !== null && fromHub > tuning.hubGuard) {
+              taken.push(angle);
               hitAngle = angle;
               continue;
             }
-            survivors.push(angle);
+            kept.push(angle);
           }
-          if (cuts === 0) continue;
+          if (taken.length === 0) continue;
 
-          other.threads = survivors;
+          other.threads = kept;
+          ball.threads = [...ball.threads, ...taken];
 
           if (tuning.threadBounce > 0) {
-            // Rope turns the ball that ran into it. Without this a ball crosses a
-            // fan of twenty in one straight line and takes the lot, and the duel
-            // that should be the body of the video is over in six seconds.
+            // Rope turns the ball that ran into it.
             const tx = Math.cos(hitAngle) - other.x;
             const ty = Math.sin(hitAngle) - other.y;
             const length = Math.hypot(tx, ty);
@@ -530,10 +424,13 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           }
 
           // One tick per thread, so running through a fan rattles.
-          for (let k = 0; k < cuts; k += 1) {
-            events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
+          for (let k = 0; k < taken.length; k += 1) {
+            events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
           }
 
+          // Holding nothing is being out. There is no fan to clear away — the
+          // threads that were its are somebody else's now, still on their
+          // anchors.
           if (other.threads.length === 0) {
             other.alive = false;
             const remaining = countAlive();
@@ -560,17 +457,23 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
 }
 
 /**
- * How long a video should run.
+ * How long a video runs.
  *
- * Most want to be the length people actually watch — a little over half a
- * minute. But a video past a minute is what monetisation asks for, so one seed
- * in four aims there instead, and comes out a longer fight rather than the same
- * fight padded. Which band a seed aims for is part of the seed, so it never
- * changes under you.
+ * The economy here conserves: nothing is created and nothing destroyed, only
+ * captured, so there is no drift towards a winner — two balls left trade the
+ * same rope back and forth and the count wanders. Played to the last thread a
+ * round takes a minute and a half at best and ten minutes at worst, and the
+ * reference itself needs ninety-six seconds. So the round is played to a bell
+ * instead, and whoever holds the most rope when it goes has won it. A ball wiped
+ * out before then is still out, exactly as it would be.
+ *
+ * Most videos want to be the length people actually watch — a little over half a
+ * minute. A video past a minute is what monetisation asks for, so one seed in
+ * four aims there instead. Which band a seed takes, and where in it, are both
+ * part of the seed, so a seed always gives the same video.
  */
 export const SHORT = { min: 28, max: 42 };
 export const LONG = { min: 58, max: 95 };
-export const ALLOWED = { min: 24, max: 95 };
 
 /** One seed in four is a long one. */
 export const aimsLong = (seed: number): boolean => createRng(seed ^ 0x1b873593).next() < 0.25;
@@ -583,28 +486,7 @@ export const aimsLong = (seed: number): boolean => createRng(seed ^ 0x1b873593).
  * rather than a number somebody typed.
  */
 export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
-  const long = aimsLong(seed);
-  const target = long ? LONG : SHORT;
-  let closest: Round | null = null;
-  let longest: Round | null = null;
-
-  // A minute-long fight has to be a close one, and close ones are rare, so a
-  // seed aiming there is allowed to look much harder before it settles.
-  const tries = long ? 60 : 20;
-  for (let attempt = 0; attempt < tries; attempt += 1) {
-    const round = play(setupFor(seed, attempt), tuning);
-    if (round.duration >= target.min && round.duration <= target.max) return round;
-    if (!longest || round.duration > longest.duration) longest = round;
-    const aim = (target.min + target.max) / 2;
-    if (!closest || Math.abs(round.duration - aim) < Math.abs(closest.duration - aim)) {
-      closest = round;
-    }
-  }
-
-  // A seed that wanted a long fight and never got one takes the longest it
-  // found: a minute of build-up is the point of those.
-  if (long && longest && longest.duration >= ALLOWED.min) return longest;
-  // Otherwise whichever came nearest the band — better a fight a few seconds
-  // short than one padded to length.
-  return closest as Round;
+  const target = aimsLong(seed) ? LONG : SHORT;
+  const bell = createRng(seed ^ 0x27d4eb2f).range(target.min, target.max);
+  return play(setupFor(seed), tuning, bell);
 }

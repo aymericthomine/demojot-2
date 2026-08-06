@@ -1,14 +1,15 @@
 # Ball Battle
 
-A generator for vertical 9:16 videos: seven balls fight inside a ring, laying
-threads to the wall as they go, until one is left. Picture and sound are both
-computed — there is no footage, no samples, and nothing downloaded.
+A generator for vertical 9:16 videos: seven balls fight inside a ring over a
+fixed set of threads pinned to the wall, taking them off each other one crossing
+at a time. Picture and sound are both computed — there is no footage, no samples,
+and nothing downloaded.
 
 Every video **opens on the same picture** — the same seven balls, same colours,
-same places, same fans. The **seed** only decides which way they are fired, and
-since a billiard in a circle never forgets its opening angle, that is enough to
-make everything after the first second different, including how long the video
-runs.
+same places, same fans dividing the rim edge to edge. The **seed** decides which
+way they are fired and where the bell falls; since a billiard in a circle never
+forgets its opening angle, the first of those is enough to make everything after
+the first second different.
 
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack synthesised from the collisions*
@@ -34,41 +35,45 @@ npm run lint
 
 ## The rules
 
-Four of them, and they are the whole game.
+Three of them, and they are the whole game.
 
-1. **Everybody starts with five threads**, and the seven fans meet edge to edge:
-   the wall is claimed from the first frame. The rim holds a whole number of
-   thread slots and no more, so nobody can grow until somebody loses — which is
-   what makes the opening a knife fight and the rest of the video a land grab.
-2. **Touching the wall claims free rim.** A fan grows from whichever edge faces
-   the point the ball struck, taking every unclaimed slot it finds up to three at
-   a time, and stopping dead at anybody else's rope. So a ball that runs into the
-   arc a beaten rival left behind comes away with a handful of threads; a ball
-   that hits wall already spoken for comes away with nothing.
-3. **A ball cannot cross a thread without cutting it.** Everything its disc
-   touches goes, that frame, with nothing to wait for — the only rope spared is
-   the bundle within a few ball-widths of the ball that owns it, where the
-   threads are packed tighter than a ball is wide and being alongside somebody is
-   not the same as crossing their fan. Threads are life: a ball with none left is
-   out, and its fan goes with it, which frees the rim for whoever gets there
-   first.
-4. **Rope turns the ball that snapped it**, and balls bounce off each other. The
-   thread deflection is a bend rather than a bounce and only the direction
-   changes — speed is a constant of the style — but it is what stops a ball
-   crossing a fan of twenty in a straight line and taking the lot.
+1. **The anchors never move.** The rim is divided into a fixed ring of anchor
+   points — thirty-five of them, seven balls with five each — set before the
+   first frame and unchanged to the last. Every anchor holds a thread the whole
+   way through, so the number of threads in the arena is a constant.
+2. **Touch a thread and it becomes yours.** A ball that runs through somebody
+   else's rope does not cut it: the thread changes hands and changes colour, its
+   rim end staying exactly where it was while its inner end swings across to the
+   ball that took it. Nothing is created and nothing destroyed — it is all
+   captured, which is why the picture is always full.
+3. **Threads are life.** A ball holding none is out. There is no fan to clear
+   away: what was its belongs to somebody else now, still on the same anchors.
 
-**Threads are never laid across each other.** A thread is only pinned into rim
-nobody holds, on the side of the fan the ball came from, so the wall ends up
-divided into coloured sectors that meet without tangling. What is *not* undone is
-a crossing that appears afterwards: the rim end of a thread is fixed for ever and
-only the ball end travels, so late on, when two balls are dragging fans of twenty
-across each other, lines do pass over lines. The reference does the same, and
-untangling it after the fact meant deleting threads nobody had cut.
+Balls bounce off each other, and rope bends the ball that ran through it — a
+nudge rather than a bounce, and only the direction changes, since speed is a
+constant of the style.
 
-The round ends with one ball left standing, so the length of a video is not a
-setting — it is how long the fight took. Over sixty seeds: 21 to 93 seconds, a
-quarter under 32, half under 38, and **a quarter past the minute**, which is the
-line that matters for monetisation.
+A thread is taken by being **crossed**, not by being leaned on: the step the ball
+just travelled has to pass through the line. That distinction is not a detail. On
+overlap instead, two balls that have come to rest against each other's rope swap
+the same threads back and forth for ever — the take counts come out exactly equal,
+which is what a stalemate looks like in a log file.
+
+## Why there is a bell
+
+This economy conserves. Nothing enters it and nothing leaves, so there is no
+drift towards a winner: the last two balls trade the same rope back and forth and
+the count wanders rather than converging. Played to the very last thread a round
+takes a minute and a half at best and ten minutes at worst — and the reference
+video itself needs ninety-six seconds to settle.
+
+So a round is played to a bell instead, and **whoever holds the most rope when it
+rings has won it.** A ball wiped out before then is out exactly as it would be.
+Where the bell falls is part of the seed: mostly 28 to 42 seconds, and one seed in
+four aims for 58 to 95 instead, which is the line that matters for monetisation.
+
+The alternative — fighting to the last thread — is one constant away, but it
+means videos of two to ten minutes.
 
 ## Measured against the reference, not guessed
 
@@ -80,23 +85,22 @@ by frame rather than chosen:
 - **A ball crosses 0.85 arena radii a second.** Tracking one frame by frame is
   the only way to get this right, and it is the thing that reads as wrong first:
   the first version ran at 2.6, three times too fast.
-- **The rim is tiled from the first frame** and stays that way, with the
-  survivors' sectors swallowing the sectors of the dead. That is why the
-  reference's totals barely move — seven balls holding seven threads each becomes
-  three balls holding fifteen.
+- **The total never changes.** Counted off the reference: seven balls holding
+  seven threads each at the start, four balls holding 19, 2, 17 and 10 eight
+  seconds later — the same forty-eight threads, redistributed. That single
+  observation is what the whole simulation is built on.
 - **The attrition is fast and the endgame is long.** The reference is down from
-  seven balls to three inside ten seconds, then spends a minute and a half as a
-  duel between two enormous fans. So does this.
-- **Fans reach a dozen threads by the middle of a round and twenty-five by the
-  end.** The rim divides into thirty-five slots — seven balls, five threads each
-  — so a finalist tops out near thirty-five. The reference starts its balls on
-  seven threads rather than five, which is why its fans read denser; the one
-  change that would match it exactly is `OPENING_THREADS`.
+  seven balls to four inside eight seconds, then spends a minute and a half
+  grinding two enormous fans against each other. So does this.
 
 One thing was measured and then deliberately *not* copied. The reference's
 soundtrack runs at eight and a half onsets a second, but almost all of that is a
 sustained tone around 480 Hz re-triggering — there is a music bed under it. The
 sound here is collisions only, synthesised, and nothing is borrowed.
+
+The reference starts its balls on seven threads rather than five, so its rim
+divides into forty-nine anchors instead of thirty-five and its fans read denser.
+That is `OPENING_THREADS`, and it is the one number that would match it exactly.
 
 ## What is fixed and what varies
 
