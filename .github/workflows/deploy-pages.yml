@@ -13,12 +13,13 @@ permissions:
   pages: write
   id-token: write
 
-# One deployment at a time, and a queued one is superseded by whatever came
-# after it — there is no point publishing a commit that is already stale, and
-# leaving them queued is what made them time out.
+# One deployment at a time, and let it finish. Cancelling in progress looks
+# tempting when deployments are piling up, but the cancellation reaches into the
+# Pages deployment itself: two runs in flight then kill each other's deployment
+# and neither publishes. Since only main triggers this, runs rarely overlap.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
