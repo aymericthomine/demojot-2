@@ -36,41 +36,57 @@ npm run lint
 
 Four of them, and they are the whole game.
 
-1. **Everybody starts with five threads.**
-2. **Reaching the wall leaves a thread there**, pinned where the ball struck. It
-   never moves again, so working the wall is how a fan grows — and it is the only
-   way rope is ever earned.
-3. **Running through somebody else's thread destroys it** — one thread, not the
-   fan. Threads are life: a ball with none left is out, and its fan goes with it.
-4. **Balls bounce off each other**, and off the threads they cut. No damage in
-   either; it simply wrecks both plans — and the rebound is what keeps a ball
-   from ploughing through a fan and dragging its own threads across it.
-5. **Threads cannot cross.** A thread is laid only into wall nobody else holds,
-   growing a fan outward as a contiguous arc, and any crossing that does appear
-   is undone by taking a thread from whoever moved in. A ball down to its last
-   three stops giving ground, so the only crossings you can see belong to a ball
-   that is nearly out.
+1. **Everybody starts with five threads**, and the seven fans meet edge to edge:
+   the wall is claimed from the first frame. The rim holds a whole number of
+   thread slots and no more, so nobody can grow until somebody loses — which is
+   what makes the opening a knife fight and the rest of the video a land grab.
+2. **Touching the wall claims free rim.** A fan grows from whichever edge faces
+   the point the ball struck, taking every unclaimed slot it finds up to three at
+   a time, and stopping dead at anybody else's rope. So a ball that runs into the
+   arc a beaten rival left behind comes away with a handful of threads; a ball
+   that hits wall already spoken for comes away with nothing.
+3. **Running through somebody else's thread destroys it** — one thread per pass,
+   not the fan, and the victim cannot be charged again until the ball has come
+   out the other side. Threads are life: a ball with none left is out, and its
+   fan goes with it, which frees the rim for whoever gets there first.
+4. **Balls bounce off each other.** No damage in it; it simply wrecks both plans,
+   and it is what keeps a duel from settling into a rhythm.
+
+**Threads are never laid across each other.** A thread is only pinned into rim
+nobody holds, on the side of the fan the ball came from, so the wall ends up
+divided into coloured sectors that meet without tangling. What is *not* undone is
+a crossing that appears afterwards: the rim end of a thread is fixed for ever and
+only the ball end travels, so late on, when two balls are dragging fans of twenty
+across each other, lines do pass over lines. The reference does the same, and
+untangling it after the fact meant deleting threads nobody had cut.
 
 The round ends with one ball left standing, so the length of a video is not a
-setting — it is how long the fight took. Over sixty seeds: 30 to 94 seconds, a
-quarter under 35, half under 41, and **a third past the minute**, which is the
+setting — it is how long the fight took. Over sixty seeds: 21 to 110 seconds, a
+quarter under 30, half under 36, and **one in six past the minute**, which is the
 line that matters for monetisation.
 
-These were found by measuring rather than guessing, and the numbers are in
-`DEFAULT_TUNING`:
+## Measured against the reference, not guessed
 
-- **Balls are fired inward, not tangentially.** A billiard in a circle keeps its
-  angle of incidence for ever, so a ball sent off near the tangent spends the
-  entire video hugging the wall in a tiny rosette: the picture stops moving and
-  the fight stops happening.
-- **A thread can only be cut along its outer part.** Threads converge on the ball
-  that owns them, so without that a ball merely passing near another would take
-  the whole fan at once.
-- **A ball gets a moment's respite after losing a thread, and both clocks tighten
-  as the field thins.** Without the respite, being outnumbered costs threads
-  faster than the wall can pay them back, no fan ever grows and the arena looks
-  bare. Without the tightening, the last two feed off the wall faster than they
-  can hurt each other and the fight never ends at all.
+Every number that decides how it *feels* was taken off the reference videos frame
+by frame rather than chosen:
+
+- **The arena is 0.49 of the frame width and a ball is 0.051 of that** — 284 px
+  of arena in a 576 px frame, balls with 419 px of solid interior.
+- **A ball crosses 0.85 arena radii a second.** Tracking one frame by frame is
+  the only way to get this right, and it is the thing that reads as wrong first:
+  the first version ran at 2.6, three times too fast.
+- **The rim is tiled from the first frame** and stays that way, with the
+  survivors' sectors swallowing the sectors of the dead. That is why the
+  reference's totals barely move — seven balls holding seven threads each becomes
+  three balls holding fifteen.
+- **The attrition is fast and the endgame is long.** The reference is down from
+  seven balls to three inside ten seconds, then spends a minute and a half as a
+  duel between two enormous fans. So does this.
+
+One thing was measured and then deliberately *not* copied. The reference's
+soundtrack runs at eight and a half onsets a second, but almost all of that is a
+sustained tone around 480 Hz re-triggering — there is a music bed under it. The
+sound here is collisions only, synthesised, and nothing is borrowed.
 
 ## What is fixed and what varies
 
@@ -87,9 +103,11 @@ Everything else follows from it.
 
 Every note is synthesised from the event list the simulation produced, so the
 sound is not *synced* to the picture — it is the same thing as the picture, and
-it cannot drift. A struck note per bounce, one pitch per ball; a short bright
-a low hit for an elimination; one chord at the end. The notes climb
-as the field thins out, which builds the tension without anyone arranging it.
+it cannot drift. A struck note per wall bounce, one pitch per ball, so you learn
+to hear who is who; the same note an octave up and much shorter for a thread
+going; a duller knock when two balls meet; a low hit for an elimination; one
+chord at the end. The notes climb as the field thins out, which builds the
+tension without anyone arranging it.
 
 Nothing is borrowed, so nothing can get a video muted or demonetised.
 

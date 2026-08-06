@@ -40,8 +40,8 @@ export const BALL_COUNT = 7;
 /** Threads everybody starts with. */
 export const OPENING_THREADS = 5;
 
-/** How far from the centre the balls start. */
-const START_RADIUS = 0.3;
+/** How far from the centre the balls start — each one inside its own sector. */
+const START_RADIUS = 0.45;
 
 /**
  * No thread can be taken in the opening seconds.
@@ -59,6 +59,16 @@ const OUTRO = 2.4;
 /** Nothing runs longer than this, whatever happens. */
 const HARD_CAP = 110;
 
+/**
+ * Most threads a single touch of the wall can win.
+ *
+ * A fan should *grow* — that is the thing people are watching. Let one touch
+ * take every free slot it can reach and a ball swallows a dead rival's whole
+ * sector in a frame, then loses it again just as fast; the fans end up flickering
+ * between four threads and twenty instead of climbing.
+ */
+const CLAIM_LIMIT = 3;
+
 export interface Tuning {
   /** Arena radii per second. */
   speed: number;
@@ -69,27 +79,12 @@ export interface Tuning {
    */
   hubGuard: number;
   /**
-   * Seconds before the same attacker can take another thread from the same
-   * victim, with a full field. Threads are only replaced by working the wall, so
-   * this is the clock the fight runs on — and with it, how long a video lasts.
-   *
-   * It shortens as balls are knocked out. Two survivors left alone at the
-   * opening rate simply feed off the wall faster than they can hurt each other
-   * and the fight never ends; tightening it as the field thins makes the endgame
-   * quick and decisive, which is also how it should feel.
+   * Radians between neighbouring threads, and so how much wall a ball takes per
+   * touch. The rim holds a whole number of these and no more: it is divided into
+   * slots, every slot is claimed at the start, and from then on the fight is over
+   * slots. Cutting a thread frees one; touching the wall is how a free one is
+   * taken. That is why the picture stays full while the fans get bigger.
    */
-  pairCooldown: number;
-  /**
-   * Seconds of respite a ball gets after losing a thread, whoever took it.
-   *
-   * Without this, being outnumbered is fatal in seconds — six attackers on a
-   * per-pair clock can take threads six times faster than the wall pays them
-   * back, so no fan ever grows and the arena looks bare. Capping the *victim's*
-   * losses keeps the picture full: fans grow while a ball is left alone, and
-   * shrink under sustained attention rather than instantly.
-   */
-  victimCooldown: number;
-  /** Radians between neighbouring threads in a fan, and so how much wall a ball takes per touch. */
   threadStep: number;
   /**
    * How close a ball must come to a thread to cut it, as a fraction of its drawn
@@ -101,9 +96,7 @@ export interface Tuning {
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
   hubGuard: 0.3,
-  pairCooldown: 1.3,
-  victimCooldown: 2.0,
-  threadStep: 0.075,
+  threadStep: (Math.PI * 2) / (BALL_COUNT * OPENING_THREADS),
   hitRadius: 0.35,
 };
 
@@ -162,14 +155,14 @@ interface Live {
   threads: number[];
   alive: boolean;
   fade: number;
-  /** When each other ball last took a thread from this one, indexed by attacker. */
-  hitBy: Float64Array;
-  /** When this ball last lost a thread to anybody. */
-  lostAt: number;
   /** When this ball last bounced off another, so one contact is not counted twice. */
   clashedAt: number;
-  /** When this ball last gave up a thread to untangle a crossing. */
-  untangledAt: number;
+  /**
+   * Whose fan this ball is *currently* inside. A pass through a fan costs one
+   * thread, not one per frame, so a victim is only charged on the frame the ball
+   * arrives and cannot be charged again until it has come out the other side.
+   */
+  onFan: Set<number>;
 }
 
 /** Do two segments cross? Standard orientation test, endpoints excluded. */
@@ -219,6 +212,10 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
     const x = Math.cos(around) * START_RADIUS;
     const y = Math.sin(around) * START_RADIUS;
 
+    // Everybody's fan covers its own slice of the rim, and the slices meet: the
+    // wall is claimed edge to edge from the first frame. Nobody can grow until
+    // somebody loses, which is what makes the opening a knife fight and the rest
+    // of the video a land grab.
     const threads: number[] = [];
     for (let k = 0; k < OPENING_THREADS; k += 1) {
       threads.push(around + (k - (OPENING_THREADS - 1) / 2) * tuning.threadStep);
@@ -240,10 +237,8 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       threads,
       alive: true,
       fade: 0,
-      hitBy: new Float64Array(BALL_COUNT).fill(-99),
-      lostAt: -99,
       clashedAt: -99,
-      untangledAt: -99,
+      onFan: new Set<number>(),
     });
   }
   return balls;
@@ -273,27 +268,43 @@ function angleDelta(a: number, b: number): number {
 }
 
 /**
- * Where the next thread goes.
+ * Where the new threads go.
  *
- * Not at the point the ball happened to touch: threads have to stay a
- * *contiguous* fan, or they cross each other the moment two balls share ground.
- * A fan therefore grows outward from whichever end the ball touched nearest,
- * one step at a time, and only into rim nobody else is holding. That single
- * change is what gives the picture its shape — the wall ends up divided into
- * coloured sectors that meet without ever tangling.
+ * Not simply at the point the ball touched: threads have to stay a *contiguous*
+ * fan, or they cross each other the moment two balls share ground. A fan grows
+ * from whichever of its two edges faces the strike, outward, taking every free
+ * slot it finds until it reaches the strike point or runs into somebody else's
+ * rope. So a ball that runs into a stretch of wall nobody holds — the arc a
+ * beaten ball left behind — comes away with a handful of threads at once, and a
+ * ball that hits a wall already spoken for comes away with nothing.
+ *
+ * That single rule is what gives the picture its shape: the rim ends up divided
+ * into coloured sectors that meet without ever tangling, and the sectors of the
+ * survivors swallow the sectors of the dead.
  */
-function nextAnchor(balls: Live[], ball: Live, contact: number, step: number): number | null {
-  const sorted = [...ball.threads].sort((a, b) => angleDelta(a, ball.threads[0]) - angleDelta(b, ball.threads[0]));
-  const first = sorted[0] ?? contact;
-  const last = sorted[sorted.length - 1] ?? contact;
+function claimAt(balls: Live[], ball: Live, contact: number, step: number): number[] {
+  if (ball.threads.length === 0) return [];
 
-  // Grow from the end the ball is nearest, and try the other if that is blocked.
-  const nearFirst = Math.abs(angleDelta(contact, first)) < Math.abs(angleDelta(contact, last));
-  const candidates = nearFirst
-    ? [first - step, last + step]
-    : [last + step, first - step];
+  // The two edges of the fan, found by walking round from the first thread.
+  const sorted = [...ball.threads].sort(
+    (a, b) => angleDelta(a, ball.threads[0]) - angleDelta(b, ball.threads[0]),
+  );
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
 
-  for (const candidate of candidates) {
+  // Grow from the edge the ball struck nearest, in the direction of the strike.
+  const toFirst = angleDelta(contact, first);
+  const toLast = angleDelta(contact, last);
+  const fromLast = Math.abs(toLast) < Math.abs(toFirst);
+  const edge = fromLast ? last : first;
+  const direction = fromLast ? 1 : -1;
+  // How far round the strike is, in slots. Growing past it would be claiming
+  // wall the ball never went near.
+  const span = Math.min(CLAIM_LIMIT, Math.floor(Math.abs(fromLast ? toLast : toFirst) / step));
+
+  const taken: number[] = [];
+  for (let k = 1; k <= span; k += 1) {
+    const candidate = edge + direction * step * k;
     let free = true;
     for (const other of balls) {
       if (other === ball || !other.alive) continue;
@@ -305,9 +316,12 @@ function nextAnchor(balls: Live[], ball: Live, contact: number, step: number): n
       }
       if (!free) break;
     }
-    if (free && !crossesAnyThread(balls, ball, candidate)) return candidate;
+    // Somebody else's rope is a wall: the fan stops there rather than jumping it,
+    // which is the whole reason threads never end up crossing.
+    if (!free || crossesAnyThread(balls, ball, candidate)) break;
+    taken.push(candidate);
   }
-  return null;
+  return taken;
 }
 
 /**
@@ -315,9 +329,13 @@ function nextAnchor(balls: Live[], ball: Live, contact: number, step: number): n
  * that true is what gives the picture its shape — each ball ends up holding a
  * contiguous slice of the wall, and the fans meet without ever tangling.
  *
- * It is enforced twice. A thread is not laid if it would cross one already
- * there, and a thread that comes to cross one — because its owner dragged it
- * into somebody else's territory — is the one that gives way.
+ * The rule is on the laying: a thread is never pinned where it would cross rope
+ * that is already there, so fans grow as contiguous sectors that meet edge to
+ * edge. A thread already pinned is not moved or taken back afterwards — the rim
+ * end is fixed and only the ball end travels, so late in a round, when two balls
+ * are dragging fans of twenty across each other, lines do pass over lines. The
+ * reference does exactly the same thing, and undoing it after the fact meant
+ * deleting threads nobody had cut, which changed the fight.
  */
 function crossesAnyThread(balls: Live[], owner: Live, angle: number): boolean {
   const ax = owner.x;
@@ -387,8 +405,8 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           // cannot pass through rope, so a thread that would cross one already
           // there is simply not laid: the wall is territory, and it has to be
           // free to be claimed.
-          const anchor = nextAnchor(balls, ball, Math.atan2(ny, nx), tuning.threadStep);
-          if (anchor !== null) ball.threads = [...ball.threads, anchor];
+          const claimed = claimAt(balls, ball, Math.atan2(ny, nx), tuning.threadStep);
+          if (claimed.length > 0) ball.threads = [...ball.threads, ...claimed];
           events.push({ t: time, kind: 'wall', ball: ball.index, alive: countAlive() });
         }
       }
@@ -433,70 +451,27 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
         }
       }
 
-      // Rope cannot pass through rope. Fans are laid as contiguous arcs into
-      // free rim, so they start clear of one another — but a ball dragging its
-      // fan into somebody else's ground makes them cross, and something has to
-      // give. The intruder pays: of the two, the ball nearer the crossing is the
-      // one that moved in, and its thread is the one that goes. Immediately, or
-      // the crossing would be there on screen for anyone to see.
-      for (let i = 0; i < balls.length; i += 1) {
-        const a = balls[i];
-        // A ball down to its last three stops giving ground. Untangling is meant
-        // to cost territory, not to finish anyone off — a version that took the
-        // thread regardless stripped the whole field in ten seconds. The price
-        // is that a nearly-beaten ball can hold a crossing for the second or two
-        // it has left.
-        if (!a.alive || a.threads.length < 4) continue;
-        for (let j = i + 1; j < balls.length; j += 1) {
-          const b = balls[j];
-          if (!b.alive || b.threads.length < 4) continue;
-
-          for (let m = a.threads.length - 1; m >= 0; m -= 1) {
-            if (a.threads.length < 4 || b.threads.length < 4) break;
-            const amx = Math.cos(a.threads[m]);
-            const amy = Math.sin(a.threads[m]);
-            for (let n = b.threads.length - 1; n >= 0; n -= 1) {
-              const bnx = Math.cos(b.threads[n]);
-              const bny = Math.sin(b.threads[n]);
-              if (!segmentsCross(a.x, a.y, amx, amy, b.x, b.y, bnx, bny)) continue;
-              // Whoever is nearer the crossing is the one who moved in, and it
-              // is their thread that goes.
-              if (Math.hypot(bnx - a.x, bny - a.y) < Math.hypot(amx - b.x, amy - b.y)) {
-                a.threads = a.threads.filter((_, k) => k !== m);
-              } else {
-                b.threads = b.threads.filter((_, k) => k !== n);
-              }
-              break;
-            }
-          }
-        }
-      }
-
       if (time < GRACE) continue;
 
-      // Both clocks tighten as the field thins. A crowded arena should let fans
-      // grow — that is the picture people came for — while the last two need to
-      // settle it rather than feed off the wall for ever.
-      const alive = countAlive();
-      const pace = Math.max(0.12, ((alive - 1) / (BALL_COUNT - 1)) ** 1.6);
-      const cooldown = tuning.pairCooldown * pace;
-      const respite = tuning.victimCooldown * pace;
-
-      // Who took what. Resolved after everyone has moved, so the order the balls
-      // were created in cannot decide who cuts whom.
+      // Passing over a thread breaks it — the thread, not the fan. One pass
+      // costs one thread: the victim is charged on the frame the ball arrives
+      // and cannot be charged again until the ball has come out the other side.
+      // Charging per frame instead drains a fan like a tap and empties the arena
+      // in a dozen seconds, which is not what the reference does.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
-        let victim: Live | null = null;
-        let victimThread = -1;
-        let hitX = 0;
-        let hitY = 0;
-
         for (const other of balls) {
-          if (other === ball || !other.alive) continue;
-          if (time - other.lostAt < respite) continue;
-          if (time - other.hitBy[ball.index] < cooldown) continue;
+          if (other === ball || !other.alive) {
+            ball.onFan.delete(other.index);
+            continue;
+          }
 
+          // The thread it is nearest to is the one that goes. Threads converge
+          // on the ball that owns them, so the bundle at the hub is spared:
+          // otherwise brushing past a ball would take its whole fan at once.
+          let victim = -1;
+          let nearest = Infinity;
           for (let k = 0; k < other.threads.length; k += 1) {
             const angle = other.threads[k];
             const hit = closestOnSegment(
@@ -507,40 +482,29 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
               Math.cos(angle),
               Math.sin(angle),
             );
-            if (hit.distanceSq < reach && hit.t > tuning.hubGuard) {
-              victim = other;
-              victimThread = k;
-              hitX = Math.cos(angle) - other.x;
-              hitY = Math.sin(angle) - other.y;
-              break;
+            if (hit.distanceSq < reach && hit.t > tuning.hubGuard && hit.distanceSq < nearest) {
+              nearest = hit.distanceSq;
+              victim = k;
             }
           }
-          if (victim) break;
-        }
 
-        if (victim && victimThread >= 0) {
-          // The thread goes, and the ball comes off it. Without the rebound a
-          // ball ploughs straight through a fan, dragging its own threads across
-          // everybody else's ground — which is what made the picture a tangle.
-          // Bouncing keeps each ball roughly in the territory it has earned.
-          const len = Math.hypot(hitX, hitY) || 1;
-          const nx = -hitY / len;
-          const ny = hitX / len;
-          const dot = ball.vx * nx + ball.vy * ny;
-          ball.vx -= 2 * dot * nx;
-          ball.vy -= 2 * dot * ny;
+          if (victim < 0) {
+            ball.onFan.delete(other.index);
+            continue;
+          }
+          // Still inside the fan it already paid for.
+          if (ball.onFan.has(other.index)) continue;
+          ball.onFan.add(other.index);
 
-          victim.hitBy[ball.index] = time;
-          victim.lostAt = time;
-          victim.threads = victim.threads.filter((_, k) => k !== victimThread);
+          other.threads = other.threads.filter((_, k) => k !== victim);
           events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
 
-          if (victim.threads.length === 0) {
-            victim.alive = false;
+          if (other.threads.length === 0) {
+            other.alive = false;
             const remaining = countAlive();
-            events.push({ t: time, kind: 'death', ball: victim.index, alive: remaining });
+            events.push({ t: time, kind: 'death', ball: other.index, alive: remaining });
             if (remaining <= 1) {
-              winner = balls.find((b) => b.alive)?.index ?? victim.index;
+              winner = balls.find((b) => b.alive)?.index ?? other.index;
               events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
               endAt = Math.min(endAt, time + OUTRO);
             }
@@ -589,7 +553,10 @@ export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Ro
   let closest: Round | null = null;
   let longest: Round | null = null;
 
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  // A minute-long fight has to be a close one, and close ones are rare, so a
+  // seed aiming there is allowed to look much harder before it settles.
+  const tries = long ? 60 : 20;
+  for (let attempt = 0; attempt < tries; attempt += 1) {
     const round = play(setupFor(seed, attempt), tuning);
     if (round.duration >= target.min && round.duration <= target.max) return round;
     if (!longest || round.duration > longest.duration) longest = round;

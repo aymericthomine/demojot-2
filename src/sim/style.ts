@@ -13,11 +13,18 @@ export const WIDTH = 1080;
 export const HEIGHT = 1920;
 export const FPS = 60;
 
-/** Arena radius as a fraction of the frame width. */
-export const ARENA = 0.44;
+/**
+ * Arena radius as a fraction of the frame width.
+ *
+ * These are measured off the reference, not chosen: 284 px of arena in a 576 px
+ * frame, balls whose solid interior is 419 px of area, and a ball crossing 0.85
+ * arena radii a second. Tracking a ball frame by frame is the only way to get
+ * the speed right — it is the thing that reads as wrong first.
+ */
+export const ARENA = 0.49;
 
 /** Ball radius, in units of the arena radius. */
-export const BALL_RADIUS = 0.037;
+export const BALL_RADIUS = 0.051;
 /** Thread width, arena units. */
 export const THREAD_WIDTH = 0.0085;
 /** The white ring of the arena. */
@@ -28,7 +35,7 @@ export const BALL_RING = 0.008;
 export const ANCHOR_TICK = 0.018;
 
 /** Ball speed in arena radii per second. Constant, and the same for every ball. */
-export const SPEED = 2.6;
+export const SPEED = 0.85;
 
 /**
  * Bright, saturated, and distinct at a glance on black. A round takes as many
