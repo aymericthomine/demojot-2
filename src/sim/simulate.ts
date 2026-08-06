@@ -1,27 +1,28 @@
 /**
  * The round.
  *
- * Seven balls travel in straight lines inside a circle, bouncing off the wall,
- * and each of them keeps laying threads from itself to the rim. A thread once
- * laid is never taken back, so the arena fills up: what starts as seven neat
- * fans becomes a thicket.
+ * Seven balls travel in straight lines inside a ring. Four rules, and they are
+ * the whole game:
  *
- * That is the whole danger. **A ball that touches somebody else's thread is
- * out**, and its own threads go with it. Early on the place is crowded and balls
- * fall quickly; later there is room again, and the last two spend a long time
- * weaving through each other's fans. The round ends with one ball left standing,
- * so the length of a video is not a setting — it is how long the fight took.
+ * 1. **Touching the wall leaves a thread there**, pinned where the ball struck.
+ *    A thread once laid never moves and never fades, so a ball that keeps
+ *    working the wall keeps growing its fan.
+ * 2. **Running through somebody else's thread destroys it** — one thread, not
+ *    the fan. That is how balls take from each other.
+ * 3. **Threads are life.** A ball with none left is out, and its fan goes with
+ *    it, which gives the survivors room again.
+ * 4. **Balls bounce off each other.** No damage in it; it just wrecks the plans
+ *    of both, and it is what keeps a duel from settling into a rhythm.
  *
- * Two details are worth knowing:
+ * Everyone starts with five, so the opening is precarious for everybody. The
+ * round ends with one ball left standing, so the length of a video is not a
+ * setting — it is how long the fight took.
  *
- * - **A thread is earned by bouncing**, and left where the ball struck. That is
- *   the rate the reference grows at — a fan gaining a thread every couple of
- *   seconds — and it is self-limiting in a way a clock is not: rope is only paid
- *   out for crossing the arena, which is exactly when a ball is exposed.
- * - **The opening is always the same.** Same seven balls, same colours, same
- *   places, same starting fans — only the directions they are fired in come from
- *   the seed. Every video therefore opens on the same picture and diverges
- *   immediately.
+ * **The opening is identical in every video**: same seven balls, same colours,
+ * same places, same five threads each, laid out as a cut pie. The seed decides
+ * one thing only — which way each ball is fired. A billiard in a circle never
+ * forgets its opening angle, so that one number per ball is enough to make every
+ * fight diverge inside a second.
  *
  * Everything here is pure arithmetic on a seeded generator: same seed, same
  * fight, same file, on any machine.
@@ -36,14 +37,14 @@ const SUBSTEPS = 4;
 /** The fixed cast. Seven balls, these colours, in this order. */
 export const BALL_COUNT = 7;
 
+/** Threads everybody starts with. */
+export const OPENING_THREADS = 5;
+
 /** How far from the centre the balls start. */
 const START_RADIUS = 0.3;
 
-/** Threads each ball opens with, fanned across its own slice of the circle. */
-const OPENING_THREADS = 12;
-
-/** Nobody can be knocked out in the first moments, whatever the opening looks like. */
-const GRACE = 0.6;
+/** Nobody can lose a thread in the first moments, whatever the opening looks like. */
+const GRACE = 0.5;
 
 /** Seconds of victory lap once only one ball is left. */
 const OUTRO = 2.4;
@@ -55,31 +56,45 @@ export interface Tuning {
   /** Arena radii per second. */
   speed: number;
   /**
-   * How far along a thread, measured from the ball that owns it, it starts being
-   * lethal. Threads converge on their owner, so without this a ball that merely
-   * came near another would be killed by the bundle at the hub rather than by
-   * anything you could see coming.
+   * How far along a thread, measured from the ball that owns it, it can be cut.
+   * Threads converge on their owner, so without this a ball that merely came
+   * near another would take the whole fan at once.
    */
   hubGuard: number;
   /**
-   * A thread every this many bounces. Threads are never taken away, so this is
-   * the rate the arena silts up, and with it how long a fight can last.
+   * Seconds before the same attacker can take another thread from the same
+   * victim, with a full field. Threads are only replaced by working the wall, so
+   * this is the clock the fight runs on — and with it, how long a video lasts.
+   *
+   * It shortens as balls are knocked out. Two survivors left alone at the
+   * opening rate simply feed off the wall faster than they can hurt each other
+   * and the fight never ends; tightening it as the field thins makes the endgame
+   * quick and decisive, which is also how it should feel.
    */
-  pinEvery: number;
+  pairCooldown: number;
   /**
-   * How close a ball has to come to a thread to be caught, as a fraction of its
-   * drawn radius. Well under 1: a ball that clips a line by a hair should slip
-   * through, or the whole thing is over in ten seconds. This is the dial that
-   * sets how long a fight lasts.
+   * Seconds of respite a ball gets after losing a thread, whoever took it.
+   *
+   * Without this, being outnumbered is fatal in seconds — six attackers on a
+   * per-pair clock can take threads six times faster than the wall pays them
+   * back, so no fan ever grows and the arena looks bare. Capping the *victim's*
+   * losses keeps the picture full: fans grow while a ball is left alone, and
+   * shrink under sustained attention rather than instantly.
+   */
+  victimCooldown: number;
+  /**
+   * How close a ball must come to a thread to cut it, as a fraction of its drawn
+   * radius. Under 1: clipping a line by a hair should not count.
    */
   hitRadius: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
-  hubGuard: 0.5,
-  pinEvery: 1,
-  hitRadius: 0.12,
+  hubGuard: 0.3,
+  pairCooldown: 1.3,
+  victimCooldown: 0.8,
+  hitRadius: 0.35,
 };
 
 export interface BallState {
@@ -87,7 +102,7 @@ export interface BallState {
   color: string;
   x: number;
   y: number;
-  /** Rim angles where this ball's threads are pinned. Only ever grows. */
+  /** Rim angles where this ball's threads are pinned. */
   threads: readonly number[];
   alive: boolean;
   /** Counts up from 0 to 1 over the death animation. */
@@ -98,7 +113,7 @@ export interface Frame {
   balls: BallState[];
 }
 
-export type EventKind = 'bounce' | 'death' | 'win';
+export type EventKind = 'wall' | 'clash' | 'cut' | 'death' | 'win';
 
 export interface SimEvent {
   /** Seconds from the start. */
@@ -137,7 +152,12 @@ interface Live {
   threads: number[];
   alive: boolean;
   fade: number;
-  bounces: number;
+  /** When each other ball last took a thread from this one, indexed by attacker. */
+  hitBy: Float64Array;
+  /** When this ball last lost a thread to anybody. */
+  lostAt: number;
+  /** When this ball last bounced off another, so one contact is not counted twice. */
+  clashedAt: number;
 }
 
 /** Closest point on a segment: how far away, and how far along. */
@@ -162,13 +182,7 @@ export function setupFor(seed: number, attempt = 0): RoundSetup {
   return { seed, attempt, ballCount: BALL_COUNT };
 }
 
-/**
- * The opening, which is deliberately identical in every video: seven balls in a
- * ring, each fanned out across its own slice of the circle, like a cut pie. Only
- * the direction each one is fired in comes from the seed — and since a billiard
- * in a circle never forgets its opening angle, that one number per ball is
- * enough to make every fight different from the first second.
- */
+/** The opening, which is deliberately identical in every video. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
   const balls: Live[] = [];
@@ -181,15 +195,15 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
 
     const threads: number[] = [];
     for (let k = 0; k < OPENING_THREADS; k += 1) {
-      threads.push(around + ((k + 0.5) / OPENING_THREADS - 0.5) * slice * 0.92);
+      threads.push(around + ((k + 0.5) / OPENING_THREADS - 0.5) * slice * 0.85);
     }
 
     // Fired inward, and not far off it. A billiard in a circle keeps its angle
     // of incidence for ever, so a ball sent off near the tangent spends the
     // whole video hugging the wall in a tiny rosette — the picture stops moving
-    // and the fight stops happening. Aiming across the middle keeps the chords
-    // long and the balls travelling.
+    // and the fight stops happening.
     const heading = around + Math.PI + rng.range(-0.7, 0.7);
+
     balls.push({
       index: i,
       color: COLORS[i],
@@ -200,7 +214,9 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       threads,
       alive: true,
       fade: 0,
-      bounces: 0,
+      hitBy: new Float64Array(BALL_COUNT).fill(-99),
+      lostAt: -99,
+      clashedAt: -99,
     });
   }
   return balls;
@@ -230,6 +246,7 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
   const dt = 1 / (FPS * SUBSTEPS);
   const wall = 1 - BALL_RADIUS;
   const reach = (BALL_RADIUS * tuning.hitRadius + THREAD_WIDTH / 2) ** 2;
+  const touching = (BALL_RADIUS * 2) ** 2;
 
   let time = 0;
   let endAt = Infinity;
@@ -263,28 +280,79 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
           ball.x = nx * wall;
           ball.y = ny * wall;
 
-          // A thread is left where the ball struck, and stays there for good.
-          // Earning rope by crossing the arena is self-limiting in a way a clock
-          // is not: a ball is only paid when it is exposed.
-          ball.bounces += 1;
-          if (ball.bounces % tuning.pinEvery === 0) {
-            ball.threads = [...ball.threads, Math.atan2(ny, nx)];
+          // Reaching the wall is how rope is earned, and it stays where it was
+          // pinned. Working the wall is therefore the only way back from a bad
+          // start — and it is also the most exposed thing a ball can do.
+          ball.threads = [...ball.threads, Math.atan2(ny, nx)];
+          events.push({ t: time, kind: 'wall', ball: ball.index, alive: countAlive() });
+        }
+      }
+
+      // Balls shove each other apart. There is no damage in it — it simply
+      // wrecks both plans, which is what stops a duel settling into a rhythm.
+      for (let i = 0; i < balls.length; i += 1) {
+        const a = balls[i];
+        if (!a.alive) continue;
+        for (let j = i + 1; j < balls.length; j += 1) {
+          const b = balls[j];
+          if (!b.alive) continue;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const gap = dx * dx + dy * dy;
+          if (gap > touching || gap === 0) continue;
+
+          const distance = Math.sqrt(gap);
+          const nx = dx / distance;
+          const ny = dy / distance;
+          const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (closing < 0) {
+            // Equal masses, head-on: they simply trade the part of their speed
+            // that lies along the line between them.
+            a.vx += closing * nx;
+            a.vy += closing * ny;
+            b.vx -= closing * nx;
+            b.vy -= closing * ny;
           }
-          events.push({ t: time, kind: 'bounce', ball: ball.index, alive: countAlive() });
+          // Push them apart so they cannot stick together.
+          const overlap = (BALL_RADIUS * 2 - distance) / 2 + 1e-4;
+          a.x -= nx * overlap;
+          a.y -= ny * overlap;
+          b.x += nx * overlap;
+          b.y += ny * overlap;
+
+          if (time - a.clashedAt > 0.08) {
+            a.clashedAt = time;
+            events.push({ t: time, kind: 'clash', ball: a.index, alive: countAlive() });
+          }
+          b.clashedAt = time;
         }
       }
 
       if (time < GRACE) continue;
 
-      // Who ran into what. Resolved after everyone has moved, so the order the
-      // balls were created in cannot decide who dies.
-      const doomed: Live[] = [];
+      // Both clocks tighten as the field thins. A crowded arena should let fans
+      // grow — that is the picture people came for — while the last two need to
+      // settle it rather than feed off the wall for ever.
+      const alive = countAlive();
+      const pace = Math.max(0.12, ((alive - 1) / (BALL_COUNT - 1)) ** 1.6);
+      const cooldown = tuning.pairCooldown * pace;
+      const respite = tuning.victimCooldown * pace;
+
+      // Who took what. Resolved after everyone has moved, so the order the balls
+      // were created in cannot decide who cuts whom.
       for (const ball of balls) {
         if (!ball.alive) continue;
+
+        let victim: Live | null = null;
+        let victimThread = -1;
+
         for (const other of balls) {
           if (other === ball || !other.alive) continue;
-          let caught = false;
-          for (const angle of other.threads) {
+          if (time - other.lostAt < respite) continue;
+          if (time - other.hitBy[ball.index] < cooldown) continue;
+
+          for (let k = 0; k < other.threads.length; k += 1) {
+            const angle = other.threads[k];
             const hit = closestOnSegment(
               ball.x,
               ball.y,
@@ -294,28 +362,30 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
               Math.sin(angle),
             );
             if (hit.distanceSq < reach && hit.t > tuning.hubGuard) {
-              caught = true;
+              victim = other;
+              victimThread = k;
               break;
             }
           }
-          if (caught) {
-            doomed.push(ball);
-            break;
-          }
+          if (victim) break;
         }
-      }
 
-      for (const ball of doomed) {
-        ball.alive = false;
-        // A dead ball's threads go with it, which is what gives the survivors
-        // room to move again.
-        ball.threads = [];
-        const remaining = countAlive();
-        events.push({ t: time, kind: 'death', ball: ball.index, alive: remaining });
-        if (remaining <= 1) {
-          winner = balls.find((b) => b.alive)?.index ?? ball.index;
-          events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
-          endAt = Math.min(endAt, time + OUTRO);
+        if (victim && victimThread >= 0) {
+          victim.hitBy[ball.index] = time;
+          victim.lostAt = time;
+          victim.threads = victim.threads.filter((_, k) => k !== victimThread);
+          events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
+
+          if (victim.threads.length === 0) {
+            victim.alive = false;
+            const remaining = countAlive();
+            events.push({ t: time, kind: 'death', ball: victim.index, alive: remaining });
+            if (remaining <= 1) {
+              winner = balls.find((b) => b.alive)?.index ?? victim.index;
+              events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
+              endAt = Math.min(endAt, time + OUTRO);
+            }
+          }
         }
       }
     }
@@ -339,12 +409,8 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
  * in four aims there instead, and comes out a longer fight rather than the same
  * fight padded. Which band a seed aims for is part of the seed, so it never
  * changes under you.
- *
- * The wider band is the safety net: some openings simply refuse to resolve
- * anywhere near the target, and a fight that lands in `ALLOWED` is better than
- * one forced.
  */
-export const SHORT = { min: 27, max: 50 };
+export const SHORT = { min: 28, max: 42 };
 export const LONG = { min: 58, max: 95 };
 export const ALLOWED = { min: 24, max: 95 };
 
@@ -375,10 +441,9 @@ export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Ro
   }
 
   // A seed that wanted a long fight and never got one takes the longest it
-  // found: a minute of build-up is the point of those, and second best is
-  // better than dropping back to half a minute.
+  // found: a minute of build-up is the point of those.
   if (long && longest && longest.duration >= ALLOWED.min) return longest;
-  // Nothing landed in the band, so take whichever fight came nearest to it —
-  // better a fight that is a few seconds short than one padded to length.
+  // Otherwise whichever came nearest the band — better a fight a few seconds
+  // short than one padded to length.
   return closest as Round;
 }

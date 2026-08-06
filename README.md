@@ -34,31 +34,36 @@ npm run lint
 
 ## The rules
 
-Every bounce off the wall leaves a thread pinned where the ball struck, and a
-thread once laid is **never taken back**. So the arena silts up: seven clean fans
-become a thicket.
+Four of them, and they are the whole game.
 
-That is the whole danger. **A ball that touches somebody else's thread is out**,
-and its own threads go with it. Early on the place is crowded and balls fall
-within seconds of each other; later there is room again, and the last two spend a
-long time weaving through each other's fans. The round ends with one ball left,
-so the length of a video is not a setting — it is how long the fight took.
+1. **Everybody starts with five threads.**
+2. **Reaching the wall leaves a thread there**, pinned where the ball struck. It
+   never moves again, so working the wall is how a fan grows — and it is the only
+   way rope is ever earned.
+3. **Running through somebody else's thread destroys it** — one thread, not the
+   fan. Threads are life: a ball with none left is out, and its fan goes with it.
+4. **Balls bounce off each other.** No damage in it; it simply wrecks both plans.
 
-Most land between 30 and 50 seconds, and **one in five runs past a minute**,
-which is the line that matters for monetisation. Over sixty seeds: a quarter
-under 31 s, half under 39 s, a fifth past 60 s.
+The round ends with one ball left standing, so the length of a video is not a
+setting — it is how long the fight took. Over sixty seeds: 30 to 94 seconds, a
+quarter under 35, half under 41, and **a third past the minute**, which is the
+line that matters for monetisation.
 
-Two numbers were found by measuring rather than guessing, and both are in
+Three numbers were found by measuring rather than guessing, and all three are in
 `DEFAULT_TUNING`:
 
 - **Balls are fired inward, not tangentially.** A billiard in a circle keeps its
   angle of incidence for ever, so a ball sent off near the tangent spends the
   entire video hugging the wall in a tiny rosette: the picture stops moving and
   the fight stops happening.
-- **A thread only kills along its outer half.** Threads converge on the ball that
-  owns them, so without that a ball merely passing near another would be killed
-  by the bundle at the hub rather than by anything you could see coming — and
-  every fight would be over in ten seconds.
+- **A thread can only be cut along its outer part.** Threads converge on the ball
+  that owns them, so without that a ball merely passing near another would take
+  the whole fan at once.
+- **A ball gets a moment's respite after losing a thread, and both clocks tighten
+  as the field thins.** Without the respite, being outnumbered costs threads
+  faster than the wall can pay them back, no fan ever grows and the arena looks
+  bare. Without the tightening, the last two feed off the wall faster than they
+  can hurt each other and the fight never ends at all.
 
 ## What is fixed and what varies
 
