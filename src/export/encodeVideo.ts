@@ -72,6 +72,62 @@ function withWatchdog<T>(work: Promise<T>, what: string): Promise<T> {
   return Promise.race([work, alarm]).finally(() => clearTimeout(timer)) as Promise<T>;
 }
 
+/**
+ * What this browser can actually do, in one line.
+ *
+ * "It does not work on my phone" is not something anyone can act on, and the
+ * failure modes here do not announce themselves: a browser with no WebCodecs at
+ * all, one that has it but refuses 1080×1920, and one that accepts the job and
+ * then runs out of memory all look identical from the outside. So the page says
+ * up front what it found, and the answer travels in a screenshot.
+ */
+export async function describeSupport(): Promise<string> {
+  const parts: string[] = [];
+
+  const encoder = (globalThis as { VideoEncoder?: typeof VideoEncoder }).VideoEncoder;
+  if (typeof OffscreenCanvas === 'undefined') parts.push('no OffscreenCanvas');
+  if (!encoder) return [...parts, 'no WebCodecs video encoder'].join(' · ');
+
+  // Both sizes, because a phone that refuses 1080×1920 at 60 will often take
+  // 720×1280 at 30 — and that is a different problem with a different fix.
+  const sizes: Array<[string, number, number, number]> = [
+    ['1080×1920@60', WIDTH, HEIGHT, FPS],
+    ['1080×1920@30', WIDTH, HEIGHT, 30],
+    ['720×1280@30', 720, 1280, 30],
+  ];
+  const codecs: Array<[string, string]> = [
+    ['H.264', 'avc1.640034'],
+    ['AV1', 'av01.0.09M.08'],
+    ['VP9', 'vp09.00.51.08'],
+    ['VP8', 'vp8'],
+  ];
+
+  for (const [label, width, height, framerate] of sizes) {
+    const ok: string[] = [];
+    for (const [name, codec] of codecs) {
+      try {
+        const result = await encoder.isConfigSupported({
+          codec,
+          width,
+          height,
+          bitrate: 8_000_000,
+          framerate,
+        });
+        if (result?.supported) ok.push(name);
+      } catch {
+        // An unsupported codec string throws rather than answering; same thing.
+      }
+    }
+    parts.push(`${label}: ${ok.length ? ok.join('/') : 'none'}`);
+  }
+
+  const audio = (globalThis as { AudioEncoder?: typeof AudioEncoder }).AudioEncoder;
+  parts.push(audio ? 'audio encoder yes' : 'no audio encoder');
+  const memory = (navigator as { deviceMemory?: number }).deviceMemory;
+  if (memory) parts.push(`${memory} GB`);
+  return parts.join(' · ');
+}
+
 export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult> {
   const {
     AudioBufferSource,

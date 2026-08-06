@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { renderRoundAudio } from '../audio/render';
 import {
+  describeSupport,
   encodeVideo,
   fileNameFor,
   EncodeCancelled,
@@ -51,6 +52,8 @@ export default function HomePage() {
   const [seed, setSeed] = useState(() => randomSeed());
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
 
+  const [support, setSupport] = useState<string | null>(null);
+
   const abortRef = useRef<AbortController | null>(null);
   const urlRef = useRef<string | null>(null);
   const linkRef = useRef<HTMLAnchorElement | null>(null);
@@ -63,6 +66,18 @@ export default function HomePage() {
     },
     [],
   );
+
+  // Asked once, on mount, so a phone that cannot do this says so before anybody
+  // waits five minutes to find out.
+  useEffect(() => {
+    let live = true;
+    void describeSupport().then((text) => {
+      if (live) setSupport(text);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
 
   // Saving is what the button was pressed for, so it happens without a second
   // click. Guarded by the URL so a re-render cannot download the same file twice.
@@ -228,7 +243,12 @@ export default function HomePage() {
           </>
         )}
 
-        {stage.kind === 'failed' && <p className="mt-3 text-xs text-rose-400">{stage.message}</p>}
+        {stage.kind === 'failed' && (
+          <p className="mt-3 text-xs text-rose-400">
+            {stage.message}
+            {support && <span className="mt-1 block text-[10px] text-rose-300/70">{support}</span>}
+          </p>
+        )}
 
         {stage.kind === 'done' && (
           <div className="mt-3 flex items-center justify-between gap-3">
@@ -251,8 +271,15 @@ export default function HomePage() {
 
         <p className="mt-3 text-[11px] leading-relaxed text-[#8b90a0]">
           {WIDTH}×{HEIGHT} · {FPS} fps · sound included. Encoded here in the page — nothing is
-          uploaded anywhere — and saved as soon as it is ready. Keep this tab in front while it runs.
+          uploaded anywhere — and saved as soon as it is ready. Keep this tab in front while it runs;
+          a phone will take several minutes and may run out of memory before it finishes.
         </p>
+
+        {support && (
+          <p className="mt-2 font-mono text-[10px] leading-relaxed break-words text-[#5c616e]">
+            {support}
+          </p>
+        )}
       </div>
     </main>
   );
