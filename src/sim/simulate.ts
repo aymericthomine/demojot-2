@@ -192,6 +192,40 @@ function crossing(
   return u;
 }
 
+/**
+ * The anchor a victim gives up to a taker: the end of the victim's arc that the
+ * taker's own arc runs up against, and of the two ends, whichever is nearer to
+ * where the crossing happened.
+ *
+ * Everything follows from this. Territory only ever changes hands at a border,
+ * so an arc stays an arc — nobody is ever left holding two separate patches of
+ * wall with somebody else's rope in between. Running through the rope of a ball
+ * that is not your neighbour does nothing: there is no border between you to
+ * push.
+ */
+function borderAnchor(
+  owner: Int8Array,
+  taker: number,
+  victim: number,
+  near: number,
+): number | null {
+  let best: number | null = null;
+  let closest = Infinity;
+  for (let j = 0; j < ANCHORS; j += 1) {
+    if (owner[j] !== victim) continue;
+    const before = owner[(j - 1 + ANCHORS) % ANCHORS];
+    const after = owner[(j + 1) % ANCHORS];
+    if (before !== taker && after !== taker) continue;
+    let gap = Math.abs(anchorAngle(j) - near) % (Math.PI * 2);
+    if (gap > Math.PI) gap = Math.PI * 2 - gap;
+    if (gap < closest) {
+      closest = gap;
+      best = j;
+    }
+  }
+  return best;
+}
+
 export function setupFor(seed: number): RoundSetup {
   return { seed, ballCount: BALL_COUNT };
 }
@@ -263,6 +297,23 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
   const dt = 1 / (FPS * SUBSTEPS);
   const wall = 1 - BALL_RADIUS;
   const touching = (BALL_RADIUS * 2) ** 2;
+
+  // Who holds each anchor. This is the state of the round: the balls only move.
+  const owner = new Int8Array(ANCHORS);
+  for (let j = 0; j < ANCHORS; j += 1) owner[j] = Math.floor(j / OPENING_THREADS);
+
+  // The per-ball thread lists the renderer wants, rebuilt only when the ring
+  // actually changes, so unchanged frames go on sharing one array.
+  const rebuild = (): void => {
+    for (const ball of balls) ball.threads = [];
+    for (let j = 0; j < ANCHORS; j += 1) balls[owner[j]].threads.push(anchorAngle(j));
+    for (const ball of balls) {
+      if (ball.alive && ball.threads.length === 0) {
+        ball.alive = false;
+        events.push({ t: time, kind: 'death', ball: ball.index, alive: countAlive() });
+      }
+    }
+  };
 
   let time = 0;
   let endAt = Infinity;
@@ -355,56 +406,46 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
 
       if (time < GRACE) continue;
 
-      // Touch a thread and it is yours. Everything the ball's disc is touching
-      // changes hands this frame — no timer, no one-at-a-time — and the rim end
-      // does not move an inch: the thread keeps its anchor and swaps its colour
-      // and its hub. Anything less leaves rope running through the middle of a
-      // ball untouched, which is the first thing anybody notices.
+      // Touch a thread and it is yours — but territory only ever changes hands
+      // at a border. Running through somebody's rope pushes your own arc one
+      // anchor further into theirs, at whichever of their two ends yours is
+      // already up against, so an arc stays an arc and nobody ends up holding
+      // two separate patches of wall. Run through the rope of a ball that is not
+      // your neighbour and nothing happens: there is no border between you.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
-        for (const other of balls) {
-          if (other === ball || !other.alive) continue;
+        let changed = false;
+        for (let j = 0; j < ANCHORS; j += 1) {
+          const victim = owner[j];
+          if (victim === ball.index) continue;
 
-          const kept: number[] = [];
-          const taken: number[] = [];
-          let hitAngle = 0;
-          for (const angle of other.threads) {
-            const rimX = Math.cos(angle);
-            const rimY = Math.sin(angle);
-            // A thread is taken by being *crossed*, not by being sat on: the
-            // step the ball just travelled has to pass through the line. Testing
-            // overlap instead lets two balls that have come to rest against each
-            // other's rope swap the same threads back and forth for ever, which
-            // is exactly what stopped a round from ever finishing.
-            const where = crossing(
-              ball.px,
-              ball.py,
-              ball.x,
-              ball.y,
-              other.x,
-              other.y,
-              rimX,
-              rimY,
-            );
-            const fromHub =
-              where === null ? 0 : where * Math.hypot(rimX - other.x, rimY - other.y);
-            if (where !== null && fromHub > tuning.hubGuard) {
-              taken.push(angle);
-              hitAngle = angle;
-              continue;
-            }
-            kept.push(angle);
+          const hub = balls[victim];
+          const angle = anchorAngle(j);
+          const rimX = Math.cos(angle);
+          const rimY = Math.sin(angle);
+
+          // A thread is taken by being *crossed*, not by being sat on: the step
+          // the ball just travelled has to pass through the line. Testing
+          // overlap instead lets two balls that have come to rest against each
+          // other's rope swap the same threads back and forth for ever, which is
+          // exactly what stopped a round from ever finishing.
+          const where = crossing(ball.px, ball.py, ball.x, ball.y, hub.x, hub.y, rimX, rimY);
+          if (where === null) continue;
+          if (where * Math.hypot(rimX - hub.x, rimY - hub.y) <= tuning.hubGuard) continue;
+
+          const border = borderAnchor(owner, ball.index, victim, angle);
+          if (border !== null) {
+            owner[border] = ball.index;
+            changed = true;
+            events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
           }
-          if (taken.length === 0) continue;
-
-          other.threads = kept;
-          ball.threads = [...ball.threads, ...taken];
 
           if (tuning.threadBounce > 0) {
-            // Rope turns the ball that ran into it.
-            const tx = Math.cos(hitAngle) - other.x;
-            const ty = Math.sin(hitAngle) - other.y;
+            // Rope turns the ball that ran through it, whether or not there was
+            // a border to push.
+            const tx = rimX - hub.x;
+            const ty = rimY - hub.y;
             const length = Math.hypot(tx, ty);
             if (length > 0) {
               const nx = -ty / length;
@@ -422,24 +463,14 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
               }
             }
           }
+        }
 
-          // One tick per thread, so running through a fan rattles.
-          for (let k = 0; k < taken.length; k += 1) {
-            events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
-          }
-
-          // Holding nothing is being out. There is no fan to clear away — the
-          // threads that were its are somebody else's now, still on their
-          // anchors.
-          if (other.threads.length === 0) {
-            other.alive = false;
-            const remaining = countAlive();
-            events.push({ t: time, kind: 'death', ball: other.index, alive: remaining });
-            if (remaining <= 1) {
-              winner = balls.find((b) => b.alive)?.index ?? other.index;
-              events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
-              endAt = Math.min(endAt, time + OUTRO);
-            }
+        if (changed) {
+          rebuild();
+          if (countAlive() <= 1) {
+            winner = balls.find((b) => b.alive)?.index ?? ball.index;
+            events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
+            endAt = Math.min(endAt, time + OUTRO);
           }
         }
       }

@@ -41,11 +41,20 @@ Three of them, and they are the whole game.
    points — thirty-five of them, seven balls with five each — set before the
    first frame and unchanged to the last. Every anchor holds a thread the whole
    way through, so the number of threads in the arena is a constant.
-2. **Touch a thread and it becomes yours.** A ball that runs through somebody
-   else's rope does not cut it: the thread changes hands and changes colour, its
-   rim end staying exactly where it was while its inner end swings across to the
-   ball that took it. Nothing is created and nothing destroyed — it is all
-   captured, which is why the picture is always full.
+2. **Touch a thread and it becomes yours** — but territory only ever changes
+   hands at a border. Running through somebody's rope pushes your own arc one
+   anchor further into theirs, at whichever of their two ends yours is already up
+   against; the thread that turns keeps its anchor and swaps only its colour and
+   its hub. Nothing is created and nothing destroyed — it is all captured, which
+   is why the picture is always full.
+
+   Because a border is the only place a thread can change hands, **every ball
+   holds one unbroken arc of the wall** from the first frame to the last: nobody
+   is ever left with two separate patches and somebody else's rope in between.
+   That is what the reference looks like, and it is the shape of the whole thing —
+   the wall is divided into coloured sectors, and the sectors push against each
+   other. Run through the rope of a ball that is not your neighbour and nothing
+   happens; there is no border between you to push.
 3. **Threads are life.** A ball holding none is out. There is no fan to clear
    away: what was its belongs to somebody else now, still on the same anchors.
 
@@ -92,6 +101,8 @@ by frame rather than chosen:
 - **The attrition is fast and the endgame is long.** The reference is down from
   seven balls to four inside eight seconds, then spends a minute and a half
   grinding two enormous fans against each other. So does this.
+- **Each ball holds one contiguous arc**, all the way through. Counted off every
+  frame of the reference, and true here by construction.
 
 One thing was measured and then deliberately *not* copied. The reference's
 soundtrack runs at eight and a half onsets a second, but almost all of that is a
