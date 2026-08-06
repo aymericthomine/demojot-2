@@ -65,11 +65,13 @@ const anchorAngle = (j: number): number =>
 /**
  * How far from the centre the balls start.
  *
- * Well out towards the rim, at the apex of its own wedge, which is where the
- * reference puts them: the middle of the arena is empty at the start and the six
- * fans point outward.
+ * Closer in than the reference puts them, so the opening reads as a huddle that
+ * scatters rather than a ring already spread against the wall. There is a floor
+ * on this: the fans have to leave each other alone from the first frame, and two
+ * balls both sitting near the middle are nearly the same point, so their wedges
+ * would open across each other. Half a radius keeps them clear.
  */
-const START_RADIUS = 0.6;
+const START_RADIUS = 0.45;
 
 /**
  * Most rope a ball can hold.
@@ -215,11 +217,12 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       threads.push(anchorAngle(i * OPENING_THREADS + k));
     }
 
-    // Fired inward, and not far off it. A billiard in a circle keeps its angle
-    // of incidence for ever, so a ball sent off near the tangent spends the
-    // whole video hugging the wall in a tiny rosette — the picture stops moving
-    // and the fight stops happening.
-    const heading = around + Math.PI + rng.range(-0.7, 0.7);
+    // Aimed across the arena, but loosely: a wide spread so no two balls set off
+    // the same way and the first seconds do not look choreographed. Still built
+    // around inward, because a billiard in a circle keeps its angle of incidence
+    // for ever — a ball sent off near the tangent spends the whole video hugging
+    // the wall in a tiny rosette, and the picture stops moving.
+    const heading = around + Math.PI + rng.range(-1.3, 1.3);
 
     balls.push({
       index: i,
