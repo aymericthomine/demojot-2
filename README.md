@@ -1,12 +1,14 @@
 # Ball Battle
 
-A generator for vertical 9:16 videos: coloured balls fight inside a ring, each
-trailing threads pinned to the wall, until one is left. Picture and sound are
-both computed — there is no footage, no samples, and nothing downloaded.
+A generator for vertical 9:16 videos: seven balls fight inside a ring, laying
+threads to the wall as they go, until one is left. Picture and sound are both
+computed — there is no footage, no samples, and nothing downloaded.
 
-A **seed is the video**. It decides how many balls fight, how many threads they
-start with, where they stand and which way they are aimed. Everything after that
-follows, including how long the video runs.
+Every video **opens on the same picture** — the same seven balls, same colours,
+same places, same fans. The **seed** only decides which way they are fired, and
+since a billiard in a circle never forgets its opening angle, that is enough to
+make everything after the first second different, including how long the video
+runs.
 
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack synthesised from the collisions*
@@ -18,9 +20,10 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-Type a seed (or press **Random**), watch the fight, press **Download the MP4**.
-The file is encoded in the page — nothing is uploaded anywhere — and lands in
-your downloads ready to post.
+Press **Generate the video**. The fight is played out, every frame is painted
+straight into the encoder, and the finished MP4 saves itself. There is no
+preview on purpose: watching it in the page costs exactly as long as the video
+and shows nothing the file will not.
 
 ```bash
 npm run build        # production build
@@ -31,47 +34,49 @@ npm run lint
 
 ## The rules
 
-Each ball drags a fan of threads pinned to the wall behind it, and that fan is
-its life. One rule then decides everything: **crossing somebody else's thread
-cuts it**, and a thread is never replaced. A ball at zero is out, and the round
-ends when one is left standing — so the length of a video is not a setting, it
-is the result of the fight.
+Every bounce off the wall leaves a thread pinned where the ball struck, and a
+thread once laid is **never taken back**. So the arena silts up: seven clean fans
+become a thicket.
 
-Most land between 30 and 45 seconds; **one seed in four aims past a minute**,
+That is the whole danger. **A ball that touches somebody else's thread is out**,
+and its own threads go with it. Early on the place is crowded and balls fall
+within seconds of each other; later there is room again, and the last two spend a
+long time weaving through each other's fans. The round ends with one ball left,
+so the length of a video is not a setting — it is how long the fight took.
+
+Most land between 30 and 50 seconds, and **one in five runs past a minute**,
 which is the line that matters for monetisation. Over sixty seeds: a quarter
-below 35 s, half below 42 s, a third past 60 s.
+under 31 s, half under 39 s, a fifth past 60 s.
 
-Two details do the real work, and both were found by looking rather than
-guessing:
+Two numbers were found by measuring rather than guessing, and both are in
+`DEFAULT_TUNING`:
 
-- **The fan is pinned by swept angle, not by a clock.** A thread goes down each
-  time the line from the centre through the ball has turned far enough, which
-  makes every fan exactly `life × step` wide, evenly spaced, wherever the ball
-  is and however fast it is going. Pinning at each bounce cannot produce the
-  picture at all: a billiard in a circle keeps its angle of incidence for ever,
-  so its bounce points step around the rim by a fixed angle, and the last twenty
-  are either scattered all the way round or belong to a ball glued to the wall.
-- **Cuts are rate-limited per pair.** One attacker can only take so much, so a
-  duel is survivable and being surrounded is not — which is what makes the
-  endgame a scramble instead of a coin toss.
+- **Balls are fired inward, not tangentially.** A billiard in a circle keeps its
+  angle of incidence for ever, so a ball sent off near the tangent spends the
+  entire video hugging the wall in a tiny rosette: the picture stops moving and
+  the fight stops happening.
+- **A thread only kills along its outer half.** Threads converge on the ball that
+  owns them, so without that a ball merely passing near another would be killed
+  by the bundle at the hub rather than by anything you could see coming — and
+  every fight would be over in ten seconds.
 
 ## What is fixed and what varies
 
-Every video is meant to read as an episode of the same thing, so the **style is
-constant**: arena size, ball size, thread thickness, ball speed, the palette, the
-black ground and the white ring. They live as constants in `src/sim/style.ts`.
+Almost everything is fixed, and that is the point: the videos should read as
+episodes of the same thing. Arena, ball size, thread thickness, speed, palette,
+the black ground and the white ring are constants in `src/sim/style.ts`; the
+cast — seven balls, these colours, these places, these opening fans — is a
+constant in `src/sim/simulate.ts`.
 
-What the seed varies: **how many balls** (5–9), **how many threads each one
-starts with** (16–30, and every ball gets its own share of that, so the opening
-frame is a set of different fans rather than a diagram), where they stand, which
-way they are aimed — and therefore the whole fight and its length.
+The seed varies exactly one thing: **the direction each ball is fired in.**
+Everything else follows from it.
 
 ## The sound
 
 Every note is synthesised from the event list the simulation produced, so the
 sound is not *synced* to the picture — it is the same thing as the picture, and
 it cannot drift. A struck note per bounce, one pitch per ball; a short bright
-tick per cut; a low hit for an elimination; one chord at the end. The notes climb
+a low hit for an elimination; one chord at the end. The notes climb
 as the field thins out, which builds the tension without anyone arranging it.
 
 Nothing is borrowed, so nothing can get a video muted or demonetised.
@@ -86,16 +91,15 @@ Nothing is borrowed, so nothing can get a video muted or demonetised.
 | `src/render/drawFrame.ts` | One frame from one state, on any canvas. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |
-| `src/components/Stage.tsx` | The preview — the same frames the export encodes. |
-| `src/app/page.tsx` | Seed, fight, download. |
+| `src/app/page.tsx` | One button: fight, encode, save. |
 
-The simulation runs once, up front, and keeps a snapshot per frame; the preview
-and the export both read those, so what you watch is what you get.
+The simulation runs once, up front, and keeps a snapshot per frame; the encoder
+reads those in order.
 
 ## Notes
 
-- Encoding a 40-second video takes a couple of minutes on a machine without a
-  hardware encoder, and seconds on one with it. Progress and a cancel button are
+- Encoding a 40-second video takes a minute or two on a machine without a
+  hardware encoder, and far less on one with it. Progress and a cancel button are
   in the page; keep the tab in front while it runs.
 - The container is MP4 with H.264 and AAC wherever the browser can encode them.
   Where it cannot — some Linux builds of Chromium, for instance — it falls back

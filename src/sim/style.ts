@@ -28,7 +28,7 @@ export const BALL_RING = 0.008;
 export const ANCHOR_TICK = 0.018;
 
 /** Ball speed in arena radii per second. Constant, and the same for every ball. */
-export const SPEED = 1.25;
+export const SPEED = 0.85;
 
 /**
  * Bright, saturated, and distinct at a glance on black. A round takes as many

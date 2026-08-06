@@ -13,9 +13,8 @@
  * - **Bounce** — a struck note, one pitch per ball, so you learn to hear who is
  *   who. The scale is pentatonic, which is the cheap trick that makes a random
  *   sequence of notes sound deliberate.
- * - **Cut** — a short bright tick, an octave up. These are the fast ones, and
- *   they are what gives a busy moment its rattle.
  * - **Elimination** — a low hit with a fifth over it.
+ * - **The win** — the only chord in the piece.
  *
  * The whole thing rises as balls are knocked out: fewer left, higher the notes,
  * which builds tension towards the finish without anyone arranging it.
@@ -87,9 +86,6 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
         struck(ctx, master, t, frequency, 0.22, 0.42, 'triangle');
         // A quiet octave above gives the note its edge without raising the level.
         struck(ctx, master, t, frequency * 2, 0.06, 0.14, 'sine');
-        break;
-      case 'cut':
-        struck(ctx, master, t, frequency * 2, 0.1, 0.1, 'square');
         break;
       case 'death':
         struck(ctx, master, t, frequency / 2, 0.3, 0.9, 'sine');
