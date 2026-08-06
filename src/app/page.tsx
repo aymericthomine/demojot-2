@@ -130,9 +130,9 @@ export default function HomePage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Ball Battle</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
-          Seven balls, one ring, and a fixed set of threads pinned to the wall. The anchors never
-          move; run through somebody else&apos;s thread and it turns your colour. Hold none and
-          you are out.
+          Six balls, one ring, and a fixed set of threads pinned to the wall. The anchors never
+          move, and rope is solid: catch on somebody else&apos;s thread and it comes away with you,
+          turning your colour. Hold none and you are out.
         </p>
       </header>
 

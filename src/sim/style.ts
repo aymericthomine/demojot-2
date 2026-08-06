@@ -16,17 +16,15 @@ export const FPS = 60;
 /**
  * Arena radius as a fraction of the frame width.
  *
- * These are measured off the reference, not chosen: 284 px of arena in a 576 px
- * frame, balls whose solid interior is 419 px of area, and a ball crossing 0.85
- * arena radii a second. Tracking a ball frame by frame is the only way to get
- * the speed right — it is the thing that reads as wrong first.
+ * Measured off the reference at full size, not chosen: a rim 969 px across in a
+ * 1080 px frame, balls 67 px through, threads about 3 px wide.
  */
-export const ARENA = 0.49;
+export const ARENA = 0.449;
 
 /** Ball radius, in units of the arena radius. */
-export const BALL_RADIUS = 0.051;
+export const BALL_RADIUS = 0.069;
 /** Thread width, arena units. */
-export const THREAD_WIDTH = 0.0085;
+export const THREAD_WIDTH = 0.0062;
 /** The white ring of the arena. */
 export const RIM_WIDTH = 0.013;
 /** The white outline around each ball. */
@@ -42,14 +40,14 @@ export const SPEED = 0.85;
  * of these as it has balls, without repeating.
  */
 export const COLORS = [
-  '#22c55e', // green
-  '#22d3ee', // cyan
-  '#2563eb', // blue
   '#a855f7', // purple
-  '#ec4899', // pink
+  '#22d3ee', // cyan
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#22c55e', // green
   '#f97316', // orange
   '#eab308', // yellow
-  '#ef4444', // red
+  '#ec4899', // pink
   '#14b8a6', // teal
   '#84cc16', // lime
   '#8b5cf6', // violet

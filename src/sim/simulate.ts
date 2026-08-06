@@ -34,24 +34,24 @@
  */
 
 import { createRng } from './random';
-import { BALL_RADIUS, COLORS, FPS, SPEED } from './style';
+import { BALL_RADIUS, COLORS, FPS, SPEED, THREAD_WIDTH } from './style';
 
 /** Physics substeps per rendered frame. Enough that a bounce lands cleanly. */
 const SUBSTEPS = 4;
 
-/** The fixed cast. Seven balls, these colours, in this order. */
-export const BALL_COUNT = 7;
+/** The fixed cast. Six balls, these colours, in this order. */
+export const BALL_COUNT = 6;
 
-/** Threads everybody starts with. */
-export const OPENING_THREADS = 5;
+/** Threads everybody starts with, counted off the reference. */
+export const OPENING_THREADS = 24;
 
 /**
  * Anchor points on the rim, fixed for the whole round.
  *
  * Every one of them holds a thread from the first frame to the last, so this is
- * also the total number of threads in the arena and it never changes. Seven
- * balls with five each divides the rim exactly, which is why the opening reads
- * as a cut pie with no gaps.
+ * also the total number of threads in the arena and it never changes. Six balls
+ * with twenty-four each divides the rim exactly, which is why the opening reads
+ * as six wedges meeting edge to edge with nothing between them.
  */
 export const ANCHORS = BALL_COUNT * OPENING_THREADS;
 
@@ -59,18 +59,14 @@ export const ANCHORS = BALL_COUNT * OPENING_THREADS;
 const anchorAngle = (j: number): number =>
   -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ((Math.PI * 2) / ANCHORS);
 
-/** How far from the centre the balls start — each one inside its own sector. */
-const START_RADIUS = 0.45;
-
 /**
- * No thread can be taken in the opening seconds.
+ * How far from the centre the balls start.
  *
- * Seven balls with five threads each, all crowded into the middle, is a
- * massacre: without this most of the field is gone before anyone has been to the
- * wall twice, and the video is over before it has started. The truce gives
- * everybody time to earn some rope first.
+ * Well out towards the rim, at the apex of its own wedge, which is where the
+ * reference puts them: the middle of the arena is empty at the start and the six
+ * fans point outward.
  */
-const GRACE = 0.5;
+const START_RADIUS = 0.6;
 
 /** Seconds of victory lap once only one ball is left. */
 const OUTRO = 2.4;
@@ -81,34 +77,10 @@ const HARD_CAP = 600;
 export interface Tuning {
   /** Arena radii per second. */
   speed: number;
-  /**
-   * How close to the ball that owns them a thread can still be cut, in arena
-   * units. Threads converge on their owner, so at the hub they are packed closer
-   * together than a ball is wide: without this, coming alongside somebody would
-   * take their whole fan in one frame, which is not crossing threads — it is
-   * standing on the knot they are tied in. A few ball-widths out they are
-   * separate lines again and every one of them can be cut.
-   */
-  hubGuard: number;
-  /**
-   * How hard rope turns the ball that snapped it. Two would be a mirror, zero a
-   * thread that gives way completely; this is well below a mirror — a bend, not
-   * a bounce. Only the direction changes: speed is a constant of the style, so
-   * the velocity is put back to length afterwards.
-   *
-   * It matters far more than its size suggests. At zero a ball crosses a fan of
-   * twenty in one straight line and takes the lot, so the field is down to two
-   * in four seconds and the fight is over in ten. Swept, not chosen: this is
-   * where the rounds come out longest, the fans biggest and the wall busiest at
-   * the same time.
-   */
-  threadBounce: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
-  hubGuard: BALL_RADIUS * 3,
-  threadBounce: 0.8,
 };
 
 export interface BallState {
@@ -171,59 +143,22 @@ interface Live {
   py: number;
 }
 
-/**
- * Do two segments cross, and how far along the second? Standard orientation
- * test; `t` is the crossing point's position along c→d, which is what says how
- * far from a thread's hub the ball went through it.
- */
-function crossing(
-  ax: number, ay: number, bx: number, by: number,
-  cx: number, cy: number, dx: number, dy: number,
-): number | null {
-  const rx = bx - ax;
-  const ry = by - ay;
-  const sx = dx - cx;
-  const sy = dy - cy;
-  const denominator = rx * sy - ry * sx;
-  if (denominator === 0) return null;
-  const u = ((cx - ax) * ry - (cy - ay) * rx) / denominator;
-  const t = ((cx - ax) * sy - (cy - ay) * sx) / denominator;
-  if (t < 0 || t > 1 || u < 0 || u > 1) return null;
-  return u;
-}
-
-/**
- * The anchor a victim gives up to a taker: the end of the victim's arc that the
- * taker's own arc runs up against, and of the two ends, whichever is nearer to
- * where the crossing happened.
- *
- * Everything follows from this. Territory only ever changes hands at a border,
- * so an arc stays an arc — nobody is ever left holding two separate patches of
- * wall with somebody else's rope in between. Running through the rope of a ball
- * that is not your neighbour does nothing: there is no border between you to
- * push.
- */
-function borderAnchor(
-  owner: Int8Array,
-  taker: number,
-  victim: number,
-  near: number,
-): number | null {
-  let best: number | null = null;
-  let closest = Infinity;
-  for (let j = 0; j < ANCHORS; j += 1) {
-    if (owner[j] !== victim) continue;
-    const before = owner[(j - 1 + ANCHORS) % ANCHORS];
-    const after = owner[(j + 1) % ANCHORS];
-    if (before !== taker && after !== taker) continue;
-    let gap = Math.abs(anchorAngle(j) - near) % (Math.PI * 2);
-    if (gap > Math.PI) gap = Math.PI * 2 - gap;
-    if (gap < closest) {
-      closest = gap;
-      best = j;
-    }
-  }
-  return best;
+/** Closest point on a segment: how far away, and how far along. */
+function closestOnSegment(
+  px: number,
+  py: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+): { distanceSq: number; t: number } {
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lengthSq = dx * dx + dy * dy;
+  const t = lengthSq > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
+  const cx = ax + dx * t;
+  const cy = ay + dy * t;
+  return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
 }
 
 export function setupFor(seed: number): RoundSetup {
@@ -297,6 +232,7 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
   const dt = 1 / (FPS * SUBSTEPS);
   const wall = 1 - BALL_RADIUS;
   const touching = (BALL_RADIUS * 2) ** 2;
+  const reach = (BALL_RADIUS + THREAD_WIDTH / 2) ** 2;
 
   // Who holds each anchor. This is the state of the round: the balls only move.
   const owner = new Int8Array(ANCHORS);
@@ -404,65 +340,65 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
         }
       }
 
-      if (time < GRACE) continue;
-
-      // Touch a thread and it is yours — but territory only ever changes hands
-      // at a border. Running through somebody's rope pushes your own arc one
-      // anchor further into theirs, at whichever of their two ends yours is
-      // already up against, so an arc stays an arc and nobody ends up holding
-      // two separate patches of wall. Run through the rope of a ball that is not
-      // your neighbour and nothing happens: there is no border between you.
+      // Rope is solid. A ball cannot pass through a thread that is not its own:
+      // it catches on it, the thread comes away with it — new hub, new colour,
+      // same anchor — and the ball rebounds off where the thread was.
+      //
+      // That one rule is what keeps the picture clean. A ball is penned inside
+      // the region its own arc opens onto, so its threads never reach across
+      // somebody else's fan and **no two threads ever overlap**. It is also the
+      // whole economy: the only rope you can reach is the rope at the edge of
+      // your own territory, so a wedge grows one anchor at a time, from the
+      // outside in, and a ball whose wedge is taken down to nothing is out.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
         let changed = false;
+        // Only the nearest one: catching on a thread stops the ball there, so it
+        // cannot be in among the bundle behind it in the same instant.
+        let caught = -1;
+        let nearest = Infinity;
         for (let j = 0; j < ANCHORS; j += 1) {
           const victim = owner[j];
           if (victim === ball.index) continue;
-
           const hub = balls[victim];
           const angle = anchorAngle(j);
+          const hit = closestOnSegment(ball.x, ball.y, hub.x, hub.y, Math.cos(angle), Math.sin(angle));
+          if (hit.distanceSq < reach && hit.distanceSq < nearest) {
+            nearest = hit.distanceSq;
+            caught = j;
+          }
+        }
+
+        if (caught >= 0) {
+          const hub = balls[owner[caught]];
+          const angle = anchorAngle(caught);
           const rimX = Math.cos(angle);
           const rimY = Math.sin(angle);
 
-          // A thread is taken by being *crossed*, not by being sat on: the step
-          // the ball just travelled has to pass through the line. Testing
-          // overlap instead lets two balls that have come to rest against each
-          // other's rope swap the same threads back and forth for ever, which is
-          // exactly what stopped a round from ever finishing.
-          const where = crossing(ball.px, ball.py, ball.x, ball.y, hub.x, hub.y, rimX, rimY);
-          if (where === null) continue;
-          if (where * Math.hypot(rimX - hub.x, rimY - hub.y) <= tuning.hubGuard) continue;
-
-          const border = borderAnchor(owner, ball.index, victim, angle);
-          if (border !== null) {
-            owner[border] = ball.index;
-            changed = true;
-            events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
-          }
-
-          if (tuning.threadBounce > 0) {
-            // Rope turns the ball that ran through it, whether or not there was
-            // a border to push.
-            const tx = rimX - hub.x;
-            const ty = rimY - hub.y;
-            const length = Math.hypot(tx, ty);
-            if (length > 0) {
-              const nx = -ty / length;
-              const ny = tx / length;
-              const dot = ball.vx * nx + ball.vy * ny;
-              ball.vx -= tuning.threadBounce * dot * nx;
-              ball.vy -= tuning.threadBounce * dot * ny;
-              // A partial reflection is not a reflection: it takes speed out as
-              // well as turning, and after fifty threads the ball is crawling.
-              // Speed is a constant of the style, so only the direction changes.
-              const moving = Math.hypot(ball.vx, ball.vy);
-              if (moving > 0) {
-                ball.vx = (ball.vx / moving) * tuning.speed;
-                ball.vy = (ball.vy / moving) * tuning.speed;
-              }
+          // Rebound off the line the thread was lying along.
+          const tx = rimX - hub.x;
+          const ty = rimY - hub.y;
+          const length = Math.hypot(tx, ty);
+          if (length > 0) {
+            const nx = -ty / length;
+            const ny = tx / length;
+            const dot = ball.vx * nx + ball.vy * ny;
+            ball.vx -= 2 * dot * nx;
+            ball.vy -= 2 * dot * ny;
+            // And clear of it, so it cannot catch on the same rope twice.
+            const side = (ball.x - hub.x) * nx + (ball.y - hub.y) * ny;
+            const push = BALL_RADIUS + THREAD_WIDTH / 2 - Math.abs(side) + 1e-4;
+            if (push > 0) {
+              const away = side >= 0 ? 1 : -1;
+              ball.x += nx * push * away;
+              ball.y += ny * push * away;
             }
           }
+
+          owner[caught] = ball.index;
+          changed = true;
+          events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
         }
 
         if (changed) {
