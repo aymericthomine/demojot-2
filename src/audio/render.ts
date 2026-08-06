@@ -100,6 +100,12 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
       case 'take':
         struck(ctx, master, t, frequency * 2, 0.12, 0.08, 'triangle');
         break;
+      case 'break':
+        // Rope giving way: the same tick as a take, but drier and a shade lower,
+        // so a full ball ploughing through a fan sounds different from a hungry
+        // one filling its hands.
+        struck(ctx, master, t, frequency * 1.5, 0.1, 0.06, 'sine');
+        break;
       case 'clash':
         struck(ctx, master, t, frequency / 2, 0.16, 0.13, 'sine');
         break;

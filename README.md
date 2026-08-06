@@ -1,15 +1,15 @@
 # Ball Battle
 
-A generator for vertical 9:16 videos: seven balls fight inside a ring over a
-fixed set of thirty-five threads pinned to the wall, taking them off each other
-one rebound at a time. Picture and sound are both computed — there is no footage, no samples,
-and nothing downloaded.
+A generator for vertical 9:16 videos: seven balls fight inside a ring over a fixed
+set of thirty-five threads pinned to the wall, taking them off each other until one
+ball is left holding rope. Picture and sound are both computed — there is no
+footage, no samples, and nothing downloaded.
 
 Every video **opens on the same picture** — the same seven balls, same colours,
 same places, seven wedges dividing the rim edge to edge. The **seed** decides which
-way they are fired and where the bell falls; since a billiard in a circle never
-forgets its opening angle, the first of those is enough to make everything after
-the first second different.
+way they are fired, and since a billiard in a circle never forgets its opening
+angle, that one number per ball is enough to make everything after the first
+second different — including how long the video runs.
 
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack synthesised from the collisions*
@@ -35,51 +35,30 @@ npm run lint
 
 ## The rules
 
-Three of them, and they are the whole game.
+Four of them, and they are the whole game.
 
 1. **The anchors never move.** The rim is divided into a fixed ring of anchor
    points — thirty-five of them, seven balls with five each — set before the
-   first frame and unchanged to the last. Every anchor holds a
-   thread the whole way through, so the number of threads in the arena is a
-   constant.
-2. **Rope is solid.** A ball cannot pass through a thread that is not its own. It
-   catches on it, the thread comes away with it — new hub, new colour, same
-   anchor — and the ball rebounds off where the thread was lying.
-3. **Threads are life.** A ball holding none is out. There is no fan to clear
-   away: what was its belongs to somebody else now, on the same anchors.
+   first frame and unchanged to the last.
+2. **Touch a thread and it comes away with you** — new hub, new colour, same
+   anchor. The ball is not turned by it: rope does not push back, and the only
+   rebounds in the arena are off the wall and off other balls.
+3. **Full hands break rope instead of taking it.** A ball can hold nine threads.
+   Run through one more and it snaps, and that anchor stays empty for the rest of
+   the round.
+4. **Threads are life.** A ball holding none is out.
 
-Rule 2 is doing all the work, and it is worth saying what falls out of it.
+Rule 3 is the one that finishes the fight, and it is worth saying why. Transfer
+on its own conserves — nothing enters the ring and nothing leaves — and a
+conserving economy has no drift towards a winner: the last two trade the same
+rope back and forth and the count wanders for ever. Ten minutes, and still two
+balls. Breakage makes it one-way. **So there is always a winner**, and the video
+ends when one ball is left holding rope.
 
 **No two threads ever overlap.** Not as a repair, not as a constraint checked
-afterwards — a ball is penned inside the region its own arc opens onto, so its
-threads can never reach across somebody else's fan. Checked on every frame of
-twelve full rounds: zero crossings.
-
-**Every ball holds one unbroken arc**, for the same reason. The only rope you can
-reach is the rope at the edge of your own territory, so a wedge grows one anchor
-at a time, from the outside in.
-
-**Nothing is created or destroyed.** It is all captured, which is why the picture
-is always full and why the wedges push against each other instead of leaving gaps.
-
-Balls also bounce off each other on the rare occasions they meet in the open
-middle.
-
-## Why there is a bell
-
-This economy conserves. Nothing enters it and nothing leaves, so there is no
-drift towards a winner: the last two balls trade the same rope back and forth and
-the count wanders rather than converging. Played to the very last thread a round
-takes a minute and a half at best and ten minutes at worst — and the reference
-video itself needs ninety-six seconds to settle.
-
-So a round is played to a bell instead, and **whoever holds the most rope when it
-rings has won it.** A ball wiped out before then is out exactly as it would be.
-Where the bell falls is part of the seed: mostly 28 to 42 seconds, and one seed in
-four aims for 58 to 95 instead, which is the line that matters for monetisation.
-
-The alternative — fighting to the last thread — is one constant away, but it
-means videos of two to ten minutes.
+afterwards: a ball takes every thread it touches, so it is never on the far side
+of one. Checked on every frame of four full rounds and every sixth frame of
+twelve: zero crossings.
 
 ## Measured against the reference, not guessed
 
@@ -94,18 +73,22 @@ by frame rather than chosen:
   each — a hundred and forty-four anchors — and reads denser than this does. The
   count here is seven balls on five, thirty-five anchors, which is a deliberate
   choice rather than a measurement; it is `BALL_COUNT` and `OPENING_THREADS`.
+  Because rope also breaks, the late game on thirty-five anchors is a sparse
+  picture — a dozen threads left where the reference still has thirty. Raising
+  `OPENING_THREADS` is the one change that fills it back in.
 - **A ball crosses 0.85 arena radii a second.** Tracking one frame by frame is
   the only way to get this right, and it is the thing that reads as wrong first:
   the first version ran at 2.6, three times too fast.
-- **The total never changes.** Counted off an earlier reference: seven balls
-  holding seven threads each at the start, four balls holding 19, 2, 17 and 10
-  eight seconds later — the same forty-eight threads, redistributed. That single
-  observation is what the whole simulation is built on.
+- **Threads are both taken and broken.** Counted round the rim frame by frame:
+  six balls on twenty threads each at the start, and the total falls to 47 by ten
+  seconds and 30 by thirty-five — while individual colours climb, purple going
+  from 3 to 22. So transfer is real and so is loss. Nobody is ever seen holding
+  much past twenty-four, which is where the holding limit comes from.
 - **The attrition is fast and the endgame is long.** The reference is down from
-  seven balls to four inside eight seconds, then spends a minute and a half
-  grinding two enormous fans against each other. So does this.
-- **Each ball holds one contiguous arc and no fan ever overlaps another**, all
-  the way through. True here by construction rather than by repair.
+  six balls to four inside ten seconds, then spends the rest of the video as a
+  duel. So does this.
+- **No fan ever overlaps another**, all the way through. True here by
+  construction rather than by repair.
 
 One thing was measured and then deliberately *not* copied. The reference's
 soundtrack runs at eight and a half onsets a second, but almost all of that is a

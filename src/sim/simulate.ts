@@ -55,6 +55,9 @@ export const OPENING_THREADS = 5;
  */
 export const ANCHORS = BALL_COUNT * OPENING_THREADS;
 
+/** An anchor whose thread has been broken. It stays empty for the rest of the round. */
+const EMPTY = -1;
+
 /** Where anchor `j` sits, so that ball `i` opens owning `j` in [5i, 5i+5). */
 const anchorAngle = (j: number): number =>
   -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ((Math.PI * 2) / ANCHORS);
@@ -68,6 +71,22 @@ const anchorAngle = (j: number): number =>
  */
 const START_RADIUS = 0.6;
 
+/**
+ * Most rope a ball can hold.
+ *
+ * Counted off the reference, and it is the reason a round ever finishes. Six
+ * balls open on twenty threads each and nobody is ever seen holding much past
+ * twenty-four; the total in the arena falls from a hundred and twenty to thirty
+ * across thirty-five seconds. So a ball that is already full does not take the
+ * thread it runs through — it **breaks** it, and that anchor is empty for the
+ * rest of the round.
+ *
+ * Transfer alone conserves, and a conserving economy has no drift towards a
+ * winner: the last two trade the same rope back and forth for ever. Breakage is
+ * what makes the fight one-way, and it is why there is always a winner.
+ */
+export const HOLD_LIMIT = Math.round(OPENING_THREADS * 1.8);
+
 /** Seconds of victory lap once only one ball is left. */
 const OUTRO = 2.4;
 
@@ -77,10 +96,13 @@ const HARD_CAP = 600;
 export interface Tuning {
   /** Arena radii per second. */
   speed: number;
+  /** Most rope one ball can hold; see `HOLD_LIMIT`. */
+  holdLimit: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
+  holdLimit: HOLD_LIMIT,
 };
 
 export interface BallState {
@@ -99,7 +121,7 @@ export interface Frame {
   balls: BallState[];
 }
 
-export type EventKind = 'wall' | 'clash' | 'take' | 'death' | 'win';
+export type EventKind = 'wall' | 'clash' | 'take' | 'break' | 'death' | 'win';
 
 export interface SimEvent {
   /** Seconds from the start. */
@@ -113,6 +135,8 @@ export interface SimEvent {
 
 export interface RoundSetup {
   seed: number;
+  /** Which deal of this seed produced the round — see `generateRound`. */
+  attempt: number;
   ballCount: number;
 }
 
@@ -161,13 +185,13 @@ function closestOnSegment(
   return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
 }
 
-export function setupFor(seed: number): RoundSetup {
-  return { seed, ballCount: BALL_COUNT };
+export function setupFor(seed: number, attempt = 0): RoundSetup {
+  return { seed, attempt, ballCount: BALL_COUNT };
 }
 
 /** The opening, which is deliberately identical in every video. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
-  const rng = createRng(setup.seed ^ 0x2545f491);
+  const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / BALL_COUNT;
 
@@ -223,8 +247,8 @@ function snapshot(balls: Live[]): Frame {
   };
 }
 
-/** Runs one fight until the bell, or until only one ball is left. */
-export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
+/** Runs one fight to the end — that is, until one ball is left holding rope. */
+export function play(setup: RoundSetup, tuning: Tuning): Round {
   const balls = start(setup, tuning);
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
@@ -242,7 +266,9 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
   // actually changes, so unchanged frames go on sharing one array.
   const rebuild = (): void => {
     for (const ball of balls) ball.threads = [];
-    for (let j = 0; j < ANCHORS; j += 1) balls[owner[j]].threads.push(anchorAngle(j));
+    for (let j = 0; j < ANCHORS; j += 1) {
+      if (owner[j] !== EMPTY) balls[owner[j]].threads.push(anchorAngle(j));
+    }
     for (const ball of balls) {
       if (ball.alive && ball.threads.length === 0) {
         ball.alive = false;
@@ -258,14 +284,6 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
 
   for (let frame = 0; ; frame += 1) {
     frames.push(snapshot(balls));
-    if (time >= bell && endAt === Infinity) {
-      // The bell. Whoever holds the most rope has won it.
-      winner = balls
-        .filter((b) => b.alive)
-        .reduce((best, b) => (b.threads.length > best.threads.length ? b : best)).index;
-      events.push({ t: time, kind: 'win', ball: winner, alive: countAlive() });
-      endAt = time + OUTRO;
-    }
     if (time >= endAt || time > HARD_CAP) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
@@ -340,65 +358,43 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
         }
       }
 
-      // Rope is solid. A ball cannot pass through a thread that is not its own:
-      // it catches on it, the thread comes away with it — new hub, new colour,
-      // same anchor — and the ball rebounds off where the thread was.
-      //
-      // That one rule is what keeps the picture clean. A ball is penned inside
-      // the region its own arc opens onto, so its threads never reach across
-      // somebody else's fan and **no two threads ever overlap**. It is also the
-      // whole economy: the only rope you can reach is the rope at the edge of
-      // your own territory, so a wedge grows one anchor at a time, from the
-      // outside in, and a ball whose wedge is taken down to nothing is out.
+      // Touch a thread and it comes away with you — new hub, new colour, same
+      // anchor. The ball is not turned by it: rope does not push back, and the
+      // only rebounds in the arena are off the wall and off other balls. So a
+      // ball crossing a fan takes every thread it passes through, which is what
+      // makes a good run pay and why somebody always ends up holding all of it.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
         let changed = false;
-        // Only the nearest one: catching on a thread stops the ball there, so it
-        // cannot be in among the bundle behind it in the same instant.
-        let caught = -1;
-        let nearest = Infinity;
+        let gained = 0;
         for (let j = 0; j < ANCHORS; j += 1) {
           const victim = owner[j];
-          if (victim === ball.index) continue;
+          if (victim === ball.index || victim === EMPTY) continue;
           const hub = balls[victim];
           const angle = anchorAngle(j);
-          const hit = closestOnSegment(ball.x, ball.y, hub.x, hub.y, Math.cos(angle), Math.sin(angle));
-          if (hit.distanceSq < reach && hit.distanceSq < nearest) {
-            nearest = hit.distanceSq;
-            caught = j;
-          }
-        }
+          const hit = closestOnSegment(
+            ball.x,
+            ball.y,
+            hub.x,
+            hub.y,
+            Math.cos(angle),
+            Math.sin(angle),
+          );
+          if (hit.distanceSq >= reach) continue;
 
-        if (caught >= 0) {
-          const hub = balls[owner[caught]];
-          const angle = anchorAngle(caught);
-          const rimX = Math.cos(angle);
-          const rimY = Math.sin(angle);
-
-          // Rebound off the line the thread was lying along.
-          const tx = rimX - hub.x;
-          const ty = rimY - hub.y;
-          const length = Math.hypot(tx, ty);
-          if (length > 0) {
-            const nx = -ty / length;
-            const ny = tx / length;
-            const dot = ball.vx * nx + ball.vy * ny;
-            ball.vx -= 2 * dot * nx;
-            ball.vy -= 2 * dot * ny;
-            // And clear of it, so it cannot catch on the same rope twice.
-            const side = (ball.x - hub.x) * nx + (ball.y - hub.y) * ny;
-            const push = BALL_RADIUS + THREAD_WIDTH / 2 - Math.abs(side) + 1e-4;
-            if (push > 0) {
-              const away = side >= 0 ? 1 : -1;
-              ball.x += nx * push * away;
-              ball.y += ny * push * away;
-            }
-          }
-
-          owner[caught] = ball.index;
+          // Full hands break rope rather than take it, and the anchor stays
+          // empty for good.
+          const full = ball.threads.length + gained >= tuning.holdLimit;
+          owner[j] = full ? EMPTY : ball.index;
+          if (!full) gained += 1;
           changed = true;
-          events.push({ t: time, kind: 'take', ball: ball.index, alive: countAlive() });
+          events.push({
+            t: time,
+            kind: full ? 'break' : 'take',
+            ball: ball.index,
+            alive: countAlive(),
+          });
         }
 
         if (changed) {
@@ -426,18 +422,15 @@ export function play(setup: RoundSetup, tuning: Tuning, bell: number): Round {
 /**
  * How long a video runs.
  *
- * The economy here conserves: nothing is created and nothing destroyed, only
- * captured, so there is no drift towards a winner — two balls left trade the
- * same rope back and forth and the count wanders. Played to the last thread a
- * round takes a minute and a half at best and ten minutes at worst, and the
- * reference itself needs ninety-six seconds. So the round is played to a bell
- * instead, and whoever holds the most rope when it goes has won it. A ball wiped
- * out before then is still out, exactly as it would be.
+ * Not a setting — the length of a video is how long the fight took, and the
+ * fight always ends with one ball holding every thread still in the ring. What
+ * the seed chooses is which fight: the same seven balls are fired off in
+ * different directions until one of those fights comes out the length wanted.
  *
  * Most videos want to be the length people actually watch — a little over half a
  * minute. A video past a minute is what monetisation asks for, so one seed in
- * four aims there instead. Which band a seed takes, and where in it, are both
- * part of the seed, so a seed always gives the same video.
+ * four aims there instead. Which band a seed takes is part of the seed, so a
+ * seed always gives the same video.
  */
 export const SHORT = { min: 28, max: 42 };
 export const LONG = { min: 58, max: 95 };
@@ -453,7 +446,20 @@ export const aimsLong = (seed: number): boolean => createRng(seed ^ 0x1b873593).
  * rather than a number somebody typed.
  */
 export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
-  const target = aimsLong(seed) ? LONG : SHORT;
-  const bell = createRng(seed ^ 0x27d4eb2f).range(target.min, target.max);
-  return play(setupFor(seed), tuning, bell);
+  const long = aimsLong(seed);
+  const target = long ? LONG : SHORT;
+  const aim = (target.min + target.max) / 2;
+
+  let closest: Round | null = null;
+  // A long fight is the rarer one, so a seed aiming there looks harder for it.
+  const tries = long ? 60 : 24;
+  for (let attempt = 0; attempt < tries; attempt += 1) {
+    const round = play(setupFor(seed, attempt), tuning);
+    if (round.duration >= target.min && round.duration <= target.max) return round;
+    if (!closest || Math.abs(round.duration - aim) < Math.abs(closest.duration - aim)) {
+      closest = round;
+    }
+  }
+  // Nothing in the band: whichever came nearest, rather than one padded to length.
+  return closest as Round;
 }

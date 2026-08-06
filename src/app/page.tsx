@@ -132,8 +132,8 @@ export default function HomePage() {
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           Seven balls, one ring, and a fixed set of thirty-five threads pinned to the wall. The anchors
           never
-          move, and rope is solid: catch on somebody else&apos;s thread and it comes away with you,
-          turning your colour. Hold none and you are out.
+          move; run through somebody else&apos;s thread and it comes away with you, turning your
+          colour. Full hands break rope instead of taking it, and a ball holding none is out.
         </p>
       </header>
 
