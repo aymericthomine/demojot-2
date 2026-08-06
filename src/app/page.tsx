@@ -16,14 +16,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { renderRoundAudio } from '../audio/render';
-import { encodeVideo, fileNameFor, EncodeCancelled } from '../export/encodeVideo';
+import {
+  encodeVideo,
+  fileNameFor,
+  EncodeCancelled,
+  type EncodeStage,
+} from '../export/encodeVideo';
 import { generateRound, type Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
 
 type Stage =
   | { kind: 'idle' }
   | { kind: 'fighting' }
-  | { kind: 'encoding'; done: number; total: number; remaining: number | null }
+  | {
+      kind: 'encoding';
+      step: EncodeStage;
+      done: number;
+      total: number;
+      remaining: number | null;
+    }
   | { kind: 'done'; round: Round; url: string; name: string; size: number; codec: string }
   | { kind: 'failed'; message: string };
 
@@ -81,18 +92,28 @@ export default function HomePage() {
           const audio = await renderRoundAudio(round).catch(() => null);
 
           const startedAt = performance.now();
-          setStage({ kind: 'encoding', done: 0, total: round.durationInFrames, remaining: null });
+          let step: EncodeStage = 'starting';
+          let done = 0;
+          let total = round.durationInFrames;
+          const show = (remaining: number | null) =>
+            setStage({ kind: 'encoding', step, done, total, remaining });
+          show(null);
 
           const result = await encodeVideo({
             round,
             audio,
             signal: controller.signal,
-            onProgress: (done, total) => {
+            onStage: (next) => {
+              step = next;
+              show(null);
+            },
+            onProgress: (at, of) => {
+              done = at;
+              total = of;
               const elapsed = (performance.now() - startedAt) / 1000;
               // Ten frames in is enough for the rate to mean something; before
               // that an estimate is just a number that jumps around.
-              const remaining = done >= 10 ? (elapsed / done) * (total - done) : null;
-              setStage({ kind: 'encoding', done, total, remaining });
+              show(done >= 10 ? (elapsed / done) * (total - done) : null);
             },
           });
 
@@ -177,8 +198,16 @@ export default function HomePage() {
           <>
             <div className="mt-3 mb-2 flex items-center justify-between text-xs">
               <span>
-                Frame {stage.done.toLocaleString()} of {stage.total.toLocaleString()}
-                {stage.remaining !== null && ` · ${seconds(stage.remaining)} left`}
+                {stage.step === 'starting'
+                  ? 'Starting the encoder…'
+                  : stage.step === 'sound'
+                    ? 'Adding the soundtrack…'
+                    : stage.step === 'finishing'
+                      ? 'Writing the file…'
+                      : `Frame ${stage.done.toLocaleString()} of ${stage.total.toLocaleString()}`}
+                {stage.step === 'frames' &&
+                  stage.remaining !== null &&
+                  ` · ${seconds(stage.remaining)} left`}
               </span>
               <button
                 type="button"
@@ -190,8 +219,10 @@ export default function HomePage() {
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-emerald-400 transition-[width] duration-200"
-                style={{ width: `${Math.round(percent * 100)}%` }}
+                className={`h-full rounded-full bg-emerald-400 transition-[width] duration-200 ${
+                  stage.step === 'frames' ? '' : 'animate-pulse'
+                }`}
+                style={{ width: `${stage.step === 'frames' ? Math.round(percent * 100) : 100}%` }}
               />
             </div>
           </>

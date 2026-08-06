@@ -90,8 +90,15 @@ export const HOLD_LIMIT = Math.round(OPENING_THREADS * 1.8);
 /** Seconds of victory lap once only one ball is left. */
 const OUTRO = 2.4;
 
-/** Nothing runs longer than this, whatever happens. */
-const HARD_CAP = 600;
+/**
+ * Nothing runs longer than this, whatever happens.
+ *
+ * Comfortably past the longest band, so it only ever catches a freak fight —
+ * and it bounds the work, which matters because the seed search plays a fight
+ * many times over before it settles on one. On a phone that is the difference
+ * between a wait and a hang.
+ */
+const HARD_CAP = 120;
 
 export interface Tuning {
   /** Arena radii per second. */
@@ -247,8 +254,14 @@ function snapshot(balls: Live[]): Frame {
   };
 }
 
-/** Runs one fight to the end — that is, until one ball is left holding rope. */
-export function play(setup: RoundSetup, tuning: Tuning): Round {
+/**
+ * Runs one fight to the end — that is, until one ball is left holding rope.
+ *
+ * `record` off keeps no frames. The seed search plays a fight only to find out
+ * how long it lasted and throws it away, and keeping five thousand snapshots per
+ * discarded attempt is how a phone runs out of memory.
+ */
+export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
   const balls = start(setup, tuning);
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
@@ -283,7 +296,8 @@ export function play(setup: RoundSetup, tuning: Tuning): Round {
   const countAlive = () => balls.reduce((n, ball) => n + (ball.alive ? 1 : 0), 0);
 
   for (let frame = 0; ; frame += 1) {
-    frames.push(snapshot(balls));
+    if (record) frames.push(snapshot(balls));
+    else frames.length = frame + 1;
     if (time >= endAt || time > HARD_CAP) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
@@ -453,13 +467,17 @@ export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Ro
   let closest: Round | null = null;
   // A long fight is the rarer one, so a seed aiming there looks harder for it.
   const tries = long ? 60 : 24;
+  let best = 0;
   for (let attempt = 0; attempt < tries; attempt += 1) {
-    const round = play(setupFor(seed, attempt), tuning);
-    if (round.duration >= target.min && round.duration <= target.max) return round;
+    const round = play(setupFor(seed, attempt), tuning, false);
+    if (round.duration >= target.min && round.duration <= target.max) {
+      return play(setupFor(seed, attempt), tuning);
+    }
     if (!closest || Math.abs(round.duration - aim) < Math.abs(closest.duration - aim)) {
       closest = round;
+      best = attempt;
     }
   }
   // Nothing in the band: whichever came nearest, rather than one padded to length.
-  return closest as Round;
+  return play(setupFor(seed, best), tuning);
 }
