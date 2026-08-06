@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
+# Only main. The feature branch used to be here too, which meant every push
+# fired two runs racing for the single Pages deployment slot: one would sit in
+# deployment_queued until the ten-minute timeout and the whole thing failed.
 on:
   push:
-    branches: [claude/procedural-video-generator-uvyody, main]
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,10 +13,12 @@ permissions:
   pages: write
   id-token: write
 
-# Let a running deployment finish rather than cancelling it midway.
+# One deployment at a time, and a queued one is superseded by whatever came
+# after it — there is no point publishing a commit that is already stale, and
+# leaving them queued is what made them time out.
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
