@@ -1,28 +1,25 @@
 name: Deploy to GitHub Pages
 
-# Only main. The feature branch used to be here too, which meant every push
-# fired two runs racing for the single Pages deployment slot: one would sit in
-# deployment_queued until the ten-minute timeout and the whole thing failed.
+# Only main. Two triggers meant two runs racing for the single Pages slot.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+# Pushing the built site to a branch needs write access to the repo, and nothing
+# else — in particular none of the Pages deployment permissions, because this
+# workflow no longer touches that API.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# One deployment at a time, and let it finish. Cancelling in progress looks
-# tempting when deployments are piling up, but the cancellation reaches into the
-# Pages deployment itself: two runs in flight then kill each other's deployment
-# and neither publishes. Since only main triggers this, runs rarely overlap.
+# One at a time, and let it finish. Cancelling in progress reaches into the
+# publish itself, so two runs in flight kill each other and neither lands.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,28 +32,29 @@ jobs:
       - run: npm ci
 
       - name: Build the static site
-        # NEXT_PUBLIC_STATIC_BUILD drops the render API from the build; the app
-        # shows the CLI command instead. PAGES_BASE_PATH matches the project
-        # site sub-path, so assets resolve under /demojot-2/.
+        # NEXT_PUBLIC_STATIC_BUILD and PAGES_BASE_PATH are set by the script, so
+        # assets resolve under /demojot-2/ exactly as Pages serves them.
         run: npm run build:static
 
       - name: Stop Jekyll from swallowing the _next folder
         run: touch out/.nojekyll
 
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: out
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+      # Publishing is a git push, not a deployment request.
+      #
+      # This used to go through actions/deploy-pages, which asks the Pages API to
+      # create a deployment and then polls it. When that queue stops moving —
+      # which it did for hours on this repo — the build succeeds, the publish
+      # sits in `deployment_queued` for ten minutes and fails, and there is
+      # nothing in the workflow that can fix it. Pushing the built folder to a
+      # branch has no queue to get stuck in.
+      - name: Publish to gh-pages
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd out
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Site from ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:gh-pages
