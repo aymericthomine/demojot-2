@@ -42,14 +42,21 @@ Four of them, and they are the whole game.
    way rope is ever earned.
 3. **Running through somebody else's thread destroys it** — one thread, not the
    fan. Threads are life: a ball with none left is out, and its fan goes with it.
-4. **Balls bounce off each other.** No damage in it; it simply wrecks both plans.
+4. **Balls bounce off each other**, and off the threads they cut. No damage in
+   either; it simply wrecks both plans — and the rebound is what keeps a ball
+   from ploughing through a fan and dragging its own threads across it.
+5. **Threads cannot cross.** A thread is laid only into wall nobody else holds,
+   growing a fan outward as a contiguous arc, and any crossing that does appear
+   is undone by taking a thread from whoever moved in. A ball down to its last
+   three stops giving ground, so the only crossings you can see belong to a ball
+   that is nearly out.
 
 The round ends with one ball left standing, so the length of a video is not a
 setting — it is how long the fight took. Over sixty seeds: 30 to 94 seconds, a
 quarter under 35, half under 41, and **a third past the minute**, which is the
 line that matters for monetisation.
 
-Three numbers were found by measuring rather than guessing, and all three are in
+These were found by measuring rather than guessing, and the numbers are in
 `DEFAULT_TUNING`:
 
 - **Balls are fired inward, not tangentially.** A billiard in a circle keeps its
