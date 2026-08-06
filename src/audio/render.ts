@@ -3,49 +3,35 @@
 /**
  * The sound, built from the fight.
  *
- * Every note is one of six recordings taken from the reference video, placed at
- * the moment the simulation says something happened. The sound is therefore not
- * *synced* to the picture — it is the same event list as the picture, and it
- * cannot drift.
+ * One recording, taken from the reference video, placed at every moment the
+ * simulation says something happened. The sound is therefore not *synced* to the
+ * picture — it is the same event list as the picture, and it cannot drift.
+ *
+ * **The same noise for threads and balls.** That is what the reference does and
+ * what was asked for: three hundred and fourteen hits across its twenty-seven
+ * seconds, all the same tick, whether a ball met the wall or took somebody's
+ * rope. There is no scale, nothing climbs, and nothing is thinned — it plays a
+ * dozen a second and that is the sound of the thing.
+ *
+ * The octave above is kept for the two moments worth marking: a ball going out,
+ * and the end.
  *
  * The hits are borrowed. That was asked for over the synthesised version that
  * was here before, and it is worth knowing what it costs: this is somebody
  * else's audio, and a platform that recognises it can mute or demonetise a video
  * that uses it. Nothing else in the project has that exposure.
- *
- * Five voices, all cut from the same six samples:
- *
- * - **Wall** — the note, one sample per ball, so you learn to hear who is who.
- * - **Take / break** — the ball's own sample, quieter and a touch quicker, so
- *   rope changing hands glitters over the bounces rather than competing with
- *   them. Always sounding the top note instead put the median of the whole
- *   soundtrack on one shrill pitch.
- * - **Clash** — a sample played slow, which drops it an octave and lengthens it.
- * - **Elimination** — slower still, and left to ring.
- * - **Win** — the six of them rolled in order, the only chord in the piece.
- *
- * The pitch climbs as balls are knocked out: the sample index walks up the set,
- * which builds tension towards the finish without anyone arranging it.
  */
 
-import type { Round, SimEvent } from '../sim/simulate';
-import { HITS, SLOT, SPRITE } from './hits';
+import type { Round } from '../sim/simulate';
+import { SLOT, SPRITE } from './hits';
 
 const SAMPLE_RATE = 48000;
 /** Room after the last event so a tail is not clipped. */
 const TAIL = 1.2;
 
-/**
- * The reference plays about one and a half notes a second. The simulation
- * reports six to fifteen events a second, and playing all of them is what made
- * the old soundtrack a rattle — a ball sweeping a fan fired off a dozen ticks in
- * half a second.
- *
- * So every ordinary event shares one clock: nothing sounds within a third of a
- * second of the last thing that did. Eliminations and the win ignore it, being
- * the two moments worth interrupting for.
- */
-const FLOOR = 0.32;
+/** The plain tick, and the same tick an octave up. */
+const TICK = 0;
+const OCTAVE = 1;
 
 let decoded: Promise<AudioBuffer> | null = null;
 
@@ -63,63 +49,43 @@ function sprite(): Promise<AudioBuffer> {
   return decoded;
 }
 
-/** Which sample a ball speaks with, walking up the set as the field thins. */
-function slotFor(event: SimEvent, ballCount: number): number {
-  const lift = Math.max(0, ballCount - event.alive);
-  return (event.ball + lift) % HITS.length;
-}
-
 export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
   const hits = await sprite();
   const length = Math.ceil((round.duration + TAIL) * SAMPLE_RATE);
   const ctx = new OfflineAudioContext(2, length, SAMPLE_RATE);
 
+  // Set by measurement, not by ear: the reference peaks at -7.5 dB, and at 0.5
+  // this was hitting -1, which is a stretch away from clipping and reads as
+  // shouty next to it.
   const master = ctx.createGain();
-  master.gain.value = 0.8;
+  master.gain.value = 0.22;
   master.connect(ctx.destination);
 
-  /** One hit: a slot of the sprite, at a speed, at a level. */
-  const play = (time: number, index: number, gain: number, rate = 1): void => {
+  /** One hit: a slot of the sprite, at a level. */
+  const play = (time: number, index: number, gain: number): void => {
     const source = ctx.createBufferSource();
     source.buffer = hits;
-    source.playbackRate.value = rate;
     const amp = ctx.createGain();
     amp.gain.value = gain;
     source.connect(amp).connect(master);
-    source.start(time, (index % HITS.length) * SLOT, SLOT);
+    source.start(time, index * SLOT, SLOT);
   };
 
-  const ballCount = round.setup.ballCount;
-  let lastNote = -1;
-
   for (const event of round.events) {
-    const t = event.t;
-    const slot = slotFor(event, ballCount);
-
     switch (event.kind) {
+      // The wall, rope changing hands, two balls meeting: all the same noise,
+      // all unthinned. Anything else would not be this video's sound.
       case 'wall':
-        if (t - lastNote < FLOOR) break;
-        lastNote = t;
-        play(t, slot, 0.85);
-        break;
       case 'take':
       case 'break':
-        if (t - lastNote < FLOOR) break;
-        lastNote = t;
-        // The ball's own note, quieter, and `break` a shade slower — enough to
-        // tell the two apart without adding a colour outside the set.
-        play(t, slot, 0.38, event.kind === 'take' ? 1.06 : 0.94);
-        break;
       case 'clash':
-        if (t - lastNote < FLOOR) break;
-        lastNote = t;
-        play(t, slot, 0.5, 0.5);
+        play(event.t, TICK, 0.8);
         break;
       case 'death':
-        play(t, slot, 0.7, 0.4);
+        play(event.t, OCTAVE, 0.9);
         break;
       case 'win':
-        HITS.forEach((_, i) => play(t + i * 0.1, i, 0.6));
+        [0, 0.12, 0.24].forEach((offset, i) => play(event.t + offset, i === 2 ? OCTAVE : TICK, 0.85));
         break;
     }
   }
