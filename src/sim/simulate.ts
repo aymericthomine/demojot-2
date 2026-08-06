@@ -73,9 +73,12 @@ export interface Tuning {
   /** Arena radii per second. */
   speed: number;
   /**
-   * How far along a thread, measured from the ball that owns it, it can be cut.
-   * Threads converge on their owner, so without this a ball that merely came
-   * near another would take the whole fan at once.
+   * How close to the ball that owns them a thread can still be cut, in arena
+   * units. Threads converge on their owner, so at the hub they are packed closer
+   * together than a ball is wide: without this, coming alongside somebody would
+   * take their whole fan in one frame, which is not crossing threads — it is
+   * standing on the knot they are tied in. A few ball-widths out they are
+   * separate lines again and every one of them can be cut.
    */
   hubGuard: number;
   /**
@@ -88,16 +91,33 @@ export interface Tuning {
   threadStep: number;
   /**
    * How close a ball must come to a thread to cut it, as a fraction of its drawn
-   * radius. Under 1: clipping a line by a hair should not count.
+   * radius. One, and it should stay one: a ball cannot cross a thread without
+   * cutting it, so anything the ball visibly touches goes. Below one, threads
+   * pass through the middle of a ball and survive, which is the first thing
+   * anybody notices.
    */
   hitRadius: number;
+  /**
+   * How hard rope turns the ball that snapped it. Two would be a mirror, zero a
+   * thread that gives way completely; this is well below a mirror — a bend, not
+   * a bounce. Only the direction changes: speed is a constant of the style, so
+   * the velocity is put back to length afterwards.
+   *
+   * It matters far more than its size suggests. At zero a ball crosses a fan of
+   * twenty in one straight line and takes the lot, so the field is down to two
+   * in four seconds and the fight is over in ten. Swept, not chosen: this is
+   * where the rounds come out longest, the fans biggest and the wall busiest at
+   * the same time.
+   */
+  threadBounce: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
-  hubGuard: 0.3,
+  hubGuard: BALL_RADIUS * 3,
   threadStep: (Math.PI * 2) / (BALL_COUNT * OPENING_THREADS),
-  hitRadius: 0.35,
+  hitRadius: 1,
+  threadBounce: 0.8,
 };
 
 export interface BallState {
@@ -157,12 +177,6 @@ interface Live {
   fade: number;
   /** When this ball last bounced off another, so one contact is not counted twice. */
   clashedAt: number;
-  /**
-   * Whose fan this ball is *currently* inside. A pass through a fan costs one
-   * thread, not one per frame, so a victim is only charged on the frame the ball
-   * arrives and cannot be charged again until it has come out the other side.
-   */
-  onFan: Set<number>;
 }
 
 /** Do two segments cross? Standard orientation test, endpoints excluded. */
@@ -238,7 +252,6 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       alive: true,
       fade: 0,
       clashedAt: -99,
-      onFan: new Set<number>(),
     });
   }
   return balls;
@@ -453,27 +466,22 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
 
       if (time < GRACE) continue;
 
-      // Passing over a thread breaks it — the thread, not the fan. One pass
-      // costs one thread: the victim is charged on the frame the ball arrives
-      // and cannot be charged again until the ball has come out the other side.
-      // Charging per frame instead drains a fan like a tap and empties the arena
-      // in a dozen seconds, which is not what the reference does.
+      // A ball cannot cross a thread without cutting it. Every thread it is
+      // touching goes, this frame, with nothing to wait for: no per-pair timer,
+      // no one-at-a-time. A cut thread is gone from the list, so there is nothing
+      // to double-charge — and anything less than this leaves threads running
+      // straight through the middle of a ball, which is the first thing anybody
+      // notices.
       for (const ball of balls) {
         if (!ball.alive) continue;
 
         for (const other of balls) {
-          if (other === ball || !other.alive) {
-            ball.onFan.delete(other.index);
-            continue;
-          }
+          if (other === ball || !other.alive) continue;
 
-          // The thread it is nearest to is the one that goes. Threads converge
-          // on the ball that owns them, so the bundle at the hub is spared:
-          // otherwise brushing past a ball would take its whole fan at once.
-          let victim = -1;
-          let nearest = Infinity;
-          for (let k = 0; k < other.threads.length; k += 1) {
-            const angle = other.threads[k];
+          const survivors: number[] = [];
+          let cuts = 0;
+          let hitAngle = 0;
+          for (const angle of other.threads) {
             const hit = closestOnSegment(
               ball.x,
               ball.y,
@@ -482,22 +490,49 @@ function play(setup: RoundSetup, tuning: Tuning): Round {
               Math.cos(angle),
               Math.sin(angle),
             );
-            if (hit.distanceSq < reach && hit.t > tuning.hubGuard && hit.distanceSq < nearest) {
-              nearest = hit.distanceSq;
-              victim = k;
+            // `t` runs from the owner to the rim along a thread of length
+            // `hypot(cos - x, sin - y)`, so this is the contact's distance from
+            // the hub in arena units.
+            const fromHub = hit.t * Math.hypot(Math.cos(angle) - other.x, Math.sin(angle) - other.y);
+            if (hit.distanceSq < reach && fromHub > tuning.hubGuard) {
+              cuts += 1;
+              hitAngle = angle;
+              continue;
+            }
+            survivors.push(angle);
+          }
+          if (cuts === 0) continue;
+
+          other.threads = survivors;
+
+          if (tuning.threadBounce > 0) {
+            // Rope turns the ball that ran into it. Without this a ball crosses a
+            // fan of twenty in one straight line and takes the lot, and the duel
+            // that should be the body of the video is over in six seconds.
+            const tx = Math.cos(hitAngle) - other.x;
+            const ty = Math.sin(hitAngle) - other.y;
+            const length = Math.hypot(tx, ty);
+            if (length > 0) {
+              const nx = -ty / length;
+              const ny = tx / length;
+              const dot = ball.vx * nx + ball.vy * ny;
+              ball.vx -= tuning.threadBounce * dot * nx;
+              ball.vy -= tuning.threadBounce * dot * ny;
+              // A partial reflection is not a reflection: it takes speed out as
+              // well as turning, and after fifty threads the ball is crawling.
+              // Speed is a constant of the style, so only the direction changes.
+              const moving = Math.hypot(ball.vx, ball.vy);
+              if (moving > 0) {
+                ball.vx = (ball.vx / moving) * tuning.speed;
+                ball.vy = (ball.vy / moving) * tuning.speed;
+              }
             }
           }
 
-          if (victim < 0) {
-            ball.onFan.delete(other.index);
-            continue;
+          // One tick per thread, so running through a fan rattles.
+          for (let k = 0; k < cuts; k += 1) {
+            events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
           }
-          // Still inside the fan it already paid for.
-          if (ball.onFan.has(other.index)) continue;
-          ball.onFan.add(other.index);
-
-          other.threads = other.threads.filter((_, k) => k !== victim);
-          events.push({ t: time, kind: 'cut', ball: ball.index, alive: countAlive() });
 
           if (other.threads.length === 0) {
             other.alive = false;

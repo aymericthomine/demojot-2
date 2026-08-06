@@ -45,12 +45,17 @@ Four of them, and they are the whole game.
    a time, and stopping dead at anybody else's rope. So a ball that runs into the
    arc a beaten rival left behind comes away with a handful of threads; a ball
    that hits wall already spoken for comes away with nothing.
-3. **Running through somebody else's thread destroys it** — one thread per pass,
-   not the fan, and the victim cannot be charged again until the ball has come
-   out the other side. Threads are life: a ball with none left is out, and its
-   fan goes with it, which frees the rim for whoever gets there first.
-4. **Balls bounce off each other.** No damage in it; it simply wrecks both plans,
-   and it is what keeps a duel from settling into a rhythm.
+3. **A ball cannot cross a thread without cutting it.** Everything its disc
+   touches goes, that frame, with nothing to wait for — the only rope spared is
+   the bundle within a few ball-widths of the ball that owns it, where the
+   threads are packed tighter than a ball is wide and being alongside somebody is
+   not the same as crossing their fan. Threads are life: a ball with none left is
+   out, and its fan goes with it, which frees the rim for whoever gets there
+   first.
+4. **Rope turns the ball that snapped it**, and balls bounce off each other. The
+   thread deflection is a bend rather than a bounce and only the direction
+   changes — speed is a constant of the style — but it is what stops a ball
+   crossing a fan of twenty in a straight line and taking the lot.
 
 **Threads are never laid across each other.** A thread is only pinned into rim
 nobody holds, on the side of the fan the ball came from, so the wall ends up
@@ -61,8 +66,8 @@ across each other, lines do pass over lines. The reference does the same, and
 untangling it after the fact meant deleting threads nobody had cut.
 
 The round ends with one ball left standing, so the length of a video is not a
-setting — it is how long the fight took. Over sixty seeds: 21 to 110 seconds, a
-quarter under 30, half under 36, and **one in six past the minute**, which is the
+setting — it is how long the fight took. Over sixty seeds: 21 to 93 seconds, a
+quarter under 32, half under 38, and **a quarter past the minute**, which is the
 line that matters for monetisation.
 
 ## Measured against the reference, not guessed
@@ -82,6 +87,11 @@ by frame rather than chosen:
 - **The attrition is fast and the endgame is long.** The reference is down from
   seven balls to three inside ten seconds, then spends a minute and a half as a
   duel between two enormous fans. So does this.
+- **Fans reach a dozen threads by the middle of a round and twenty-five by the
+  end.** The rim divides into thirty-five slots — seven balls, five threads each
+  — so a finalist tops out near thirty-five. The reference starts its balls on
+  seven threads rather than five, which is why its fans read denser; the one
+  change that would match it exactly is `OPENING_THREADS`.
 
 One thing was measured and then deliberately *not* copied. The reference's
 soundtrack runs at eight and a half onsets a second, but almost all of that is a
