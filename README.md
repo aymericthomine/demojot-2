@@ -1,12 +1,12 @@
 # Ball Battle
 
-A generator for vertical 9:16 videos: six balls fight inside a ring over a fixed
-set of threads pinned to the wall, taking them off each other one rebound at a
-time. Picture and sound are both computed — there is no footage, no samples,
+A generator for vertical 9:16 videos: seven balls fight inside a ring over a
+fixed set of thirty-five threads pinned to the wall, taking them off each other
+one rebound at a time. Picture and sound are both computed — there is no footage, no samples,
 and nothing downloaded.
 
-Every video **opens on the same picture** — the same six balls, same colours,
-same places, six wedges dividing the rim edge to edge. The **seed** decides which
+Every video **opens on the same picture** — the same seven balls, same colours,
+same places, seven wedges dividing the rim edge to edge. The **seed** decides which
 way they are fired and where the bell falls; since a billiard in a circle never
 forgets its opening angle, the first of those is enough to make everything after
 the first second different.
@@ -38,8 +38,8 @@ npm run lint
 Three of them, and they are the whole game.
 
 1. **The anchors never move.** The rim is divided into a fixed ring of anchor
-   points — a hundred and forty-four of them, six balls with twenty-four each —
-   set before the first frame and unchanged to the last. Every anchor holds a
+   points — thirty-five of them, seven balls with five each — set before the
+   first frame and unchanged to the last. Every anchor holds a
    thread the whole way through, so the number of threads in the arena is a
    constant.
 2. **Rope is solid.** A ball cannot pass through a thread that is not its own. It
@@ -89,8 +89,11 @@ by frame rather than chosen:
 - **The arena is 0.449 of the frame width, a ball is 0.069 of that, a thread
   0.0062** — a rim 969 px across in a 1080 px frame, balls 67 px through, threads
   about 3 px wide.
-- **Six balls, twenty-four threads each**, counted off the opening frame, which
-  is six wedges meeting edge to edge with an empty middle.
+- **The opening is wedges meeting edge to edge with an empty middle**, each ball
+  at the apex of its own. The reference runs six balls on twenty-four threads
+  each — a hundred and forty-four anchors — and reads denser than this does. The
+  count here is seven balls on five, thirty-five anchors, which is a deliberate
+  choice rather than a measurement; it is `BALL_COUNT` and `OPENING_THREADS`.
 - **A ball crosses 0.85 arena radii a second.** Tracking one frame by frame is
   the only way to get this right, and it is the thing that reads as wrong first:
   the first version ran at 2.6, three times too fast.

@@ -39,19 +39,19 @@ import { BALL_RADIUS, COLORS, FPS, SPEED, THREAD_WIDTH } from './style';
 /** Physics substeps per rendered frame. Enough that a bounce lands cleanly. */
 const SUBSTEPS = 4;
 
-/** The fixed cast. Six balls, these colours, in this order. */
-export const BALL_COUNT = 6;
+/** The fixed cast. Seven balls, these colours, in this order. */
+export const BALL_COUNT = 7;
 
-/** Threads everybody starts with, counted off the reference. */
-export const OPENING_THREADS = 24;
+/** Threads everybody starts with. */
+export const OPENING_THREADS = 5;
 
 /**
  * Anchor points on the rim, fixed for the whole round.
  *
  * Every one of them holds a thread from the first frame to the last, so this is
- * also the total number of threads in the arena and it never changes. Six balls
- * with twenty-four each divides the rim exactly, which is why the opening reads
- * as six wedges meeting edge to edge with nothing between them.
+ * also the total number of threads in the arena and it never changes. Seven
+ * balls with five each divides the rim exactly, which is why the opening reads
+ * as seven wedges meeting edge to edge with nothing between them.
  */
 export const ANCHORS = BALL_COUNT * OPENING_THREADS;
 
