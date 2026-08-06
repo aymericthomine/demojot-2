@@ -32,23 +32,48 @@ const SAMPLE_RATE = 48000;
 /** Room after the last event so a tail is not clipped. */
 const TAIL = 1.2;
 
-/** Minor pentatonic, in semitones. Hard to make ugly. */
-const SCALE = [0, 3, 5, 7, 10];
+/**
+ * Major pentatonic, in semitones — the pitch classes counted off the reference,
+ * which leans on A#, C and D with an F and a G behind them. Minor pentatonic is
+ * what was here before, and it is the difference between wistful and bright.
+ */
+const SCALE = [0, 2, 4, 7, 9];
 
-/** E5, which puts the plucks in the reference's register. */
-const ROOT = 659.25;
+/**
+ * D5. Chosen by measurement, not by ear: the reference's median note is D6, and
+ * the scale degrees plus the tension lift carry roughly an octave above the
+ * root, so this is where the middle of the piece lands on the middle of theirs.
+ */
+const ROOT = 587.33;
 
 const hz = (semitone: number): number => ROOT * 2 ** (semitone / 12);
 
-/** The note a ball speaks with, plus a lift as the field thins out. */
+/**
+ * The note a ball speaks with, plus a lift as the field thins out.
+ *
+ * Everything stays inside one octave of the root. Giving the sixth and seventh
+ * balls an octave of their own, and letting the tension climb a semitone per
+ * elimination, put the median note an octave above the reference — measured at
+ * 2243 Hz against its 1153. The lift is now a scale degree at a time, so it is
+ * still audible without walking off the top.
+ */
 function pitchFor(event: SimEvent, ballCount: number): number {
   const step = SCALE[event.ball % SCALE.length];
-  const octave = 12 * Math.floor(event.ball / SCALE.length);
-  // `alive` counts down through the round, so this climbs.
-  const tension = Math.max(0, ballCount - event.alive) * 1.2;
-  return hz(step + octave + tension);
+  const lift = SCALE[Math.min(SCALE.length - 1, Math.max(0, ballCount - event.alive))];
+  return hz(step + lift);
 }
 
+/**
+ * One note. A plain sine with a soft attack and an exponential tail.
+ *
+ * Measured off the reference: the second harmonic sits at a hundredth of the
+ * first, which is to say there are no harmonics — these are pure tones, and that
+ * is most of why they sound soft. A triangle wave was here before, and its odd
+ * harmonics are what made the old version buzz.
+ *
+ * The pitch is also held steady. A downward glide reads as *struck*, but on a
+ * pure tone it reads as a boing; the reference has none.
+ */
 function struck(
   ctx: OfflineAudioContext,
   out: AudioNode,
@@ -56,18 +81,16 @@ function struck(
   frequency: number,
   gain: number,
   decay: number,
-  type: OscillatorType,
 ): void {
   const osc = ctx.createOscillator();
   const amp = ctx.createGain();
-  osc.type = type;
+  osc.type = 'sine';
   osc.frequency.setValueAtTime(frequency, time);
-  // A touch of downward glide is what makes a tone read as *struck* rather than
-  // switched on.
-  osc.frequency.exponentialRampToValueAtTime(frequency * 0.92, time + decay);
 
   amp.gain.setValueAtTime(0.0001, time);
-  amp.gain.exponentialRampToValueAtTime(gain, time + 0.004);
+  // Six milliseconds rather than four: fast enough to be a hit, slow enough to
+  // take the click off the front of it.
+  amp.gain.exponentialRampToValueAtTime(gain, time + 0.006);
   amp.gain.exponentialRampToValueAtTime(0.0001, time + decay);
 
   osc.connect(amp).connect(out);
@@ -87,36 +110,49 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
 
   const ballCount = round.setup.ballCount;
 
+  // The reference plays about one and a half notes a second. The simulation
+  // reports six to fifteen events a second, and playing all of them is what made
+  // the old soundtrack a rattle: a ball sweeping a fan fired off a dozen ticks in
+  // half a second. So the small events are thinned to a floor spacing, and a
+  // burst becomes one note instead of a machine gun. Walls and eliminations are
+  // never thinned — they are the events worth hearing. A floor of three tenths
+  // is what brings the count down to the reference's rate; a tenth still left it
+  // at four a second against the reference's one and a half.
+  const FLOOR = 0.3;
+  let lastSmall = -1;
+
   for (const event of round.events) {
     const t = event.t;
     const frequency = pitchFor(event, ballCount);
 
     switch (event.kind) {
       case 'wall':
-        struck(ctx, master, t, frequency, 0.2, 0.3, 'triangle');
-        // A quiet octave above gives the note its edge without raising the level.
-        struck(ctx, master, t, frequency * 2, 0.05, 0.1, 'sine');
+        // The note of the piece: a pure tone, a tenth of a second, which is what
+        // the reference's decay measures.
+        struck(ctx, master, t, frequency, 0.22, 0.22);
         break;
       case 'take':
-        struck(ctx, master, t, frequency * 2, 0.12, 0.08, 'triangle');
-        break;
       case 'break':
-        // Rope giving way: the same tick as a take, but drier and a shade lower,
-        // so a full ball ploughing through a fan sounds different from a hungry
-        // one filling its hands.
-        struck(ctx, master, t, frequency * 1.5, 0.1, 0.06, 'sine');
+        if (t - lastSmall < FLOOR) break;
+        lastSmall = t;
+        // An octave up and quieter, so taking rope glitters over the bounces
+        // rather than competing with them. `break` is a shade lower and shorter,
+        // which is enough to tell the two apart without adding a new colour.
+        struck(ctx, master, t, frequency * (event.kind === 'take' ? 1.5 : 1.25), 0.09, 0.16);
         break;
       case 'clash':
-        struck(ctx, master, t, frequency / 2, 0.16, 0.13, 'sine');
+        if (t - lastSmall < FLOOR) break;
+        lastSmall = t;
+        struck(ctx, master, t, frequency / 2, 0.14, 0.14);
         break;
       case 'death':
-        struck(ctx, master, t, frequency / 4, 0.3, 0.9, 'sine');
-        struck(ctx, master, t, (frequency / 4) * 1.5, 0.16, 0.7, 'triangle');
+        struck(ctx, master, t, frequency / 4, 0.26, 0.7);
+        struck(ctx, master, t, (frequency / 4) * 1.5, 0.13, 0.55);
         break;
       case 'win':
-        // The only chord in the piece.
+        // The only chord in the piece, rolled rather than struck at once.
         [0, 4, 7, 12].forEach((step, i) => {
-          struck(ctx, master, t + i * 0.09, hz(step), 0.2, 0.8, 'triangle');
+          struck(ctx, master, t + i * 0.09, hz(step), 0.18, 0.8);
         });
         break;
     }
