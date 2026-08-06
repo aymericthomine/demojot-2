@@ -67,9 +67,11 @@ export default function HomePage() {
     [],
   );
 
-  // Asked once, on mount, so a phone that cannot do this says so before anybody
-  // waits five minutes to find out.
+  // Asked only when something has gone wrong, never on load. The probe calls
+  // isConfigSupported a dozen times, and on some browsers that spins up a real
+  // encoder each time — exactly the resource the next attempt needs.
   useEffect(() => {
+    if (stage.kind !== 'failed' || support !== null) return;
     let live = true;
     void describeSupport().then((text) => {
       if (live) setSupport(text);
@@ -77,7 +79,7 @@ export default function HomePage() {
     return () => {
       live = false;
     };
-  }, []);
+  }, [stage.kind, support]);
 
   // Saving is what the button was pressed for, so it happens without a second
   // click. Guarded by the URL so a re-render cannot download the same file twice.
@@ -275,11 +277,7 @@ export default function HomePage() {
           a phone will take several minutes and may run out of memory before it finishes.
         </p>
 
-        {support && (
-          <p className="mt-2 font-mono text-[10px] leading-relaxed break-words text-[#5c616e]">
-            {support}
-          </p>
-        )}
+
       </div>
     </main>
   );

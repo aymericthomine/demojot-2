@@ -61,12 +61,17 @@ const breathe = (): Promise<void> => new Promise((resolve) => setTimeout(resolve
  */
 const WATCHDOG_MS = 60_000;
 
-function withWatchdog<T>(work: Promise<T>, what: string): Promise<T> {
+function withWatchdog<T>(work: Promise<T>, what: string, limit = WATCHDOG_MS): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
   const alarm = new Promise<never>((_, reject) => {
     timer = setTimeout(
-      () => reject(new Error(`${what} did not respond within a minute. This browser says it can encode video but is not doing it — try Chrome on a desktop.`)),
-      WATCHDOG_MS,
+      () =>
+        reject(
+          new Error(
+            `${what} gave no answer in ${Math.round(limit / 1000)}s. This browser says it can encode video but is not doing it.`,
+          ),
+        ),
+      limit,
     );
   });
   return Promise.race([work, alarm]).finally(() => clearTimeout(timer)) as Promise<T>;
@@ -190,6 +195,19 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   await withWatchdog(output.start(), 'Starting the encoder');
 
   try {
+    // The soundtrack goes in first, before any video sample.
+    //
+    // It was moved after the loop to stop the page sitting on "frame 0 of
+    // 2,516" while it encoded — but that made the muxer hold every video sample
+    // in memory waiting for a second track that only arrived at the end, which
+    // roughly doubles peak memory on a ninety-second round. A desktop shrugs;
+    // a phone gets the tab killed. The label is the right fix for a confusing
+    // wait, not the ordering.
+    if (audioSource && track) {
+      options.onStage?.('sound');
+      await audioSource.add(track);
+    }
+
     const total = round.durationInFrames;
     options.onStage?.('frames');
     options.onProgress?.(0, total);
@@ -205,18 +223,14 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       // watched, because an encoder that is never going to produce anything
       // hangs here rather than throwing.
       const added = video.add(frame / FPS, 1 / FPS);
-      await (frame === 0 ? withWatchdog(added, 'The first frame') : added);
+      // The first one gets a long leash: it carries the encoder's warm-up and
+      // the first keyframe, and a phone is slow enough that a tight limit would
+      // fail work that was going to finish.
+      await (frame === 0 ? withWatchdog(added, 'The first frame', 180_000) : added);
       options.onProgress?.(frame + 1, total);
       if (frame % 4 === 3) await breathe();
     }
 
-    // The soundtrack goes in last, on purpose. Encoding it takes a while on a
-    // phone, and doing it before the loop meant the page sat on "frame 0 of
-    // 2,500" the whole time, looking hung when it was working perfectly.
-    if (audioSource && track) {
-      options.onStage?.('sound');
-      await audioSource.add(track);
-    }
   } catch (error) {
     await output.cancel();
     throw error;
