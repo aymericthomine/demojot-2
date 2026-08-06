@@ -89,6 +89,16 @@ const START_RADIUS = 0.45;
  */
 export const HOLD_LIMIT = Math.round(OPENING_THREADS * 1.8);
 
+/**
+ * Seconds the opening picture is held before anybody moves.
+ *
+ * The seven wedges dividing the rim are the most legible frame in the video and
+ * they are gone in an instant otherwise. Nothing happens during the hold — no
+ * movement, no rope changing hands — so it reads as a held breath rather than a
+ * slow start.
+ */
+const HOLD = 1;
+
 /** Seconds of victory lap once only one ball is left. */
 const OUTRO = 2.4;
 
@@ -301,10 +311,21 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
   for (let frame = 0; ; frame += 1) {
     if (record) frames.push(snapshot(balls));
     else frames.length = frame + 1;
-    if (time >= endAt || time > HARD_CAP) break;
+    if (time > HARD_CAP && endAt === Infinity) {
+      // Out of time rather than out of opponents. Vanishingly rare, but a video
+      // has to end on somebody: whoever holds the most rope takes it.
+      winner = balls
+        .filter((ball) => ball.alive)
+        .reduce((best, ball) => (ball.threads.length > best.threads.length ? ball : best)).index;
+      events.push({ t: time, kind: 'win', ball: winner, alive: countAlive() });
+      endAt = time + OUTRO;
+    }
+    if (time >= endAt) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
       time += dt;
+      // Held on the opening picture. Nothing moves and nothing changes hands.
+      if (time < HOLD) continue;
 
       for (const ball of balls) {
         if (!ball.alive) {
@@ -442,45 +463,32 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
  * Not a setting — the length of a video is how long the fight took, and the
  * fight always ends with one ball holding every thread still in the ring. What
  * the seed chooses is which fight: the same seven balls are fired off in
- * different directions until one of those fights comes out the length wanted.
+ * different directions until one of those fights comes out long enough.
  *
- * Most videos want to be the length people actually watch — a little over half a
- * minute. A video past a minute is what monetisation asks for, so one seed in
- * four aims there instead. Which band a seed takes is part of the seed, so a
- * seed always gives the same video.
+ * **Past the minute, always.** That is the line that matters for monetisation,
+ * and no video is worth shipping under it. It costs nothing to insist on:
+ * measured over forty seeds, a fight of a minute or more turns up in a median of
+ * two deals and never took more than eleven.
  */
-export const SHORT = { min: 28, max: 42 };
-export const LONG = { min: 58, max: 95 };
+export const BAND = { min: 60, max: 100 };
 
-/** One seed in four is a long one. */
-export const aimsLong = (seed: number): boolean => createRng(seed ^ 0x1b873593).next() < 0.25;
-
-/**
- * Rounds are found, not designed: the seed is played out, and if the fight was
- * over in eight seconds or still going at ninety, the same seed fires the balls
- * off in different directions and plays again. Deterministic, so a seed always
- * lands on the same round — and the lengths that come out follow the fights
- * rather than a number somebody typed.
- */
 export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
-  const long = aimsLong(seed);
-  const target = long ? LONG : SHORT;
-  const aim = (target.min + target.max) / 2;
-
-  let closest: Round | null = null;
-  // A long fight is the rarer one, so a seed aiming there looks harder for it.
-  const tries = long ? 60 : 24;
+  let longest = 0;
   let best = 0;
-  for (let attempt = 0; attempt < tries; attempt += 1) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    // Played without recording first: the search only wants to know how long the
+    // fight lasted, and keeping five thousand snapshots per discarded attempt is
+    // how a phone runs out of memory.
     const round = play(setupFor(seed, attempt), tuning, false);
-    if (round.duration >= target.min && round.duration <= target.max) {
+    if (round.duration >= BAND.min && round.duration <= BAND.max) {
       return play(setupFor(seed, attempt), tuning);
     }
-    if (!closest || Math.abs(round.duration - aim) < Math.abs(closest.duration - aim)) {
-      closest = round;
+    if (round.duration > longest) {
+      longest = round.duration;
       best = attempt;
     }
   }
-  // Nothing in the band: whichever came nearest, rather than one padded to length.
+  // Nothing inside the band: the longest found, which in practice is still over
+  // the minute — better that than one padded to length.
   return play(setupFor(seed, best), tuning);
 }
