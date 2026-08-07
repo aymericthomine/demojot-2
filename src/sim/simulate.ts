@@ -58,9 +58,45 @@ export const ANCHORS = BALL_COUNT * OPENING_THREADS;
 /** An anchor whose thread has been broken. It stays empty for the rest of the round. */
 const EMPTY = -1;
 
+/** Radians between neighbouring anchors. */
+const ANCHOR_STEP = (Math.PI * 2) / ANCHORS;
+
 /** Where anchor `j` sits, so that ball `i` opens owning `j` in [5i, 5i+5). */
 const anchorAngle = (j: number): number =>
-  -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ((Math.PI * 2) / ANCHORS);
+  -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ANCHOR_STEP;
+
+/**
+ * How the opening is dealt out.
+ *
+ * Every video used to start on the same picture, pixel for pixel: same wedges in
+ * the same places, same colours on the same balls. That was asked for, and the
+ * figure still is the same figure — seven wedges meeting edge to edge with an
+ * empty middle. What the seed now decides is where the figure starts and who
+ * wears what.
+ *
+ * `turn` is a whole number of anchor slots, which is what keeps the figure from
+ * deforming as it rotates: the anchors stay on their grid and the wedges still
+ * meet without a gap. `palette` shuffles the same seven colours between the same
+ * seven balls, so the screen holds exactly the palette it held before — only the
+ * arrangement moves.
+ *
+ * Thirty-five turns times five thousand and forty shuffles is a hundred and
+ * seventy-six thousand openings, which is enough that two videos do not share a
+ * first frame.
+ *
+ * Taken from the seed alone, never from the deal: every attempt at a seed has to
+ * share one opening, or "the seed is the video" stops being true.
+ */
+export function openingFor(seed: number): { turn: number; palette: number[] } {
+  const rng = createRng(seed ^ 0x9e3779b9);
+  const turn = rng.int(0, ANCHORS - 1);
+  const palette = Array.from({ length: BALL_COUNT }, (_, i) => i);
+  for (let i = BALL_COUNT - 1; i > 0; i -= 1) {
+    const j = rng.int(0, i);
+    [palette[i], palette[j]] = [palette[j], palette[i]];
+  }
+  return { turn, palette };
+}
 
 /**
  * How far from the centre the balls start.
@@ -205,23 +241,26 @@ export function setupFor(seed: number, attempt = 0): RoundSetup {
   return { seed, attempt, ballCount: BALL_COUNT };
 }
 
-/** The opening, which is deliberately identical in every video. */
+/** The opening: the same figure in every video, turned and recoloured. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
+  const { turn, palette } = openingFor(setup.seed);
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / BALL_COUNT;
 
   for (let i = 0; i < BALL_COUNT; i += 1) {
-    const around = -Math.PI / 2 + i * slice;
+    const around = -Math.PI / 2 + i * slice + turn * ANCHOR_STEP;
     const x = Math.cos(around) * START_RADIUS;
     const y = Math.sin(around) * START_RADIUS;
 
-    // Ball i opens holding anchors 5i to 5i+4, so the seven fans divide the rim
-    // exactly and meet edge to edge. Nothing will be added to this ring and
-    // nothing taken away — from here on the fight is only over who holds what.
+    // Ball i opens holding five consecutive anchors, so the seven fans divide
+    // the rim exactly and meet edge to edge. Nothing will be added to this ring
+    // and nothing taken away — from here on the fight is only over who holds
+    // what. No modulo here: this is an angle, and an anchor a full turn along is
+    // the same point on the rim.
     const threads: number[] = [];
     for (let k = 0; k < OPENING_THREADS; k += 1) {
-      threads.push(anchorAngle(i * OPENING_THREADS + k));
+      threads.push(anchorAngle(i * OPENING_THREADS + k + turn));
     }
 
     // Aimed across the arena, but loosely: a wide spread so no two balls set off
@@ -233,7 +272,7 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
 
     balls.push({
       index: i,
-      color: COLORS[i],
+      color: COLORS[palette[i]],
       x,
       y,
       vx: Math.cos(heading) * tuning.speed,
@@ -287,8 +326,15 @@ export function play(
   const reach = (BALL_RADIUS + THREAD_WIDTH / 2) ** 2;
 
   // Who holds each anchor. This is the state of the round: the balls only move.
+  // The modulo is not optional here — unlike the angles in `start`, these are
+  // array indices, and a turn that runs off the end has to come back round.
   const owner = new Int8Array(ANCHORS);
-  for (let j = 0; j < ANCHORS; j += 1) owner[j] = Math.floor(j / OPENING_THREADS);
+  const { turn } = openingFor(setup.seed);
+  for (let i = 0; i < BALL_COUNT; i += 1) {
+    for (let k = 0; k < OPENING_THREADS; k += 1) {
+      owner[(i * OPENING_THREADS + k + turn) % ANCHORS] = i;
+    }
+  }
 
   // The per-ball thread lists the renderer wants, rebuilt only when the ring
   // actually changes, so unchanged frames go on sharing one array.

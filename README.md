@@ -5,11 +5,18 @@ set of thirty-five threads pinned to the wall, taking them off each other until 
 ball is left holding rope. Picture and sound are both computed — there is no
 footage, no samples, and nothing downloaded.
 
-Every video **opens on the same picture** — the same seven balls, same colours,
-same places, seven wedges dividing the rim edge to edge. The **seed** decides which
-way they are fired, and since a billiard in a circle never forgets its opening
-angle, that one number per ball is enough to make everything after the first
-second different — including how long the video runs.
+Every video **opens on the same figure** — seven wedges dividing the rim edge to
+edge, an empty middle, the same seven colours on screen — but not on the same
+*picture*: the seed turns the figure by a whole number of anchors and shuffles
+which ball wears which colour. Thirty-five turns times five thousand and forty
+shuffles, so two videos do not share a first frame. The seed also decides which
+way the balls are fired, and since a billiard in a circle never forgets its
+opening angle, that one number per ball is enough to make everything after the
+first second different.
+
+The first frame used to be identical everywhere, pixel for pixel. Combined with a
+fixed length and one sound, that is a fingerprint, and a platform looking for
+duplicates looks there first — so the figure stays and the arrangement moves.
 
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack synthesised from the collisions*
@@ -39,7 +46,9 @@ Four of them, and they are the whole game.
 
 1. **The anchors never move.** The rim is divided into a fixed ring of anchor
    points — thirty-five of them, seven balls with five each — set before the
-   first frame and unchanged to the last.
+   first frame and unchanged to the last. Where the ring *starts* is the seed's,
+   and it moves in whole anchors: turn by a fraction of one and the wedges would
+   stop meeting.
 2. **Touch a thread and it comes away with you** — new hub, new colour, same
    anchor. The ball is not turned by it: rope does not push back, and the only
    rebounds in the arena are off the wall and off other balls.
