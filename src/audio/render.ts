@@ -26,8 +26,6 @@ import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
 
 const SAMPLE_RATE = 48000;
-/** Room after the last event so a tail is not clipped. */
-const TAIL = 1.2;
 
 /** The plain tick, and the same tick an octave up. */
 const TICK = 0;
@@ -51,7 +49,12 @@ function sprite(): Promise<AudioBuffer> {
 
 export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
   const hits = await sprite();
-  const length = Math.ceil((round.duration + TAIL) * SAMPLE_RATE);
+  // Exactly as long as the picture, not a frame more. A second of room used to
+  // be left here so a tail could not be clipped, and it made a video that is
+  // 61 seconds of picture report itself as 62: the container takes the longest
+  // track. Nothing is lost — the last events land seconds before the end, and a
+  // tick is a seventh of a second long.
+  const length = Math.round(round.duration * SAMPLE_RATE);
   const ctx = new OfflineAudioContext(2, length, SAMPLE_RATE);
 
   // Set by measurement, not by ear: the reference peaks at -7.5 dB, and at 0.5

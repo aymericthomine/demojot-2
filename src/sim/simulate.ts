@@ -99,9 +99,6 @@ export const HOLD_LIMIT = Math.round(OPENING_THREADS * 1.8);
  */
 const HOLD = 1;
 
-/** Seconds of victory lap once only one ball is left. */
-const OUTRO = 2.4;
-
 /**
  * Nothing runs longer than this, whatever happens.
  *
@@ -274,7 +271,12 @@ function snapshot(balls: Live[]): Frame {
  * how long it lasted and throws it away, and keeping five thousand snapshots per
  * discarded attempt is how a phone runs out of memory.
  */
-export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
+export function play(
+  setup: RoundSetup,
+  tuning: Tuning,
+  record = true,
+  runFor = HARD_CAP,
+): Round {
   const balls = start(setup, tuning);
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
@@ -308,19 +310,33 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
   let winner = balls[0].index;
   const countAlive = () => balls.reduce((n, ball) => n + (ball.alive ? 1 : 0), 0);
 
+  const total = Math.round(runFor * FPS);
+
   for (let frame = 0; ; frame += 1) {
     if (record) frames.push(snapshot(balls));
     else frames.length = frame + 1;
-    if (time > HARD_CAP && endAt === Infinity) {
-      // Out of time rather than out of opponents. Vanishingly rare, but a video
-      // has to end on somebody: whoever holds the most rope takes it.
-      winner = balls
-        .filter((ball) => ball.alive)
-        .reduce((best, ball) => (ball.threads.length > best.threads.length ? ball : best)).index;
-      events.push({ t: time, kind: 'win', ball: winner, alive: countAlive() });
-      endAt = time + OUTRO;
+    // The search only wants to know when the fight settled, so once it has that
+    // there is nothing left to compute: the victory lap is only worth playing
+    // out when somebody is going to watch it. This is most of the cost of a
+    // generate — a hundred and fifty deals each running the full clock is
+    // seconds of frozen page on a phone.
+    if (!record && endAt !== Infinity) break;
+    if (frame + 1 >= total) {
+      // Only when somebody is going to watch it. The search reads the win event
+      // to find out when a fight settled, and a consolation winner declared at
+      // the buzzer looks exactly like one that settled on the last frame — which
+      // had the search accepting fights that never finished at all.
+      if (endAt === Infinity && record) {
+        // Out of time rather than out of opponents: the clock ran out on a fight
+        // still in progress. A video has to end on somebody, so whoever holds
+        // the most rope takes it.
+        winner = balls
+          .filter((ball) => ball.alive)
+          .reduce((best, ball) => (ball.threads.length > best.threads.length ? ball : best)).index;
+        events.push({ t: time, kind: 'win', ball: winner, alive: countAlive() });
+      }
+      break;
     }
-    if (time >= endAt) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
       time += dt;
@@ -437,10 +453,12 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
 
         if (changed) {
           rebuild();
-          if (countAlive() <= 1) {
+          if (countAlive() <= 1 && endAt === Infinity) {
             winner = balls.find((b) => b.alive)?.index ?? ball.index;
             events.push({ t: time, kind: 'win', ball: winner, alive: 1 });
-            endAt = Math.min(endAt, time + OUTRO);
+            // Noted, not acted on: the round runs to the clock either way, and
+            // what is left is the winner's victory lap.
+            endAt = time;
           }
         }
       }
@@ -458,37 +476,50 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true): Round {
 }
 
 /**
- * How long a video runs.
+ * How long a video runs: exactly this, every time.
  *
- * Not a setting — the length of a video is how long the fight took, and the
- * fight always ends with one ball holding every thread still in the ring. What
- * the seed chooses is which fight: the same seven balls are fired off in
- * different directions until one of those fights comes out long enough.
+ * A minute and a second. The fight itself is not a settable length — it takes as
+ * long as it takes — so the seed hunts for one that settles inside `SETTLES`,
+ * and whatever is left over is the winner's victory lap: it keeps moving, with
+ * every thread in the ring, until the clock runs out.
  *
- * **Past the minute, always.** That is the line that matters for monetisation,
- * and no video is worth shipping under it. It costs nothing to insist on:
- * measured over forty seeds, a fight of a minute or more turns up in a median of
- * two deals and never took more than eleven.
+ * The window is a compromise measured rather than picked. Insisting the fight
+ * end between 55 and 61 seconds costs a median of 21 deals and up to 137; from
+ * 52 it is 12 and the lap never runs past nine seconds, which is a length that
+ * still reads as an ending rather than a wait.
  */
-export const BAND = { min: 60, max: 100 };
+export const LENGTH = 61;
+export const SETTLES = { min: 52, max: LENGTH };
 
 export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
-  let longest = 0;
-  let best = 0;
-  for (let attempt = 0; attempt < 40; attempt += 1) {
-    // Played without recording first: the search only wants to know how long the
-    // fight lasted, and keeping five thousand snapshots per discarded attempt is
-    // how a phone runs out of memory.
-    const round = play(setupFor(seed, attempt), tuning, false);
-    if (round.duration >= BAND.min && round.duration <= BAND.max) {
-      return play(setupFor(seed, attempt), tuning);
+  /** When the fight settled, or `Infinity` if it never did. */
+  const settlesAt = (attempt: number): number =>
+    // Run no further than the window: a fight still going at the far edge of it
+    // is a reject, and how much further it would have gone does not matter.
+    play(setupFor(seed, attempt), tuning, false, SETTLES.max).events.find((e) => e.kind === 'win')
+      ?.t ?? Infinity;
+
+  let closest = 0;
+  let closestGap = Infinity;
+  // Capped rather than exhaustive. A seed that has not found its fight in eighty
+  // deals is a seed whose fights mostly run long, and eighty is already a second
+  // of work on a phone — the fallback below costs a few seconds of victory lap,
+  // which is cheaper than a page that sits still.
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    // Played without recording first: the search only wants to know when the
+    // fight settled, and keeping four thousand snapshots per discarded attempt
+    // is how a phone runs out of memory.
+    const at = settlesAt(attempt);
+    if (at >= SETTLES.min && at <= SETTLES.max) {
+      return play(setupFor(seed, attempt), tuning, true, LENGTH);
     }
-    if (round.duration > longest) {
-      longest = round.duration;
-      best = attempt;
+    // Falling short is better than overrunning: a fight cut off by the clock has
+    // no ending, only a leader.
+    const gap = at > SETTLES.max ? at - SETTLES.max + 100 : SETTLES.min - at;
+    if (gap < closestGap) {
+      closestGap = gap;
+      closest = attempt;
     }
   }
-  // Nothing inside the band: the longest found, which in practice is still over
-  // the minute — better that than one padded to length.
-  return play(setupFor(seed, best), tuning);
+  return play(setupFor(seed, closest), tuning, true, LENGTH);
 }
