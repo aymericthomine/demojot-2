@@ -22,10 +22,25 @@ export interface EncodeResult {
   blob: Blob;
   extension: 'mp4' | 'webm';
   codec: string;
+  /** Set when the picture came out but the sound did not, and why. */
+  silent?: string;
 }
 
-/** What the encoder is busy with, for a UI that would otherwise look hung. */
-export type EncodeStage = 'starting' | 'frames' | 'sound' | 'finishing';
+/**
+ * What the encoder is busy with, for a UI that would otherwise look hung.
+ *
+ * Named finely on purpose. "Starting the encoder" used to cover half a dozen
+ * awaits, so a phone stuck on it told nobody which one — a screenshot of this
+ * now names the call.
+ */
+export type EncodeStage =
+  | 'loading'
+  | 'probing'
+  | 'sound'
+  | 'audio-codec'
+  | 'starting'
+  | 'frames'
+  | 'writing';
 
 export interface EncodeOptions {
   round: Round;
@@ -60,6 +75,13 @@ const breathe = (): Promise<void> => new Promise((resolve) => setTimeout(resolve
  * sitting on "frame 0" for ever. Better to give up loudly.
  */
 const WATCHDOG_MS = 60_000;
+
+/**
+ * Shorter for the probes. Asking a browser whether it can encode something is a
+ * question it answers in milliseconds or never; a minute of waiting to find that
+ * out is a minute of a page looking broken.
+ */
+const PROBE_MS = 20_000;
 
 function withWatchdog<T>(work: Promise<T>, what: string, limit = WATCHDOG_MS): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
@@ -134,6 +156,9 @@ export async function describeSupport(): Promise<string> {
 }
 
 export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult> {
+  const { round, audio } = options;
+
+  options.onStage?.('loading');
   const {
     AudioBufferSource,
     BufferTarget,
@@ -144,14 +169,13 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
     WebMOutputFormat,
     getFirstEncodableAudioCodec,
     getFirstEncodableVideoCodec,
-  } = await import('mediabunny');
+  } = await withWatchdog(import('mediabunny'), 'Loading the encoder', PROBE_MS);
 
-  const { round, audio } = options;
-  options.onStage?.('starting');
-
+  options.onStage?.('probing');
   const codec = await withWatchdog(
     getFirstEncodableVideoCodec(['avc', 'av1', 'vp9', 'vp8'], { width: WIDTH, height: HEIGHT }),
     'Looking for a video encoder',
+    PROBE_MS,
   );
   if (!codec) {
     throw new Error('This browser has no video encoder. Try Chrome, Edge or Safari.');
@@ -175,22 +199,45 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   });
   output.addVideoTrack(video, { frameRate: FPS });
 
-  // The page normally hands the soundtrack over ready-made; make it here if not,
-  // so a video can never come out silent. A browser that cannot encode audio at
-  // all still gets the picture rather than an error.
-  const track = audio ?? (await renderRoundAudio(round).catch(() => null));
+  // The page normally hands the soundtrack over ready-made; make it here if not.
+  // Either way the sound is allowed to fail: a video with no sound is a poor
+  // result, but a page that hangs for ever is not a result at all, so every step
+  // of it is on a clock and a failure is reported rather than fatal.
+  let silent: string | undefined;
+  let track = audio;
+  if (!track) {
+    options.onStage?.('sound');
+    track = await withWatchdog(renderRoundAudio(round), 'Building the soundtrack', PROBE_MS).catch(
+      (error: Error) => {
+        silent = error.message;
+        return null;
+      },
+    );
+  }
 
   let audioSource: InstanceType<typeof AudioBufferSource> | null = null;
   if (track) {
-    const audioCodec = await getFirstEncodableAudioCodec(webm ? ['opus'] : ['aac', 'opus'], {
-      numberOfChannels: track.numberOfChannels,
-      sampleRate: track.sampleRate,
+    options.onStage?.('audio-codec');
+    const audioCodec = await withWatchdog(
+      getFirstEncodableAudioCodec(webm ? ['opus'] : ['aac', 'opus'], {
+        numberOfChannels: track.numberOfChannels,
+        sampleRate: track.sampleRate,
+      }),
+      'Looking for an audio encoder',
+      PROBE_MS,
+    ).catch((error: Error) => {
+      silent = error.message;
+      return null;
     });
     if (audioCodec) {
       audioSource = new AudioBufferSource({ codec: audioCodec, bitrate: 160_000 });
       output.addAudioTrack(audioSource);
+    } else if (!silent) {
+      silent = 'this browser has no audio encoder';
     }
   }
+
+  options.onStage?.('starting');
 
   await withWatchdog(output.start(), 'Starting the encoder');
 
@@ -236,7 +283,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
     throw error;
   }
 
-  options.onStage?.('finishing');
+  options.onStage?.('writing');
   await output.finalize();
   const buffer = target.buffer;
   if (!buffer) throw new Error('The encoder produced no data.');
@@ -245,6 +292,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
     blob: new Blob([buffer], { type: format.mimeType }),
     extension: webm ? 'webm' : 'mp4',
     codec,
+    silent,
   };
 }
 

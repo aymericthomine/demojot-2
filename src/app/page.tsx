@@ -36,7 +36,15 @@ type Stage =
       total: number;
       remaining: number | null;
     }
-  | { kind: 'done'; round: Round; url: string; name: string; size: number; codec: string }
+  | {
+      kind: 'done';
+      round: Round;
+      url: string;
+      name: string;
+      size: number;
+      codec: string;
+      silent?: string;
+    }
   | { kind: 'failed'; message: string };
 
 const seconds = (value: number): string =>
@@ -45,6 +53,21 @@ const seconds = (value: number): string =>
     : `${Math.max(1, Math.round(value))} s`;
 
 const megabytes = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+
+/**
+ * One label per step of the encoder, so a page that is waiting says what on.
+ * "Starting the encoder" used to cover half the work and told nobody which part
+ * of it had stopped.
+ */
+const STEP_LABEL: Record<EncodeStage, string> = {
+  loading: 'Loading the encoder…',
+  probing: 'Looking for a video encoder…',
+  sound: 'Building the soundtrack…',
+  'audio-codec': 'Looking for an audio encoder…',
+  starting: 'Starting the encoder…',
+  frames: '',
+  writing: 'Writing the file…',
+};
 
 const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
 
@@ -143,6 +166,7 @@ export default function HomePage() {
             name: fileNameFor(round, result.extension),
             size: result.blob.size,
             codec: result.codec,
+            silent: result.silent,
           });
         } catch (cause) {
           setStage(
@@ -215,13 +239,9 @@ export default function HomePage() {
           <>
             <div className="mt-3 mb-2 flex items-center justify-between text-xs">
               <span>
-                {stage.step === 'starting'
-                  ? 'Starting the encoder…'
-                  : stage.step === 'sound'
-                    ? 'Adding the soundtrack…'
-                    : stage.step === 'finishing'
-                      ? 'Writing the file…'
-                      : `Frame ${stage.done.toLocaleString()} of ${stage.total.toLocaleString()}`}
+                {stage.step === 'frames'
+                  ? `Frame ${stage.done.toLocaleString()} of ${stage.total.toLocaleString()}`
+                  : STEP_LABEL[stage.step]}
                 {stage.step === 'frames' &&
                   stage.remaining !== null &&
                   ` · ${seconds(stage.remaining)} left`}
@@ -258,6 +278,9 @@ export default function HomePage() {
               <code className="block truncate font-mono text-[11px] text-emerald-300">
                 {stage.name}
               </code>
+              {stage.silent && (
+                <span className="block text-[11px] text-amber-400">no sound: {stage.silent}</span>
+              )}
               <span className="text-[11px] text-[#8b90a0]">
                 {stage.round.duration.toFixed(1)}s · winner #{stage.round.winner + 1} ·{' '}
                 {megabytes(stage.size)} · {stage.codec.toUpperCase()}

@@ -40,8 +40,10 @@ function sprite(): Promise<AudioBuffer> {
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
     // A throwaway context purely to decode; the samples are resampled to
-    // whatever the rendering context runs at.
-    const ctx = new OfflineAudioContext(1, 1, SAMPLE_RATE);
+    // whatever the rendering context runs at. Given a second of length rather
+    // than a single frame: a context of length 1 is legal but degenerate, and
+    // not every browser is happy being asked to decode through one.
+    const ctx = new OfflineAudioContext(1, SAMPLE_RATE, SAMPLE_RATE);
     return ctx.decodeAudioData(bytes.buffer);
   })();
   return decoded;
