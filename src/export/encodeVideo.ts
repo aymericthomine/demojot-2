@@ -155,10 +155,53 @@ export async function describeSupport(): Promise<string> {
   return parts.join(' · ');
 }
 
+type Mediabunny = typeof import('mediabunny');
+type VideoCodec = NonNullable<Awaited<ReturnType<Mediabunny['getFirstEncodableVideoCodec']>>>;
+
+let reserved: Promise<{ lib: Mediabunny; codec: VideoCodec }> | null = null;
+
+/**
+ * Load the encoder and pick a codec — before anything else is allocated.
+ *
+ * Asking a phone for a hardware encoder is asking for a scarce resource, and it
+ * is a request that stalls rather than fails when the device is under memory
+ * pressure. A sixty-one second round holds twenty-five thousand snapshot objects
+ * and its soundtrack is another eleven megabytes, and all of it used to be built
+ * *before* this ran. So the page calls this first, while there is room, and the
+ * answer is kept for the encode that follows.
+ */
+export async function reserveEncoder(
+  onStage?: (stage: EncodeStage) => void,
+): Promise<{ lib: Mediabunny; codec: VideoCodec }> {
+  reserved ??= (async () => {
+    onStage?.('loading');
+    const lib = await withWatchdog(import('mediabunny'), 'Loading the encoder', PROBE_MS);
+
+    onStage?.('probing');
+    const codec = await withWatchdog(
+      lib.getFirstEncodableVideoCodec(['avc', 'av1', 'vp9', 'vp8'], {
+        width: WIDTH,
+        height: HEIGHT,
+      }),
+      'Looking for a video encoder',
+      PROBE_MS,
+    );
+    if (!codec) {
+      throw new Error('This browser has no video encoder. Try Chrome, Edge or Safari.');
+    }
+    return { lib, codec };
+  })().catch((error: unknown) => {
+    // A failed reservation must not be remembered, or the next press inherits it.
+    reserved = null;
+    throw error;
+  });
+  return reserved;
+}
+
 export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult> {
   const { round, audio } = options;
 
-  options.onStage?.('loading');
+  const { lib, codec } = await reserveEncoder(options.onStage);
   const {
     AudioBufferSource,
     BufferTarget,
@@ -168,18 +211,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
     Quality,
     WebMOutputFormat,
     getFirstEncodableAudioCodec,
-    getFirstEncodableVideoCodec,
-  } = await withWatchdog(import('mediabunny'), 'Loading the encoder', PROBE_MS);
-
-  options.onStage?.('probing');
-  const codec = await withWatchdog(
-    getFirstEncodableVideoCodec(['avc', 'av1', 'vp9', 'vp8'], { width: WIDTH, height: HEIGHT }),
-    'Looking for a video encoder',
-    PROBE_MS,
-  );
-  if (!codec) {
-    throw new Error('This browser has no video encoder. Try Chrome, Edge or Safari.');
-  }
+  } = lib;
 
   const webm = codec === 'vp9' || codec === 'vp8';
   const format = webm
@@ -270,6 +302,10 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       // watched, because an encoder that is never going to produce anything
       // hangs here rather than throwing.
       const added = video.add(frame / FPS, 1 / FPS);
+      // Done with it. A sixty-one second round is three and a half thousand
+      // snapshots and the encoder never looks back, so letting each one go as it
+      // is drawn keeps the tail of a long encode cheaper than its head.
+      round.frames[frame] = undefined as unknown as (typeof round.frames)[number];
       // The first one gets a long leash: it carries the encoder's warm-up and
       // the first keyframe, and a phone is slow enough that a tight limit would
       // fail work that was going to finish.

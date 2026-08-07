@@ -57,7 +57,10 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
   // track. Nothing is lost — the last events land seconds before the end, and a
   // tick is a seventh of a second long.
   const length = Math.round(round.duration * SAMPLE_RATE);
-  const ctx = new OfflineAudioContext(2, length, SAMPLE_RATE);
+  // Mono. Every hit is the same mono recording played at the same level, so the
+  // two channels were identical and the second one cost eleven megabytes on a
+  // minute-long round — memory a phone would rather spend on the encoder.
+  const ctx = new OfflineAudioContext(1, length, SAMPLE_RATE);
 
   // Set by measurement, not by ear: the reference peaks at -7.5 dB, and at 0.5
   // this was hitting -1, which is a stretch away from clipping and reads as

@@ -20,6 +20,7 @@ import {
   describeSupport,
   encodeVideo,
   fileNameFor,
+  reserveEncoder,
   EncodeCancelled,
   type EncodeStage,
 } from '../export/encodeVideo';
@@ -128,25 +129,34 @@ export default function HomePage() {
     window.setTimeout(() => {
       void (async () => {
         try {
-          const round = generateRound(forSeed);
-          const audio = await renderRoundAudio(round).catch(() => null);
-
           const startedAt = performance.now();
-          let step: EncodeStage = 'starting';
+          let step: EncodeStage = 'loading';
           let done = 0;
-          let total = round.durationInFrames;
+          let total = 0;
           const show = (remaining: number | null) =>
             setStage({ kind: 'encoding', step, done, total, remaining });
+          const onStage = (next: EncodeStage) => {
+            step = next;
+            show(null);
+          };
           show(null);
+
+          // The encoder is reserved before the round exists. Asking a phone for
+          // a hardware encoder once twenty-five thousand snapshots and a
+          // soundtrack are already resident is asking under memory pressure, and
+          // that is a request which stalls rather than fails.
+          await reserveEncoder(onStage);
+
+          const round = generateRound(forSeed);
+          total = round.durationInFrames;
+          onStage('sound');
+          const audio = await renderRoundAudio(round).catch(() => null);
 
           const result = await encodeVideo({
             round,
             audio,
             signal: controller.signal,
-            onStage: (next) => {
-              step = next;
-              show(null);
-            },
+            onStage,
             onProgress: (at, of) => {
               done = at;
               total = of;
