@@ -336,4 +336,6 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
 }
 
 export const fileNameFor = (round: Round, extension: string, invert = false): string =>
-  `balls-${round.setup.seed}-${Math.round(round.duration)}s${invert ? '-white' : ''}.${extension}`;
+  `balls-${round.setup.seed}-${round.setup.threads}t-${Math.round(round.duration)}s${
+    invert ? '-white' : ''
+  }.${extension}`;

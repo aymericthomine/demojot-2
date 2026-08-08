@@ -42,28 +42,56 @@ const SUBSTEPS = 4;
 /** The fixed cast. Seven balls, these colours, in this order. */
 export const BALL_COUNT = 7;
 
-/** Threads everybody starts with. */
-export const OPENING_THREADS = 5;
+/**
+ * Threads everybody can start with.
+ *
+ * Five is the sparse game: thirty-five anchors, wedges you can count, a picture
+ * that thins out as rope is broken. Ten is the dense one — seventy anchors, fans
+ * that read as solid colour — and it is a slower fight, because there is twice as
+ * much territory to take before anybody runs out.
+ */
+export const THREAD_CHOICES = [5, 10] as const;
+export type ThreadCount = (typeof THREAD_CHOICES)[number];
+
+/** The default, and what every earlier video used. */
+export const OPENING_THREADS: ThreadCount = 5;
 
 /**
  * Anchor points on the rim, fixed for the whole round.
  *
  * Every one of them holds a thread from the first frame to the last, so this is
- * also the total number of threads in the arena and it never changes. Seven
- * balls with five each divides the rim exactly, which is why the opening reads
- * as seven wedges meeting edge to edge with nothing between them.
+ * also the total number of threads in the arena and it never changes. Seven balls
+ * with five each divides the rim exactly, which is why the opening reads as seven
+ * wedges meeting edge to edge with nothing between them — and it divides exactly
+ * for any thread count, which is why the choice is safe.
  */
-export const ANCHORS = BALL_COUNT * OPENING_THREADS;
+export const anchorsFor = (threads: number): number => BALL_COUNT * threads;
+
+/**
+ * Most rope a ball can hold, and the reason a round ever finishes.
+ *
+ * Transfer alone conserves, and a conserving economy has no drift towards a
+ * winner: the last two trade the same rope back and forth for ever. A full ball
+ * breaks the thread it runs through instead of taking it, that anchor stays empty
+ * for the rest of the round, and the fight becomes one-way.
+ *
+ * Proportional to what a ball opens with, so the dense game is not simply the
+ * sparse one played for four times as long.
+ */
+export const holdLimitFor = (threads: number): number => Math.round(threads * 1.8);
 
 /** An anchor whose thread has been broken. It stays empty for the rest of the round. */
 const EMPTY = -1;
 
 /** Radians between neighbouring anchors. */
-const ANCHOR_STEP = (Math.PI * 2) / ANCHORS;
+const stepFor = (anchors: number): number => (Math.PI * 2) / anchors;
 
-/** Where anchor `j` sits, so that ball `i` opens owning `j` in [5i, 5i+5). */
-const anchorAngle = (j: number): number =>
-  -Math.PI / 2 + (j - (OPENING_THREADS - 1) / 2) * ANCHOR_STEP;
+/**
+ * Where anchor `j` sits, so that ball `i` opens owning the run starting at
+ * `i * threads`.
+ */
+const anchorAngle = (j: number, setup: RoundSetup): number =>
+  -Math.PI / 2 + (j - (setup.threads - 1) / 2) * stepFor(setup.anchors);
 
 /**
  * How the opening is dealt out.
@@ -87,9 +115,9 @@ const anchorAngle = (j: number): number =>
  * Taken from the seed alone, never from the deal: every attempt at a seed has to
  * share one opening, or "the seed is the video" stops being true.
  */
-export function openingFor(seed: number): { turn: number; palette: number[] } {
+export function openingFor(seed: number, anchors: number): { turn: number; palette: number[] } {
   const rng = createRng(seed ^ 0x9e3779b9);
-  const turn = rng.int(0, ANCHORS - 1);
+  const turn = rng.int(0, anchors - 1);
   const palette = Array.from({ length: BALL_COUNT }, (_, i) => i);
   for (let i = BALL_COUNT - 1; i > 0; i -= 1) {
     const j = rng.int(0, i);
@@ -123,8 +151,6 @@ const START_RADIUS = 0.45;
  * winner: the last two trade the same rope back and forth for ever. Breakage is
  * what makes the fight one-way, and it is why there is always a winner.
  */
-export const HOLD_LIMIT = Math.round(OPENING_THREADS * 1.8);
-
 /**
  * Seconds the opening picture is held before anybody moves.
  *
@@ -148,13 +174,16 @@ const HARD_CAP = 120;
 export interface Tuning {
   /** Arena radii per second. */
   speed: number;
-  /** Most rope one ball can hold; see `HOLD_LIMIT`. */
-  holdLimit: number;
+  /**
+   * Most rope one ball can hold. Left out, it comes from the thread count via
+   * `holdLimitFor`; set, it overrides — which is only wanted by the sweeps that
+   * chose the multiplier in the first place.
+   */
+  holdLimit?: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
-  holdLimit: HOLD_LIMIT,
 };
 
 export interface BallState {
@@ -190,6 +219,10 @@ export interface RoundSetup {
   /** Which deal of this seed produced the round — see `generateRound`. */
   attempt: number;
   ballCount: number;
+  /** Threads each ball opens with: five for the sparse game, ten for the dense. */
+  threads: number;
+  /** `ballCount * threads`, and so the total rope in the ring. */
+  anchors: number;
 }
 
 export interface Round {
@@ -237,19 +270,23 @@ function closestOnSegment(
   return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
 }
 
-export function setupFor(seed: number, attempt = 0): RoundSetup {
-  return { seed, attempt, ballCount: BALL_COUNT };
+export function setupFor(
+  seed: number,
+  attempt = 0,
+  threads: number = OPENING_THREADS,
+): RoundSetup {
+  return { seed, attempt, ballCount: BALL_COUNT, threads, anchors: anchorsFor(threads) };
 }
 
 /** The opening: the same figure in every video, turned and recoloured. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
-  const { turn, palette } = openingFor(setup.seed);
+  const { turn, palette } = openingFor(setup.seed, setup.anchors);
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / BALL_COUNT;
 
   for (let i = 0; i < BALL_COUNT; i += 1) {
-    const around = -Math.PI / 2 + i * slice + turn * ANCHOR_STEP;
+    const around = -Math.PI / 2 + i * slice + turn * stepFor(setup.anchors);
     const x = Math.cos(around) * START_RADIUS;
     const y = Math.sin(around) * START_RADIUS;
 
@@ -259,8 +296,8 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
     // what. No modulo here: this is an angle, and an anchor a full turn along is
     // the same point on the rim.
     const threads: number[] = [];
-    for (let k = 0; k < OPENING_THREADS; k += 1) {
-      threads.push(anchorAngle(i * OPENING_THREADS + k + turn));
+    for (let k = 0; k < setup.threads; k += 1) {
+      threads.push(anchorAngle(i * setup.threads + k + turn, setup));
     }
 
     // Aimed across the arena, but loosely: a wide spread so no two balls set off
@@ -328,11 +365,13 @@ export function play(
   // Who holds each anchor. This is the state of the round: the balls only move.
   // The modulo is not optional here — unlike the angles in `start`, these are
   // array indices, and a turn that runs off the end has to come back round.
-  const owner = new Int8Array(ANCHORS);
-  const { turn } = openingFor(setup.seed);
+  const { anchors } = setup;
+  const holdLimit = tuning.holdLimit ?? holdLimitFor(setup.threads);
+  const owner = new Int8Array(anchors);
+  const { turn } = openingFor(setup.seed, anchors);
   for (let i = 0; i < BALL_COUNT; i += 1) {
-    for (let k = 0; k < OPENING_THREADS; k += 1) {
-      owner[(i * OPENING_THREADS + k + turn) % ANCHORS] = i;
+    for (let k = 0; k < setup.threads; k += 1) {
+      owner[(i * setup.threads + k + turn) % anchors] = i;
     }
   }
 
@@ -340,8 +379,8 @@ export function play(
   // actually changes, so unchanged frames go on sharing one array.
   const rebuild = (): void => {
     for (const ball of balls) ball.threads = [];
-    for (let j = 0; j < ANCHORS; j += 1) {
-      if (owner[j] !== EMPTY) balls[owner[j]].threads.push(anchorAngle(j));
+    for (let j = 0; j < anchors; j += 1) {
+      if (owner[j] !== EMPTY) balls[owner[j]].threads.push(anchorAngle(j, setup));
     }
     for (const ball of balls) {
       if (ball.alive && ball.threads.length === 0) {
@@ -468,11 +507,11 @@ export function play(
 
         let changed = false;
         let gained = 0;
-        for (let j = 0; j < ANCHORS; j += 1) {
+        for (let j = 0; j < anchors; j += 1) {
           const victim = owner[j];
           if (victim === ball.index || victim === EMPTY) continue;
           const hub = balls[victim];
-          const angle = anchorAngle(j);
+          const angle = anchorAngle(j, setup);
           const hit = closestOnSegment(
             ball.x,
             ball.y,
@@ -485,7 +524,7 @@ export function play(
 
           // Full hands break rope rather than take it, and the anchor stays
           // empty for good.
-          const full = ball.threads.length + gained >= tuning.holdLimit;
+          const full = ball.threads.length + gained >= holdLimit;
           owner[j] = full ? EMPTY : ball.index;
           if (!full) gained += 1;
           changed = true;
@@ -537,13 +576,19 @@ export function play(
 export const LENGTH = 61;
 export const SETTLES = { min: 52, max: LENGTH };
 
-export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Round {
+export function generateRound(
+  seed: number,
+  threads: number = OPENING_THREADS,
+  tuning: Tuning = DEFAULT_TUNING,
+): Round {
+  const deal = (attempt: number) => setupFor(seed, attempt, threads);
+
   /** When the fight settled, or `Infinity` if it never did. */
   const settlesAt = (attempt: number): number =>
     // Run no further than the window: a fight still going at the far edge of it
     // is a reject, and how much further it would have gone does not matter.
-    play(setupFor(seed, attempt), tuning, false, SETTLES.max).events.find((e) => e.kind === 'win')
-      ?.t ?? Infinity;
+    play(deal(attempt), tuning, false, SETTLES.max).events.find((e) => e.kind === 'win')?.t ??
+    Infinity;
 
   let closest = 0;
   let closestGap = Infinity;
@@ -557,7 +602,7 @@ export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Ro
     // is how a phone runs out of memory.
     const at = settlesAt(attempt);
     if (at >= SETTLES.min && at <= SETTLES.max) {
-      return play(setupFor(seed, attempt), tuning, true, LENGTH);
+      return play(deal(attempt), tuning, true, LENGTH);
     }
     // Falling short is better than overrunning: a fight cut off by the clock has
     // no ending, only a leader.
@@ -567,5 +612,5 @@ export function generateRound(seed: number, tuning: Tuning = DEFAULT_TUNING): Ro
       closest = attempt;
     }
   }
-  return play(setupFor(seed, closest), tuning, true, LENGTH);
+  return play(deal(closest), tuning, true, LENGTH);
 }

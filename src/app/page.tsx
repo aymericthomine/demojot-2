@@ -24,7 +24,7 @@ import {
   EncodeCancelled,
   type EncodeStage,
 } from '../export/encodeVideo';
-import { generateRound, type Round } from '../sim/simulate';
+import { generateRound, THREAD_CHOICES, type Round, type ThreadCount } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
 
 type Stage =
@@ -75,6 +75,7 @@ const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
 export default function HomePage() {
   const [seed, setSeed] = useState(() => randomSeed());
   const [invert, setInvert] = useState(false);
+  const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
 
   const [support, setSupport] = useState<string | null>(null);
@@ -114,7 +115,7 @@ export default function HomePage() {
     linkRef.current?.click();
   }, [stage]);
 
-  const run = useCallback((forSeed: number, negative: boolean) => {
+  const run = useCallback((forSeed: number, negative: boolean, perBall: ThreadCount) => {
     if (abortRef.current) return;
     const controller = new AbortController();
     abortRef.current = controller;
@@ -148,7 +149,7 @@ export default function HomePage() {
           // that is a request which stalls rather than fails.
           await reserveEncoder(onStage);
 
-          const round = generateRound(forSeed);
+          const round = generateRound(forSeed, perBall);
           total = round.durationInFrames;
           onStage('sound');
           const audio = await renderRoundAudio(round).catch(() => null);
@@ -204,10 +205,10 @@ export default function HomePage() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Ball Battle</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
-          Seven balls, one ring, and a fixed set of thirty-five threads pinned to the wall. The anchors
-          never
-          move; run through somebody else&apos;s thread and it comes away with you, turning your
-          colour. Full hands break rope instead of taking it, and a ball holding none is out.
+          Seven balls, one ring, and a fixed set of threads pinned to the wall — thirty-five of
+          them, or seventy. The anchors never move; run through somebody else&apos;s thread and it
+          comes away with you, turning your colour. Full hands break rope instead of taking it, and a
+          ball holding none is out.
         </p>
       </header>
 
@@ -234,6 +235,25 @@ export default function HomePage() {
           </button>
         </div>
 
+        <div className="mt-2 flex items-center gap-2">
+          <span className="px-1 text-sm text-[#8b90a0]">Threads per ball</span>
+          {THREAD_CHOICES.map((count) => (
+            <button
+              key={count}
+              type="button"
+              onClick={() => setThreads(count)}
+              disabled={busy}
+              className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                threads === count
+                  ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-200'
+                  : 'border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]'
+              }`}
+            >
+              {count}
+            </button>
+          ))}
+        </div>
+
         <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
           <input
             type="checkbox"
@@ -247,7 +267,7 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run(seed, invert)}
+          onClick={() => run(seed, invert, threads)}
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
