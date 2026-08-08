@@ -47,10 +47,13 @@ export const BALL_COUNT = 7;
  *
  * Five is the sparse game: thirty-five anchors, wedges you can count, a picture
  * that thins out as rope is broken. Ten is the dense one — seventy anchors, fans
- * that read as solid colour — and it is a slower fight, because there is twice as
- * much territory to take before anybody runs out.
+ * that read as solid colour. Twenty is a hundred and forty, packed tight enough
+ * that the rim reads as a ring of colour rather than as separate threads.
+ *
+ * Each step doubles the territory to be taken before anybody runs out, so each
+ * one is a slower fight than the last.
  */
-export const THREAD_CHOICES = [5, 10] as const;
+export const THREAD_CHOICES = [5, 10, 20] as const;
 export type ThreadCount = (typeof THREAD_CHOICES)[number];
 
 /** The default, and what every earlier video used. */
@@ -367,6 +370,20 @@ export function play(
   // array indices, and a turn that runs off the end has to come back round.
   const { anchors } = setup;
   const holdLimit = tuning.holdLimit ?? holdLimitFor(setup.threads);
+
+  // Where every anchor sits, worked out once. These never move, and the contact
+  // test below runs for every anchor against every ball on every substep — at
+  // twenty threads that is a million sines a second of simulated time, all of
+  // them recomputing the same hundred and forty numbers.
+  const rimX = new Float64Array(anchors);
+  const rimY = new Float64Array(anchors);
+  const rimAngle = new Float64Array(anchors);
+  for (let j = 0; j < anchors; j += 1) {
+    const angle = anchorAngle(j, setup);
+    rimAngle[j] = angle;
+    rimX[j] = Math.cos(angle);
+    rimY[j] = Math.sin(angle);
+  }
   const owner = new Int8Array(anchors);
   const { turn } = openingFor(setup.seed, anchors);
   for (let i = 0; i < BALL_COUNT; i += 1) {
@@ -380,7 +397,7 @@ export function play(
   const rebuild = (): void => {
     for (const ball of balls) ball.threads = [];
     for (let j = 0; j < anchors; j += 1) {
-      if (owner[j] !== EMPTY) balls[owner[j]].threads.push(anchorAngle(j, setup));
+      if (owner[j] !== EMPTY) balls[owner[j]].threads.push(rimAngle[j]);
     }
     for (const ball of balls) {
       if (ball.alive && ball.threads.length === 0) {
@@ -511,15 +528,7 @@ export function play(
           const victim = owner[j];
           if (victim === ball.index || victim === EMPTY) continue;
           const hub = balls[victim];
-          const angle = anchorAngle(j, setup);
-          const hit = closestOnSegment(
-            ball.x,
-            ball.y,
-            hub.x,
-            hub.y,
-            Math.cos(angle),
-            Math.sin(angle),
-          );
+          const hit = closestOnSegment(ball.x, ball.y, hub.x, hub.y, rimX[j], rimY[j]);
           if (hit.distanceSq >= reach) continue;
 
           // Full hands break rope rather than take it, and the anchor stays

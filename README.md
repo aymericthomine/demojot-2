@@ -28,12 +28,12 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-**Threads per ball** is five or ten. Five is the sparse game — thirty-five
-anchors, wedges you can count, a picture that thins out as rope is broken. Ten is
-the dense one, seventy anchors, fans that read as solid colour, and a slower fight
-because there is twice as much territory to take before anybody runs out. The
-holding limit scales with it, so the dense game is not the sparse one played four
-times as long.
+**Threads per ball** is five, ten or twenty — thirty-five anchors, seventy, or a
+hundred and forty. Five gives wedges you can count and a picture that thins out as
+rope is broken; twenty packs the rim tight enough to read as a ring of colour.
+Each step doubles the territory to be taken before anybody runs out, so each is a
+slower fight than the last, and the holding limit scales with it — otherwise the
+dense game would be the sparse one played four times as long.
 
 There is a checkbox for **white ground, colours inverted**: a true negative
 rather than a swap of the black and the white, so the ring turns black and each
@@ -58,8 +58,8 @@ npm run lint
 Four of them, and they are the whole game.
 
 1. **The anchors never move.** The rim is divided into a fixed ring of anchor
-   points — seven balls with five threads each, or ten — set before the first
-   frame and unchanged to the last. Where the ring *starts* is the seed's,
+   points — seven balls with five threads each, or ten, or twenty — set before
+   the first frame and unchanged to the last. Where the ring *starts* is the seed's,
    and it moves in whole anchors: turn by a fraction of one and the wedges would
    stop meeting.
 2. **Touch a thread and it comes away with you** — new hub, new colour, same
