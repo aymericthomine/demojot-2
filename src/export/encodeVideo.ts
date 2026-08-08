@@ -45,6 +45,8 @@ export type EncodeStage =
 export interface EncodeOptions {
   round: Round;
   audio: AudioBuffer | null;
+  /** White ground and complementary colours instead of the usual black. */
+  invert?: boolean;
   onProgress?: (done: number, total: number) => void;
   onStage?: (stage: EncodeStage) => void;
   signal?: AbortSignal;
@@ -296,6 +298,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       drawFrame(ctx as unknown as CanvasRenderingContext2D, round.frames[frame], {
         width: WIDTH,
         height: HEIGHT,
+        invert: options.invert,
       });
       // Awaiting is what applies back-pressure: it resolves when the encoder is
       // ready for more, so raw frames never pile up in memory. The first one is
@@ -332,5 +335,5 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   };
 }
 
-export const fileNameFor = (round: Round, extension: string): string =>
-  `balls-${round.setup.seed}-${Math.round(round.duration)}s.${extension}`;
+export const fileNameFor = (round: Round, extension: string, invert = false): string =>
+  `balls-${round.setup.seed}-${Math.round(round.duration)}s${invert ? '-white' : ''}.${extension}`;

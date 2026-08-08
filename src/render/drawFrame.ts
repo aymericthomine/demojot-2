@@ -24,12 +24,29 @@ import {
 export interface Viewport {
   width: number;
   height: number;
+  /** Print the negative: white ground, and every colour its complement. */
+  invert?: boolean;
+}
+
+/**
+ * A colour, possibly turned inside out.
+ *
+ * A true negative rather than a swap of the black and the white: the ground
+ * becomes white, the ring becomes black, and each ball takes its complement, so
+ * the picture holds together as one image instead of a light background with a
+ * dark palette sitting awkwardly on it.
+ */
+function ink(hex: string, invert: boolean): string {
+  if (!invert) return hex;
+  const n = Number.parseInt(hex.slice(1), 16);
+  const flipped = 0xffffff - n;
+  return `#${flipped.toString(16).padStart(6, '0')}`;
 }
 
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
-  { width, height }: Viewport,
+  { width, height, invert = false }: Viewport,
 ): void {
   const radius = width * ARENA;
   const cx = width / 2;
@@ -38,11 +55,11 @@ export function drawFrame(
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = ink('#000000', invert);
   ctx.fillRect(0, 0, width, height);
 
   // The arena.
-  ctx.strokeStyle = '#ffffff';
+  ctx.strokeStyle = ink('#ffffff', invert);
   ctx.lineWidth = radius * RIM_WIDTH;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -60,7 +77,7 @@ export function drawFrame(
     const alpha = ball.alive ? 1 : 1 - ball.fade;
     if (alpha <= 0.01) continue;
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = ball.color;
+    ctx.strokeStyle = ink(ball.color, invert);
     ctx.beginPath();
     const bx = toScreenX(ball.x);
     const by = toScreenY(ball.y);
@@ -78,7 +95,7 @@ export function drawFrame(
     const alpha = ball.alive ? 1 : 1 - ball.fade;
     if (alpha <= 0.01 || ball.threads.length === 0) continue;
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = ball.color;
+    ctx.strokeStyle = ink(ball.color, invert);
     const half = ANCHOR_TICK / 2;
     for (const angle of ball.threads) {
       ctx.beginPath();
@@ -99,12 +116,12 @@ export function drawFrame(
     const by = toScreenY(ball.y);
     const r = radius * BALL_RADIUS * scale;
 
-    ctx.fillStyle = ball.color;
+    ctx.fillStyle = ink(ball.color, invert);
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = ink('#ffffff', invert);
     ctx.lineWidth = radius * BALL_RING;
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);

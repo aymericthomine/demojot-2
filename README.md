@@ -28,6 +28,12 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
+There is a checkbox for **white ground, colours inverted**: a true negative
+rather than a swap of the black and the white, so the ring turns black and each
+ball takes its complement — the green becomes magenta, the orange becomes blue.
+The file is named `-white` so the two do not get mixed up. Everything else is the
+same video: same seed, same fight, same sound.
+
 Press **Generate the video**. The fight is played out, every frame is painted
 straight into the encoder, and the finished MP4 saves itself. There is no
 preview on purpose: watching it in the page costs exactly as long as the video

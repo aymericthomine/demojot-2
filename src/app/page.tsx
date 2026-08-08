@@ -74,6 +74,7 @@ const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
 
 export default function HomePage() {
   const [seed, setSeed] = useState(() => randomSeed());
+  const [invert, setInvert] = useState(false);
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
 
   const [support, setSupport] = useState<string | null>(null);
@@ -113,7 +114,7 @@ export default function HomePage() {
     linkRef.current?.click();
   }, [stage]);
 
-  const run = useCallback((forSeed: number) => {
+  const run = useCallback((forSeed: number, negative: boolean) => {
     if (abortRef.current) return;
     const controller = new AbortController();
     abortRef.current = controller;
@@ -155,6 +156,7 @@ export default function HomePage() {
           const result = await encodeVideo({
             round,
             audio,
+            invert: negative,
             signal: controller.signal,
             onStage,
             onProgress: (at, of) => {
@@ -173,7 +175,7 @@ export default function HomePage() {
             kind: 'done',
             round,
             url,
-            name: fileNameFor(round, result.extension),
+            name: fileNameFor(round, result.extension, negative),
             size: result.blob.size,
             codec: result.codec,
             silent: result.silent,
@@ -232,9 +234,20 @@ export default function HomePage() {
           </button>
         </div>
 
+        <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
+          <input
+            type="checkbox"
+            checked={invert}
+            disabled={busy}
+            onChange={(event) => setInvert(event.target.checked)}
+            className="size-4 accent-emerald-400"
+          />
+          White ground, colours inverted
+        </label>
+
         <button
           type="button"
-          onClick={() => run(seed)}
+          onClick={() => run(seed, invert)}
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
