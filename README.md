@@ -74,8 +74,30 @@ Rule 3 is the one that finishes the fight, and it is worth saying why. Transfer
 on its own conserves — nothing enters the ring and nothing leaves — and a
 conserving economy has no drift towards a winner: the last two trade the same
 rope back and forth and the count wanders for ever. Ten minutes, and still two
-balls. Breakage makes it one-way. **So there is always a winner**, and the video
-ends when one ball is left holding rope.
+balls. Breakage makes it one-way. **So there is always a winner.**
+
+## How long a video runs
+
+**Twenty seconds to a minute and twenty, drawn from the seed.** The fight is not
+a settable length — it takes as long as it takes — so the seed picks a length
+first, then hunts for a fight that settles just inside it, and the rest is the
+winner's victory lap: it keeps moving, holding every thread in the ring, until
+the clock runs out. The lap is capped at a third of the length, so a short video
+does not spend half of itself on an ending.
+
+Worth checking the range was reachable before promising it, at every density:
+played out, fights settle anywhere from four seconds to a hundred and nine, median
+around thirty. A fifth land under twenty seconds at five threads and a tenth at
+twenty threads, so even the short end is found in a handful of deals rather than
+by luck. Twenty seeds at each density: the length is respected every time and
+nothing is cut off by the clock.
+
+Over five thousand seeds the lengths come out uniform — about a sixth in each
+ten-second band.
+
+The first second is held on the opening picture before anybody moves. Seven
+wedges dividing the rim is the most legible frame in the video and it is gone in
+an instant otherwise.
 
 **No two threads ever overlap.** Not as a repair, not as a constraint checked
 afterwards: a ball takes every thread it touches, so it is never on the far side
