@@ -570,20 +570,37 @@ export function play(
 }
 
 /**
- * How long a video runs: exactly this, every time.
+ * How long a video runs.
  *
- * A minute and a second. The fight itself is not a settable length — it takes as
- * long as it takes — so the seed hunts for one that settles inside `SETTLES`,
- * and whatever is left over is the winner's victory lap: it keeps moving, with
- * every thread in the ring, until the clock runs out.
+ * Drawn from the seed, twenty seconds to a minute and twenty. The fight itself
+ * is not a settable length — it takes as long as it takes — so the seed picks a
+ * length first, then hunts for a fight that settles just inside it, and whatever
+ * is left over is the winner's victory lap: it keeps moving, holding every
+ * thread in the ring, until the clock runs out.
  *
- * The window is a compromise measured rather than picked. Insisting the fight
- * end between 55 and 61 seconds costs a median of 21 deals and up to 137; from
- * 52 it is 12 and the lap never runs past nine seconds, which is a length that
- * still reads as an ending rather than a wait.
+ * Reachable at every density, which is the thing worth checking before promising
+ * a range. Played out, fights settle anywhere from four seconds to a hundred and
+ * nine, median around thirty; a fifth of them land under twenty seconds at five
+ * threads and a tenth at twenty threads, so even the short end of the range is
+ * found in a handful of deals rather than by luck.
  */
-export const LENGTH = 61;
-export const SETTLES = { min: 52, max: LENGTH };
+export const SHORTEST = 20;
+export const LONGEST = 80;
+
+/** The length this seed asks for. From the seed alone, never from the deal. */
+export const lengthFor = (seed: number): number => {
+  const seconds = createRng(seed ^ 0x7feb352d).range(SHORTEST, LONGEST);
+  // Whole frames, so the video is an exact number of them.
+  return Math.round(seconds * FPS) / FPS;
+};
+
+/**
+ * How early the fight has to settle, leaving the rest as the victory lap.
+ *
+ * Scaled rather than fixed: nine seconds of lap is an ending on a minute-long
+ * video and nearly half a short one, so it is capped at a third of the length.
+ */
+const lapFor = (length: number): number => Math.min(9, length * 0.3);
 
 export function generateRound(
   seed: number,
@@ -591,12 +608,15 @@ export function generateRound(
   tuning: Tuning = DEFAULT_TUNING,
 ): Round {
   const deal = (attempt: number) => setupFor(seed, attempt, threads);
+  const length = lengthFor(seed);
+  const settleBy = length;
+  const settleFrom = Math.max(3, length - lapFor(length));
 
   /** When the fight settled, or `Infinity` if it never did. */
   const settlesAt = (attempt: number): number =>
     // Run no further than the window: a fight still going at the far edge of it
     // is a reject, and how much further it would have gone does not matter.
-    play(deal(attempt), tuning, false, SETTLES.max).events.find((e) => e.kind === 'win')?.t ??
+    play(deal(attempt), tuning, false, settleBy).events.find((e) => e.kind === 'win')?.t ??
     Infinity;
 
   let closest = 0;
@@ -610,16 +630,16 @@ export function generateRound(
     // fight settled, and keeping four thousand snapshots per discarded attempt
     // is how a phone runs out of memory.
     const at = settlesAt(attempt);
-    if (at >= SETTLES.min && at <= SETTLES.max) {
-      return play(deal(attempt), tuning, true, LENGTH);
+    if (at >= settleFrom && at <= settleBy) {
+      return play(deal(attempt), tuning, true, length);
     }
     // Falling short is better than overrunning: a fight cut off by the clock has
     // no ending, only a leader.
-    const gap = at > SETTLES.max ? at - SETTLES.max + 100 : SETTLES.min - at;
+    const gap = at > settleBy ? at - settleBy + 100 : settleFrom - at;
     if (gap < closestGap) {
       closestGap = gap;
       closest = attempt;
     }
   }
-  return play(deal(closest), tuning, true, LENGTH);
+  return play(deal(closest), tuning, true, length);
 }
