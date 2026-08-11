@@ -40,6 +40,12 @@ and cropped to fill it, so a rectangular logo keeps its proportions. A logo wins
 over a glyph on the same ball. Images are decoded to a bitmap when you pick them,
 not on every frame.
 
+**Pick a colour** for any ball by clicking its swatch. The seed deals the palette
+out; the picker overrides what it dealt, and the override follows the ball
+everywhere it shows — the disc, its threads and its pins on the rim all change
+together, so a captured thread still reads as a capture. The `↺` next to a
+swatch hands the ball back the colour the seed gave it.
+
 **Threads per ball** is five, ten or twenty — thirty-five anchors, seventy, or a
 hundred and forty. Five gives wedges you can count and a picture that thins out as
 rope is broken; twenty packs the rim tight enough to read as a ring of colour.

@@ -34,6 +34,8 @@ import {
 export interface BallFace {
   glyph?: string;
   image?: CanvasImageSource | null;
+  /** Overrides the colour the seed dealt this ball — threads and pins included. */
+  color?: string;
 }
 
 export interface Viewport {
@@ -82,6 +84,12 @@ export function drawFrame(
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.stroke();
 
+  // A ball's colour is its identity: it paints the disc, the threads and the
+  // pins on the rim, so an override has to reach all three or the picture would
+  // disagree with itself.
+  const hue = (ball: Frame['balls'][number]) =>
+    ink(faces?.[ball.index]?.color ?? ball.color, invert);
+
   const toScreenX = (x: number) => cx + x * radius;
   const toScreenY = (y: number) => cy + y * radius;
 
@@ -94,7 +102,7 @@ export function drawFrame(
     const alpha = ball.alive ? 1 : 1 - ball.fade;
     if (alpha <= 0.01) continue;
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = ink(ball.color, invert);
+    ctx.strokeStyle = hue(ball);
     ctx.beginPath();
     const bx = toScreenX(ball.x);
     const by = toScreenY(ball.y);
@@ -112,7 +120,7 @@ export function drawFrame(
     const alpha = ball.alive ? 1 : 1 - ball.fade;
     if (alpha <= 0.01 || ball.threads.length === 0) continue;
     ctx.globalAlpha = alpha;
-    ctx.strokeStyle = ink(ball.color, invert);
+    ctx.strokeStyle = hue(ball);
     const half = ANCHOR_TICK / 2;
     for (const angle of ball.threads) {
       ctx.beginPath();
@@ -133,7 +141,7 @@ export function drawFrame(
     const by = toScreenY(ball.y);
     const r = radius * BALL_RADIUS * scale;
 
-    ctx.fillStyle = ink(ball.color, invert);
+    ctx.fillStyle = hue(ball);
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.fill();

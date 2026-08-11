@@ -13,7 +13,7 @@
  * seed, so what follows is never the same twice.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { renderRoundAudio } from "../audio/render";
 import {
@@ -29,8 +29,10 @@ import {
   FEWEST_BALLS,
   MOST_BALLS,
   THREAD_CHOICES,
+  anchorsFor,
   clampBalls,
   generateRound,
+  openingFor,
   type Round,
   type ThreadCount,
 } from "../sim/simulate";
@@ -96,6 +98,18 @@ export default function HomePage() {
 
   const setGlyph = (index: number, glyph: string) =>
     setFaces((old) => old.map((f, i) => (i === index ? { ...f, glyph } : f)));
+
+  // What the seed dealt this ball, which is what the picker starts from and what
+  // clearing an override goes back to. The panel used to show COLORS[i], which
+  // was simply the wrong colour: the seed shuffles the palette, so ball three is
+  // not the third colour in the list.
+  const dealt = useMemo(() => {
+    const { palette } = openingFor(seed, anchorsFor(threads, balls), balls);
+    return palette.map((c) => COLORS[c % COLORS.length]);
+  }, [seed, threads, balls]);
+
+  const setColor = (index: number, color: string | undefined) =>
+    setFaces((old) => old.map((f, i) => (i === index ? { ...f, color } : f)));
 
   const setImage = async (index: number, file: File | null) => {
     // Decoded to a bitmap here rather than at encode time: the encoder draws it
@@ -321,10 +335,32 @@ export default function HomePage() {
           <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
             {Array.from({ length: balls }, (_, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span
-                  className="size-5 shrink-0 rounded-full border border-white/40"
-                  style={{ background: COLORS[i % COLORS.length] }}
-                />
+                <label className="relative size-6 shrink-0 cursor-pointer">
+                  <span
+                    className={`block size-6 rounded-full border ${
+                      faces[i]?.color ? "border-emerald-400" : "border-white/40"
+                    }`}
+                    style={{ background: faces[i]?.color ?? dealt[i] }}
+                  />
+                  <input
+                    type="color"
+                    value={faces[i]?.color ?? dealt[i] ?? "#ffffff"}
+                    disabled={busy}
+                    onChange={(event) => setColor(i, event.target.value)}
+                    className="absolute inset-0 cursor-pointer opacity-0"
+                  />
+                </label>
+                {faces[i]?.color && (
+                  <button
+                    type="button"
+                    onClick={() => setColor(i, undefined)}
+                    disabled={busy}
+                    title="Back to the colour the seed dealt"
+                    className="text-[11px] text-[#5c616e] hover:text-white"
+                  >
+                    ↺
+                  </button>
+                )}
                 <input
                   type="text"
                   value={faces[i]?.glyph ?? ""}
