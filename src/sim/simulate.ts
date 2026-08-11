@@ -77,6 +77,29 @@ export type ThreadCount = (typeof THREAD_CHOICES)[number];
 export const OPENING_THREADS: ThreadCount = 5;
 
 /**
+ * How big a ball is, as a multiple of the size measured off the reference.
+ *
+ * One is the reference — 67 px across in a 1080 px frame. The bigger sizes are
+ * not only a look: a wide ball sweeps a wider corridor, so it runs through more
+ * rope per pass and the fight moves faster. The hold limit is chosen per video
+ * against the length asked for, so that speeding up does not shorten the video —
+ * it makes it busier.
+ *
+ * Stops short of the point where a ball no longer fits in its own wedge at
+ * twelve balls, which is what `startRadiusFor` guards.
+ */
+export const SIZE_CHOICES = [1, 1.4, 1.9] as const;
+export type BallSize = (typeof SIZE_CHOICES)[number];
+
+/** The reference size, and what every earlier video used. */
+export const NORMAL_SIZE: BallSize = 1;
+
+export const clampSize = (n: number): number => Math.max(1, Math.min(2.4, n || NORMAL_SIZE));
+
+/** Ball radius for this round, in arena units. */
+export const radiusFor = (size: number): number => BALL_RADIUS * clampSize(size);
+
+/**
  * Anchor points on the rim, fixed for the whole round.
  *
  * Every one of them holds a thread from the first frame to the last, so this is
@@ -160,6 +183,22 @@ export function openingFor(
  * would open across each other. Half a radius keeps them clear.
  */
 const START_RADIUS = 0.45;
+
+/**
+ * The same huddle, opened up only as far as the balls force it to.
+ *
+ * Half a radius is the figure, and it stays the figure at the reference size.
+ * Big balls do not fit round a ring that small — twelve of them at nearly twice
+ * the width would open the round already overlapping, and two balls sharing a
+ * point have their wedges crossing from the first frame. So the ring is pushed
+ * out to whatever leaves a hair between neighbours, and no further, and it is
+ * held off the wall so nobody starts embedded in it.
+ */
+const startRadiusFor = (setup: RoundSetup): number => {
+  const r = radiusFor(setup.size);
+  const clear = setup.ballCount > 1 ? (r * 1.05) / Math.sin(Math.PI / setup.ballCount) : 0;
+  return Math.min(1 - r * 1.05, Math.max(START_RADIUS, clear));
+};
 
 /**
  * Most rope a ball can hold.
@@ -247,6 +286,8 @@ export interface RoundSetup {
   threads: number;
   /** `ballCount * threads`, and so the total rope in the ring. */
   anchors: number;
+  /** Ball radius as a multiple of the measured one. Physics and picture both. */
+  size: number;
 }
 
 export interface Round {
@@ -299,9 +340,17 @@ export function setupFor(
   attempt = 0,
   threads: number = OPENING_THREADS,
   balls: number = BALL_COUNT,
+  size: number = NORMAL_SIZE,
 ): RoundSetup {
   const ballCount = clampBalls(balls);
-  return { seed, attempt, ballCount, threads, anchors: anchorsFor(threads, ballCount) };
+  return {
+    seed,
+    attempt,
+    ballCount,
+    threads,
+    anchors: anchorsFor(threads, ballCount),
+    size: clampSize(size),
+  };
 }
 
 /** The opening: the same figure in every video, turned and recoloured. */
@@ -310,11 +359,12 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const { turn, palette } = openingFor(setup.seed, setup.anchors, setup.ballCount);
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / setup.ballCount;
+  const ring = startRadiusFor(setup);
 
   for (let i = 0; i < setup.ballCount; i += 1) {
     const around = -Math.PI / 2 + i * slice + turn * stepFor(setup.anchors);
-    const x = Math.cos(around) * START_RADIUS;
-    const y = Math.sin(around) * START_RADIUS;
+    const x = Math.cos(around) * ring;
+    const y = Math.sin(around) * ring;
 
     // Ball i opens holding five consecutive anchors, so the seven fans divide
     // the rim exactly and meet edge to edge. Nothing will be added to this ring
@@ -384,9 +434,10 @@ export function play(
   const events: SimEvent[] = [];
 
   const dt = 1 / (FPS * SUBSTEPS);
-  const wall = 1 - BALL_RADIUS;
-  const touching = (BALL_RADIUS * 2) ** 2;
-  const reach = (BALL_RADIUS + THREAD_WIDTH / 2) ** 2;
+  const radius = radiusFor(setup.size);
+  const wall = 1 - radius;
+  const touching = (radius * 2) ** 2;
+  const reach = (radius + THREAD_WIDTH / 2) ** 2;
 
   // Who holds each anchor. This is the state of the round: the balls only move.
   // The modulo is not optional here — unlike the angles in `start`, these are
@@ -523,7 +574,7 @@ export function play(
             b.vy -= closing * ny;
           }
           // Push them apart so they cannot stick together.
-          const overlap = (BALL_RADIUS * 2 - distance) / 2 + 1e-4;
+          const overlap = (radius * 2 - distance) / 2 + 1e-4;
           a.x -= nx * overlap;
           a.y -= ny * overlap;
           b.x += nx * overlap;
@@ -595,19 +646,19 @@ export function play(
 /**
  * How long a video runs.
  *
- * Drawn from the seed, twenty seconds to a minute and twenty. The fight itself
- * is not a settable length — it takes as long as it takes — so the seed picks a
- * length first, then hunts for a fight that settles just inside it, and whatever
- * is left over is the winner's victory lap: it keeps moving, holding every
- * thread in the ring, until the clock runs out.
+ * Drawn from the seed, a minute to a minute and twenty. The fight itself is not
+ * a settable length — it takes as long as it takes — so the seed picks a length
+ * first, then hunts for a fight that settles just inside it, and whatever is
+ * left over is the winner's victory lap: it keeps moving, holding every thread
+ * in the ring, until the clock runs out.
  *
- * Reachable at every density, which is the thing worth checking before promising
- * a range. Played out, fights settle anywhere from four seconds to a hundred and
- * nine, median around thirty; a fifth of them land under twenty seconds at five
- * threads and a tenth at twenty threads, so even the short end of the range is
- * found in a handful of deals rather than by luck.
+ * A minute is long for this fight, and that is the whole difficulty of the
+ * range. Played at the old fixed hold limit, fights settle around thirty seconds
+ * at seven balls and around twenty at twelve, so most deals were finishing less
+ * than halfway through and the rest of the video would have been victory lap.
+ * The hold limit is what the search moves to fix that — see `HOLD_LADDER`.
  */
-export const SHORTEST = 20;
+export const SHORTEST = 60;
 export const LONGEST = 80;
 
 /** The length this seed asks for. From the seed alone, never from the deal. */
@@ -620,50 +671,135 @@ export const lengthFor = (seed: number): number => {
 /**
  * How early the fight has to settle, leaving the rest as the victory lap.
  *
- * Scaled rather than fixed: nine seconds of lap is an ending on a minute-long
- * video and nearly half a short one, so it is capped at a third of the length.
+ * Twelve seconds on a minute-long video is an ending rather than an epilogue,
+ * and it is a fifth of the video at most. It used to be nine, and nine was too
+ * strict to be worth it: the search either spent its whole budget hunting a
+ * fight that finished in exactly the right second, or gave up and handed back a
+ * deal with a thirty-second lap. A window the search can actually hit produces
+ * shorter endings than a window it misses.
  */
-const lapFor = (length: number): number => Math.min(9, length * 0.3);
+const lapFor = (length: number): number => Math.min(12, length * 0.2);
 
+/**
+ * How much rope a ball may hold, tight to loose, as multiples of what it opens
+ * with. This is the dial the search turns to make a fight last a minute.
+ *
+ * The hold limit is what makes the economy one-way: a full ball breaks the
+ * thread it runs through instead of taking it, and the arena empties until one
+ * ball is left. Tighten it and rope disappears fast and the fight is over in
+ * seconds; loosen it and the rope stays in play and the fight runs long. Swept
+ * across every density, it moves the median settling time from around ten
+ * seconds to past a hundred, monotonically, which is what makes it searchable.
+ *
+ * It does not go up for ever. Past the top of this ladder breakage is so rare
+ * that the round is nearly conserving again, and a conserving round has no
+ * winner — the last two trade the same rope until the clock stops.
+ */
+const HOLD_LADDER = [
+  1.2, 1.4, 1.6, 1.8, 2.0, 2.3, 2.6, 3.0, 3.4, 4.0, 4.6, 5.3, 6.2, 7.2, 8.4,
+];
+
+/**
+ * Picks the fight this video will show.
+ *
+ * Two dials, turned in order. The **hold limit** decides roughly how long fights
+ * at this density last, and it is found by bisecting the ladder — four plays to
+ * bracket a minute, whatever the ball count and thread count are. The **deal**
+ * then decides this particular fight, and deals are tried at the chosen rung
+ * until one settles inside the window.
+ *
+ * Searching the limit first is what makes a one-minute video possible at all. A
+ * deal-only search was hunting for the one fight in twenty that ran long enough,
+ * and at twelve balls, where fights settle in twenty seconds, there was often no
+ * such deal to find; bracketing the limit first puts the whole distribution
+ * where the length wants it, and then almost any deal will do.
+ */
 export function generateRound(
   seed: number,
   threads: number = OPENING_THREADS,
   balls: number = BALL_COUNT,
+  size: number = NORMAL_SIZE,
   tuning: Tuning = DEFAULT_TUNING,
 ): Round {
-  const deal = (attempt: number) => setupFor(seed, attempt, threads, balls);
+  const deal = (attempt: number) => setupFor(seed, attempt, threads, balls, size);
   const length = lengthFor(seed);
   const settleBy = length;
   const settleFrom = Math.max(3, length - lapFor(length));
 
-  /** When the fight settled, or `Infinity` if it never did. */
-  const settlesAt = (attempt: number): number =>
+  // A caller that has fixed the limit itself — the sweeps that chose these
+  // numbers — is not looking for the search to move it back.
+  const fixed = tuning.holdLimit !== undefined;
+  const rungAt = (rung: number): Tuning => ({
+    ...tuning,
+    holdLimit: tuning.holdLimit ?? Math.max(threads + 1, Math.round(threads * HOLD_LADDER[rung])),
+  });
+
+  /** When the fight settled, or `Infinity` if it never did — or not in time. */
+  const settlesAt = (attempt: number, rung: number): number =>
     // Run no further than the window: a fight still going at the far edge of it
-    // is a reject, and how much further it would have gone does not matter.
-    play(deal(attempt), tuning, false, settleBy).events.find((e) => e.kind === 'win')?.t ??
+    // is a reject, and how much further it would have gone does not matter. It
+    // also bounds the search, which is the difference between a wait and a hang.
+    play(deal(attempt), rungAt(rung), false, settleBy).events.find((e) => e.kind === 'win')?.t ??
     Infinity;
 
-  let closest = 0;
-  let closestGap = Infinity;
-  // Capped rather than exhaustive. A seed that has not found its fight in eighty
-  // deals is a seed whose fights mostly run long, and eighty is already a second
-  // of work on a phone — the fallback below costs a few seconds of victory lap,
-  // which is cheaper than a page that sits still.
-  for (let attempt = 0; attempt < 80; attempt += 1) {
-    // Played without recording first: the search only wants to know when the
-    // fight settled, and keeping four thousand snapshots per discarded attempt
-    // is how a phone runs out of memory.
-    const at = settlesAt(attempt);
-    if (at >= settleFrom && at <= settleBy) {
-      return play(deal(attempt), tuning, true, length);
+  // Falling short is better than overrunning: a fight cut off by the clock has
+  // no ending, only a leader. So an overrun is scored a hundred seconds worse
+  // than the longest possible shortfall.
+  const miss = (at: number) => (at > settleBy ? at - settleBy + 100 : settleFrom - at);
+
+  let bestAttempt = 0;
+  let bestRung = 0;
+  let bestMiss = Infinity;
+
+  // Played without recording throughout: the search only wants to know when the
+  // fight settled, and keeping four thousand snapshots per discarded attempt is
+  // how a phone runs out of memory.
+  const probe = (attempt: number, rung: number): number => {
+    const at = settlesAt(attempt, rung);
+    const gap = miss(at);
+    if (gap < bestMiss) {
+      bestMiss = gap;
+      bestAttempt = attempt;
+      bestRung = rung;
     }
-    // Falling short is better than overrunning: a fight cut off by the clock has
-    // no ending, only a leader.
-    const gap = at > settleBy ? at - settleBy + 100 : settleFrom - at;
-    if (gap < closestGap) {
-      closestGap = gap;
-      closest = attempt;
+    return at;
+  };
+  const lands = (at: number) => at >= settleFrom && at <= settleBy;
+
+  if (!fixed) {
+    let lo = 0;
+    let hi = HOLD_LADDER.length - 1;
+    while (lo <= hi) {
+      const rung = (lo + hi) >> 1;
+      const at = probe(0, rung);
+      if (lands(at)) return play(deal(0), rungAt(rung), true, length);
+      // Settled early means the rope ran out too fast: loosen. Otherwise it ran
+      // past the clock, and the limit has to come back down.
+      if (at < settleFrom) lo = rung + 1;
+      else hi = rung - 1;
     }
   }
-  return play(deal(closest), tuning, true, length);
+
+  // Then deals, with the limit still following what each one does: one deal is
+  // a noisy reading of a rung — fights at the same limit vary by a factor of
+  // three — so a rung fixed on the strength of a single play is often the wrong
+  // one. Stepping after every miss lets the search walk back and forth across
+  // the window instead of hammering one side of it.
+  //
+  // Capped rather than exhaustive: a seed that has not found its fight in two
+  // dozen deals is one whose fights all sit on the wrong side of the window, and
+  // the fallback below costs a few seconds of victory lap, which is cheaper than
+  // a page that sits still.
+  let rung = bestRung;
+  for (let attempt = 1; attempt < 40; attempt += 1) {
+    const at = probe(attempt, rung);
+    if (lands(at)) return play(deal(attempt), rungAt(rung), true, length);
+    if (at < settleFrom) rung = Math.min(HOLD_LADDER.length - 1, rung + 1);
+    else rung = Math.max(0, rung - 1);
+    // Two dozen is enough for almost every seed. The rest of the budget is spent
+    // only where it is needed — on a seed whose best fight so far still leaves a
+    // long ending — rather than on every generate.
+    if (attempt >= 24 && bestMiss <= 8) break;
+  }
+  return play(deal(bestAttempt), rungAt(bestRung), true, length);
 }

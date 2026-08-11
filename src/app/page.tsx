@@ -28,11 +28,14 @@ import {
   BALL_COUNT,
   FEWEST_BALLS,
   MOST_BALLS,
+  NORMAL_SIZE,
+  SIZE_CHOICES,
   THREAD_CHOICES,
   anchorsFor,
   clampBalls,
   generateRound,
   openingFor,
+  type BallSize,
   type Round,
   type ThreadCount,
 } from "../sim/simulate";
@@ -90,6 +93,7 @@ export default function HomePage() {
   const [invert, setInvert] = useState(false);
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
+  const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
   // One entry per ball, by index, kept at full length so changing the count
   // never loses what was already set on the balls that stay.
   const [faces, setFaces] = useState<BallFace[]>(() =>
@@ -162,6 +166,7 @@ export default function HomePage() {
       negative: boolean,
       perBall: ThreadCount,
       howMany: number,
+      wide: BallSize,
       dressed: readonly BallFace[],
     ) => {
       if (abortRef.current) return;
@@ -197,7 +202,7 @@ export default function HomePage() {
             // that is a request which stalls rather than fails.
             await reserveEncoder(onStage);
 
-            const round = generateRound(forSeed, perBall, howMany);
+            const round = generateRound(forSeed, perBall, howMany, wide);
             total = round.durationInFrames;
             onStage("sound");
             const audio = await renderRoundAudio(round).catch(() => null);
@@ -328,6 +333,25 @@ export default function HomePage() {
           </span>
         </div>
 
+        <div className="mt-2 flex items-center gap-2">
+          <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
+          {SIZE_CHOICES.map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              onClick={() => setSize(choice)}
+              disabled={busy}
+              className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                size === choice
+                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+              }`}
+            >
+              ×{choice}
+            </button>
+          ))}
+        </div>
+
         <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
           <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
             Dress the balls — emoji, flag, letter or a logo
@@ -412,7 +436,7 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run(seed, invert, threads, balls, faces)}
+          onClick={() => run(seed, invert, threads, balls, size, faces)}
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >

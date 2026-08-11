@@ -46,6 +46,13 @@ everywhere it shows — the disc, its threads and its pins on the rim all change
 together, so a captured thread still reads as a capture. The `↺` next to a
 swatch hands the ball back the colour the seed gave it.
 
+**Ball size** is ×1, ×1.4 or ×1.9. Not only a look: a wider ball sweeps a wider
+corridor, so it runs through more rope per pass and the fight moves faster. It
+does not make the video shorter — the holding limit is searched against the
+length either way — it makes it busier. At twelve big balls the opening huddle
+would not fit round its usual ring, so the ring opens out just far enough to
+leave a hair between neighbours, and no further.
+
 **Threads per ball** is five, ten or twenty — thirty-five anchors, seventy, or a
 hundred and forty. Five gives wedges you can count and a picture that thins out as
 rope is broken; twenty packs the rim tight enough to read as a ring of colour.
@@ -83,9 +90,10 @@ Four of them, and they are the whole game.
 2. **Touch a thread and it comes away with you** — new hub, new colour, same
    anchor. The ball is not turned by it: rope does not push back, and the only
    rebounds in the arena are off the wall and off other balls.
-3. **Full hands break rope instead of taking it.** A ball can hold nine threads.
-   Run through one more and it snaps, and that anchor stays empty for the rest of
-   the round.
+3. **Full hands break rope instead of taking it.** Run through one thread past
+   what your hands hold and it snaps, and that anchor stays empty for the rest of
+   the round. How much a ball can hold is the one number chosen per video rather
+   than fixed, because it is what decides how long the fight lasts — see below.
 4. **Threads are life.** A ball holding none is out.
 
 Rule 3 is the one that finishes the fight, and it is worth saying why. Transfer
@@ -96,22 +104,33 @@ balls. Breakage makes it one-way. **So there is always a winner.**
 
 ## How long a video runs
 
-**Twenty seconds to a minute and twenty, drawn from the seed.** The fight is not
-a settable length — it takes as long as it takes — so the seed picks a length
-first, then hunts for a fight that settles just inside it, and the rest is the
-winner's victory lap: it keeps moving, holding every thread in the ring, until
-the clock runs out. The lap is capped at a third of the length, so a short video
-does not spend half of itself on an ending.
+**A minute to a minute and twenty, drawn from the seed.** Never less than a
+minute. The fight is not a settable length — it takes as long as it takes — so
+the seed picks a length first, then hunts for a fight that settles just inside
+it, and the rest is the winner's victory lap: it keeps moving, holding every
+thread in the ring, until the clock runs out. The lap is a fifth of the video at
+most, so the ending is an ending rather than half the film.
 
-Worth checking the range was reachable before promising it, at every density:
-played out, fights settle anywhere from four seconds to a hundred and nine, median
-around thirty. A fifth land under twenty seconds at five threads and a tenth at
-twenty threads, so even the short end is found in a handful of deals rather than
-by luck. Twenty seeds at each density: the length is respected every time and
-nothing is cut off by the clock.
+A minute is a long fight, and simply asking for one does not produce it. At the
+old fixed holding limit fights settle around thirty seconds at seven balls and
+around twenty at twelve — most deals were finishing less than halfway through,
+and no amount of re-dealing changes a distribution. **So the limit is searched,
+not fixed.** Loosen it and rope survives longer and the fight runs long; tighten
+it and the arena empties in seconds. Swept across every density it moves the
+median settling time from ten seconds to past a hundred, monotonically, so a
+video's limit is found by bisecting a ladder of them — four plays to bracket the
+length asked for — and only then are deals tried, with the limit still stepping
+after each miss.
 
-Over five thousand seeds the lengths come out uniform — about a sixth in each
-ten-second band.
+That is what a search over deals alone could not do: at twelve balls there was
+often no deal that lasted a minute to find.
+
+Measured across every combination of ball count, thread count and ball size,
+twenty seeds each: **the length is exact every time, and every video has a
+winner.** The victory lap comes out five to eleven seconds typically, under
+twenty for nine seeds in ten. Finding the fight costs a tenth of a second at
+three balls and one to two seconds at twelve balls on a hundred and forty
+anchors, worst case five.
 
 The first second is held on the opening picture before anybody moves. Seven
 wedges dividing the rim is the most legible frame in the video and it is gone in
@@ -119,8 +138,8 @@ an instant otherwise.
 
 **No two threads ever overlap.** Not as a repair, not as a constraint checked
 afterwards: a ball takes every thread it touches, so it is never on the far side
-of one. Checked on every frame of four full rounds and every sixth frame of
-twelve: zero crossings.
+of one. Checked on every frame of five full rounds spanning every ball count,
+thread count and ball size: zero crossings.
 
 ## Measured against the reference, not guessed
 

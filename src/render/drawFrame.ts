@@ -45,6 +45,11 @@ export interface Viewport {
   invert?: boolean;
   /** One entry per ball, by index. Missing or empty means colour only. */
   faces?: readonly (BallFace | null | undefined)[];
+  /**
+   * Ball radius as a multiple of the measured one. Has to be the same number the
+   * fight was played at, or the balls would take rope they are not touching.
+   */
+  size?: number;
 }
 
 /**
@@ -65,7 +70,7 @@ function ink(hex: string, invert: boolean): string {
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
-  { width, height, invert = false, faces }: Viewport,
+  { width, height, invert = false, faces, size = 1 }: Viewport,
 ): void {
   const radius = width * ARENA;
   const cx = width / 2;
@@ -139,7 +144,7 @@ export function drawFrame(
 
     const bx = toScreenX(ball.x);
     const by = toScreenY(ball.y);
-    const r = radius * BALL_RADIUS * scale;
+    const r = radius * BALL_RADIUS * size * scale;
 
     ctx.fillStyle = hue(ball);
     ctx.beginPath();

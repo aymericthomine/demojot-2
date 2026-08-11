@@ -302,6 +302,10 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
         height: HEIGHT,
         invert: options.invert,
         faces: options.faces,
+        // From the round, never from the page: the fight was played with balls
+        // this wide, so drawing them any other size would show rope being taken
+        // at a distance.
+        size: round.setup.size,
       });
       // Awaiting is what applies back-pressure: it resolves when the encoder is
       // ready for more, so raw frames never pile up in memory. The first one is
@@ -341,4 +345,4 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
 export const fileNameFor = (round: Round, extension: string, invert = false): string =>
   `balls-${round.setup.seed}-${round.setup.ballCount}b-${round.setup.threads}t-${Math.round(
     round.duration,
-  )}s${invert ? '-white' : ''}.${extension}`;
+  )}s${round.setup.size === 1 ? '' : `-x${round.setup.size}`}${invert ? '-white' : ''}.${extension}`;
