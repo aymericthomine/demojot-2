@@ -28,6 +28,18 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
+**Balls** is three to twelve. Not two: a two-ball round never finishes, because
+each is penned in its own half of the ring and can only reach the rope on the
+boundary between them, so they trade the same threads for ever — ten seeds out of
+ten were still going on a five-minute clock. Twelve is the palette.
+
+**Dress the balls** with an emoji, a flag, a letter or a logo, or leave them as
+colours. A glyph is drawn in the middle of the disc — colour emoji bring their own
+colours, a plain character takes the ink — and an image is clipped to the circle
+and cropped to fill it, so a rectangular logo keeps its proportions. A logo wins
+over a glyph on the same ball. Images are decoded to a bitmap when you pick them,
+not on every frame.
+
 **Threads per ball** is five, ten or twenty — thirty-five anchors, seventy, or a
 hundred and forty. Five gives wedges you can count and a picture that thins out as
 rope is broken; twenty packs the rim tight enough to read as a ring of colour.

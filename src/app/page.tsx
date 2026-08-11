@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * The whole app: press the button, get a video.
@@ -13,9 +13,9 @@
  * seed, so what follows is never the same twice.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { renderRoundAudio } from '../audio/render';
+import { renderRoundAudio } from "../audio/render";
 import {
   describeSupport,
   encodeVideo,
@@ -23,22 +23,32 @@ import {
   reserveEncoder,
   EncodeCancelled,
   type EncodeStage,
-} from '../export/encodeVideo';
-import { generateRound, THREAD_CHOICES, type Round, type ThreadCount } from '../sim/simulate';
-import { FPS, HEIGHT, WIDTH } from '../sim/style';
+} from "../export/encodeVideo";
+import {
+  BALL_COUNT,
+  FEWEST_BALLS,
+  MOST_BALLS,
+  THREAD_CHOICES,
+  clampBalls,
+  generateRound,
+  type Round,
+  type ThreadCount,
+} from "../sim/simulate";
+import { COLORS, FPS, HEIGHT, WIDTH } from "../sim/style";
+import type { BallFace } from "../render/drawFrame";
 
 type Stage =
-  | { kind: 'idle' }
-  | { kind: 'fighting' }
+  | { kind: "idle" }
+  | { kind: "fighting" }
   | {
-      kind: 'encoding';
+      kind: "encoding";
       step: EncodeStage;
       done: number;
       total: number;
       remaining: number | null;
     }
   | {
-      kind: 'done';
+      kind: "done";
       round: Round;
       url: string;
       name: string;
@@ -46,14 +56,15 @@ type Stage =
       codec: string;
       silent?: string;
     }
-  | { kind: 'failed'; message: string };
+  | { kind: "failed"; message: string };
 
 const seconds = (value: number): string =>
   value >= 60
     ? `${Math.floor(value / 60)} min ${Math.round(value % 60)} s`
     : `${Math.max(1, Math.round(value))} s`;
 
-const megabytes = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+const megabytes = (bytes: number): string =>
+  `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 /**
  * One label per step of the encoder, so a page that is waiting says what on.
@@ -61,13 +72,13 @@ const megabytes = (bytes: number): string => `${(bytes / 1024 / 1024).toFixed(1)
  * of it had stopped.
  */
 const STEP_LABEL: Record<EncodeStage, string> = {
-  loading: 'Loading the encoder…',
-  probing: 'Looking for a video encoder…',
-  sound: 'Building the soundtrack…',
-  'audio-codec': 'Looking for an audio encoder…',
-  starting: 'Starting the encoder…',
-  frames: '',
-  writing: 'Writing the file…',
+  loading: "Loading the encoder…",
+  probing: "Looking for a video encoder…",
+  sound: "Building the soundtrack…",
+  "audio-codec": "Looking for an audio encoder…",
+  starting: "Starting the encoder…",
+  frames: "",
+  writing: "Writing the file…",
 };
 
 const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
@@ -76,7 +87,23 @@ export default function HomePage() {
   const [seed, setSeed] = useState(() => randomSeed());
   const [invert, setInvert] = useState(false);
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
-  const [stage, setStage] = useState<Stage>({ kind: 'idle' });
+  const [balls, setBalls] = useState(BALL_COUNT);
+  // One entry per ball, by index, kept at full length so changing the count
+  // never loses what was already set on the balls that stay.
+  const [faces, setFaces] = useState<BallFace[]>(() =>
+    Array.from({ length: MOST_BALLS }, () => ({})),
+  );
+
+  const setGlyph = (index: number, glyph: string) =>
+    setFaces((old) => old.map((f, i) => (i === index ? { ...f, glyph } : f)));
+
+  const setImage = async (index: number, file: File | null) => {
+    // Decoded to a bitmap here rather than at encode time: the encoder draws it
+    // three thousand times and should not be decoding a PNG on every frame.
+    const image = file ? await createImageBitmap(file).catch(() => null) : null;
+    setFaces((old) => old.map((f, i) => (i === index ? { ...f, image } : f)));
+  };
+  const [stage, setStage] = useState<Stage>({ kind: "idle" });
 
   const [support, setSupport] = useState<string | null>(null);
 
@@ -97,7 +124,7 @@ export default function HomePage() {
   // isConfigSupported a dozen times, and on some browsers that spins up a real
   // encoder each time — exactly the resource the next attempt needs.
   useEffect(() => {
-    if (stage.kind !== 'failed' || support !== null) return;
+    if (stage.kind !== "failed" || support !== null) return;
     let live = true;
     void describeSupport().then((text) => {
       if (live) setSupport(text);
@@ -110,105 +137,118 @@ export default function HomePage() {
   // Saving is what the button was pressed for, so it happens without a second
   // click. Guarded by the URL so a re-render cannot download the same file twice.
   useEffect(() => {
-    if (stage.kind !== 'done' || savedRef.current === stage.url) return;
+    if (stage.kind !== "done" || savedRef.current === stage.url) return;
     savedRef.current = stage.url;
     linkRef.current?.click();
   }, [stage]);
 
-  const run = useCallback((forSeed: number, negative: boolean, perBall: ThreadCount) => {
-    if (abortRef.current) return;
-    const controller = new AbortController();
-    abortRef.current = controller;
+  const run = useCallback(
+    (
+      forSeed: number,
+      negative: boolean,
+      perBall: ThreadCount,
+      howMany: number,
+      dressed: readonly BallFace[],
+    ) => {
+      if (abortRef.current) return;
+      const controller = new AbortController();
+      abortRef.current = controller;
 
-    if (urlRef.current) {
-      URL.revokeObjectURL(urlRef.current);
-      urlRef.current = null;
-    }
-    setStage({ kind: 'fighting' });
+      if (urlRef.current) {
+        URL.revokeObjectURL(urlRef.current);
+        urlRef.current = null;
+      }
+      setStage({ kind: "fighting" });
 
-    // A tick's grace so the button paints its new state before the fight takes
-    // the thread for a moment.
-    window.setTimeout(() => {
-      void (async () => {
-        try {
-          const startedAt = performance.now();
-          let step: EncodeStage = 'loading';
-          let done = 0;
-          let total = 0;
-          const show = (remaining: number | null) =>
-            setStage({ kind: 'encoding', step, done, total, remaining });
-          const onStage = (next: EncodeStage) => {
-            step = next;
+      // A tick's grace so the button paints its new state before the fight takes
+      // the thread for a moment.
+      window.setTimeout(() => {
+        void (async () => {
+          try {
+            const startedAt = performance.now();
+            let step: EncodeStage = "loading";
+            let done = 0;
+            let total = 0;
+            const show = (remaining: number | null) =>
+              setStage({ kind: "encoding", step, done, total, remaining });
+            const onStage = (next: EncodeStage) => {
+              step = next;
+              show(null);
+            };
             show(null);
-          };
-          show(null);
 
-          // The encoder is reserved before the round exists. Asking a phone for
-          // a hardware encoder once twenty-five thousand snapshots and a
-          // soundtrack are already resident is asking under memory pressure, and
-          // that is a request which stalls rather than fails.
-          await reserveEncoder(onStage);
+            // The encoder is reserved before the round exists. Asking a phone for
+            // a hardware encoder once twenty-five thousand snapshots and a
+            // soundtrack are already resident is asking under memory pressure, and
+            // that is a request which stalls rather than fails.
+            await reserveEncoder(onStage);
 
-          const round = generateRound(forSeed, perBall);
-          total = round.durationInFrames;
-          onStage('sound');
-          const audio = await renderRoundAudio(round).catch(() => null);
+            const round = generateRound(forSeed, perBall, howMany);
+            total = round.durationInFrames;
+            onStage("sound");
+            const audio = await renderRoundAudio(round).catch(() => null);
 
-          const result = await encodeVideo({
-            round,
-            audio,
-            invert: negative,
-            signal: controller.signal,
-            onStage,
-            onProgress: (at, of) => {
-              done = at;
-              total = of;
-              const elapsed = (performance.now() - startedAt) / 1000;
-              // Ten frames in is enough for the rate to mean something; before
-              // that an estimate is just a number that jumps around.
-              show(done >= 10 ? (elapsed / done) * (total - done) : null);
-            },
-          });
+            const result = await encodeVideo({
+              round,
+              audio,
+              invert: negative,
+              faces: dressed,
+              signal: controller.signal,
+              onStage,
+              onProgress: (at, of) => {
+                done = at;
+                total = of;
+                const elapsed = (performance.now() - startedAt) / 1000;
+                // Ten frames in is enough for the rate to mean something; before
+                // that an estimate is just a number that jumps around.
+                show(done >= 10 ? (elapsed / done) * (total - done) : null);
+              },
+            });
 
-          const url = URL.createObjectURL(result.blob);
-          urlRef.current = url;
-          setStage({
-            kind: 'done',
-            round,
-            url,
-            name: fileNameFor(round, result.extension, negative),
-            size: result.blob.size,
-            codec: result.codec,
-            silent: result.silent,
-          });
-        } catch (cause) {
-          setStage(
-            cause instanceof EncodeCancelled
-              ? { kind: 'idle' }
-              : {
-                  kind: 'failed',
-                  message: cause instanceof Error ? cause.message : String(cause),
-                },
-          );
-        } finally {
-          abortRef.current = null;
-        }
-      })();
-    }, 20);
-  }, []);
+            const url = URL.createObjectURL(result.blob);
+            urlRef.current = url;
+            setStage({
+              kind: "done",
+              round,
+              url,
+              name: fileNameFor(round, result.extension, negative),
+              size: result.blob.size,
+              codec: result.codec,
+              silent: result.silent,
+            });
+          } catch (cause) {
+            setStage(
+              cause instanceof EncodeCancelled
+                ? { kind: "idle" }
+                : {
+                    kind: "failed",
+                    message:
+                      cause instanceof Error ? cause.message : String(cause),
+                  },
+            );
+          } finally {
+            abortRef.current = null;
+          }
+        })();
+      }, 20);
+    },
+    [],
+  );
 
-  const busy = stage.kind === 'fighting' || stage.kind === 'encoding';
-  const percent = stage.kind === 'encoding' ? stage.done / Math.max(1, stage.total) : 0;
+  const busy = stage.kind === "fighting" || stage.kind === "encoding";
+  const percent =
+    stage.kind === "encoding" ? stage.done / Math.max(1, stage.total) : 0;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-5 py-10">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Ball Battle</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
-          Seven balls, one ring, and a fixed set of threads pinned to the wall — thirty-five of
-          them, or seventy. The anchors never move; run through somebody else&apos;s thread and it
-          comes away with you, turning your colour. Full hands break rope instead of taking it, and a
-          ball holding none is out.
+          Seven balls, one ring, and a fixed set of threads pinned to the wall —
+          thirty-five of them, or seventy. The anchors never move; run through
+          somebody else&apos;s thread and it comes away with you, turning your
+          colour. Full hands break rope instead of taking it, and a ball holding
+          none is out.
         </p>
       </header>
 
@@ -221,7 +261,9 @@ export default function HomePage() {
               min={0}
               value={seed}
               disabled={busy}
-              onChange={(event) => setSeed(Math.max(0, Math.floor(Number(event.target.value))))}
+              onChange={(event) =>
+                setSeed(Math.max(0, Math.floor(Number(event.target.value))))
+              }
               className="w-full bg-transparent font-mono text-sm outline-none disabled:opacity-50"
             />
           </label>
@@ -245,14 +287,81 @@ export default function HomePage() {
               disabled={busy}
               className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
                 threads === count
-                  ? 'border-emerald-400/40 bg-emerald-400/15 text-emerald-200'
-                  : 'border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]'
+                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
               }`}
             >
               {count}
             </button>
           ))}
         </div>
+
+        <div className="mt-2 flex items-center gap-2">
+          <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
+          <input
+            type="number"
+            min={FEWEST_BALLS}
+            max={MOST_BALLS}
+            value={balls}
+            disabled={busy}
+            onChange={(event) =>
+              setBalls(clampBalls(Number(event.target.value)))
+            }
+            className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
+          />
+          <span className="text-[11px] text-[#5c616e]">
+            {FEWEST_BALLS}–{MOST_BALLS}
+          </span>
+        </div>
+
+        <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
+          <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
+            Dress the balls — emoji, flag, letter or a logo
+          </summary>
+          <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
+            {Array.from({ length: balls }, (_, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span
+                  className="size-5 shrink-0 rounded-full border border-white/40"
+                  style={{ background: COLORS[i % COLORS.length] }}
+                />
+                <input
+                  type="text"
+                  value={faces[i]?.glyph ?? ""}
+                  disabled={busy}
+                  placeholder="🔥"
+                  onChange={(event) =>
+                    setGlyph(i, event.target.value.slice(0, 4))
+                  }
+                  className="w-12 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 text-center text-sm outline-none disabled:opacity-40"
+                />
+                <label
+                  className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] ${
+                    faces[i]?.image
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] text-[#8b90a0] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {faces[i]?.image ? "logo ✓" : "logo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={busy}
+                    onChange={(event) =>
+                      void setImage(i, event.target.files?.[0] ?? null)
+                    }
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            ))}
+          </div>
+          <p className="px-3 pb-3 text-[11px] leading-relaxed text-[#5c616e]">
+            A logo wins over a glyph on the same ball. Leave both empty and the
+            ball is just its colour. Flags are emoji — 🇫🇷 🇧🇷 — and paste like
+            any other character.
+          </p>
+        </details>
 
         <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
           <input
@@ -267,25 +376,25 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run(seed, invert, threads)}
+          onClick={() => run(seed, invert, threads, balls, faces)}
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
-          {stage.kind === 'fighting'
-            ? 'Fighting…'
-            : stage.kind === 'encoding'
-              ? 'Encoding…'
-              : 'Generate the video'}
+          {stage.kind === "fighting"
+            ? "Fighting…"
+            : stage.kind === "encoding"
+              ? "Encoding…"
+              : "Generate the video"}
         </button>
 
-        {stage.kind === 'encoding' && (
+        {stage.kind === "encoding" && (
           <>
             <div className="mt-3 mb-2 flex items-center justify-between text-xs">
               <span>
-                {stage.step === 'frames'
+                {stage.step === "frames"
                   ? `Frame ${stage.done.toLocaleString()} of ${stage.total.toLocaleString()}`
                   : STEP_LABEL[stage.step]}
-                {stage.step === 'frames' &&
+                {stage.step === "frames" &&
                   stage.remaining !== null &&
                   ` · ${seconds(stage.remaining)} left`}
               </span>
@@ -300,33 +409,42 @@ export default function HomePage() {
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
               <div
                 className={`h-full rounded-full bg-emerald-400 transition-[width] duration-200 ${
-                  stage.step === 'frames' ? '' : 'animate-pulse'
+                  stage.step === "frames" ? "" : "animate-pulse"
                 }`}
-                style={{ width: `${stage.step === 'frames' ? Math.round(percent * 100) : 100}%` }}
+                style={{
+                  width: `${stage.step === "frames" ? Math.round(percent * 100) : 100}%`,
+                }}
               />
             </div>
           </>
         )}
 
-        {stage.kind === 'failed' && (
+        {stage.kind === "failed" && (
           <p className="mt-3 text-xs text-rose-400">
             {stage.message}
-            {support && <span className="mt-1 block text-[10px] text-rose-300/70">{support}</span>}
+            {support && (
+              <span className="mt-1 block text-[10px] text-rose-300/70">
+                {support}
+              </span>
+            )}
           </p>
         )}
 
-        {stage.kind === 'done' && (
+        {stage.kind === "done" && (
           <div className="mt-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <code className="block truncate font-mono text-[11px] text-emerald-300">
                 {stage.name}
               </code>
               {stage.silent && (
-                <span className="block text-[11px] text-amber-400">no sound: {stage.silent}</span>
+                <span className="block text-[11px] text-amber-400">
+                  no sound: {stage.silent}
+                </span>
               )}
               <span className="text-[11px] text-[#8b90a0]">
-                {stage.round.duration.toFixed(1)}s · winner #{stage.round.winner + 1} ·{' '}
-                {megabytes(stage.size)} · {stage.codec.toUpperCase()}
+                {stage.round.duration.toFixed(1)}s · winner #
+                {stage.round.winner + 1} · {megabytes(stage.size)} ·{" "}
+                {stage.codec.toUpperCase()}
               </span>
             </div>
             <a ref={linkRef} href={stage.url} download={stage.name}>
@@ -338,12 +456,11 @@ export default function HomePage() {
         )}
 
         <p className="mt-3 text-[11px] leading-relaxed text-[#8b90a0]">
-          {WIDTH}×{HEIGHT} · {FPS} fps · sound included. Encoded here in the page — nothing is
-          uploaded anywhere — and saved as soon as it is ready. Keep this tab in front while it runs;
-          a phone will take several minutes and may run out of memory before it finishes.
+          {WIDTH}×{HEIGHT} · {FPS} fps · sound included. Encoded here in the
+          page — nothing is uploaded anywhere — and saved as soon as it is
+          ready. Keep this tab in front while it runs; a phone will take several
+          minutes and may run out of memory before it finishes.
         </p>
-
-
       </div>
     </main>
   );

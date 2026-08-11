@@ -43,6 +43,23 @@ const SUBSTEPS = 4;
 export const BALL_COUNT = 7;
 
 /**
+ * How many balls a round may have.
+ *
+ * Three, not two. A two-ball round never finishes: each is penned in its own
+ * half of the ring and can only reach the rope on the boundary between them, so
+ * they trade the same threads and neither runs out — played to a five-minute
+ * clock, ten seeds out of ten were still going. Three settles seven times in ten
+ * over the same clock, and inside the search window every deal found an ending.
+ *
+ * Twelve is the palette, and the point at which a wedge is narrow enough that a
+ * ball barely fits inside its own opening.
+ */
+export const FEWEST_BALLS = 3;
+export const MOST_BALLS = 12;
+export const clampBalls = (n: number): number =>
+  Math.max(FEWEST_BALLS, Math.min(MOST_BALLS, Math.round(n) || BALL_COUNT));
+
+/**
  * Threads everybody can start with.
  *
  * Five is the sparse game: thirty-five anchors, wedges you can count, a picture
@@ -68,7 +85,7 @@ export const OPENING_THREADS: ThreadCount = 5;
  * wedges meeting edge to edge with nothing between them — and it divides exactly
  * for any thread count, which is why the choice is safe.
  */
-export const anchorsFor = (threads: number): number => BALL_COUNT * threads;
+export const anchorsFor = (threads: number, balls: number = BALL_COUNT): number => balls * threads;
 
 /**
  * Most rope a ball can hold, and the reason a round ever finishes.
@@ -118,11 +135,15 @@ const anchorAngle = (j: number, setup: RoundSetup): number =>
  * Taken from the seed alone, never from the deal: every attempt at a seed has to
  * share one opening, or "the seed is the video" stops being true.
  */
-export function openingFor(seed: number, anchors: number): { turn: number; palette: number[] } {
+export function openingFor(
+  seed: number,
+  anchors: number,
+  balls: number = BALL_COUNT,
+): { turn: number; palette: number[] } {
   const rng = createRng(seed ^ 0x9e3779b9);
   const turn = rng.int(0, anchors - 1);
-  const palette = Array.from({ length: BALL_COUNT }, (_, i) => i);
-  for (let i = BALL_COUNT - 1; i > 0; i -= 1) {
+  const palette = Array.from({ length: balls }, (_, i) => i);
+  for (let i = balls - 1; i > 0; i -= 1) {
     const j = rng.int(0, i);
     [palette[i], palette[j]] = [palette[j], palette[i]];
   }
@@ -277,18 +298,20 @@ export function setupFor(
   seed: number,
   attempt = 0,
   threads: number = OPENING_THREADS,
+  balls: number = BALL_COUNT,
 ): RoundSetup {
-  return { seed, attempt, ballCount: BALL_COUNT, threads, anchors: anchorsFor(threads) };
+  const ballCount = clampBalls(balls);
+  return { seed, attempt, ballCount, threads, anchors: anchorsFor(threads, ballCount) };
 }
 
 /** The opening: the same figure in every video, turned and recoloured. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
-  const { turn, palette } = openingFor(setup.seed, setup.anchors);
+  const { turn, palette } = openingFor(setup.seed, setup.anchors, setup.ballCount);
   const balls: Live[] = [];
-  const slice = (Math.PI * 2) / BALL_COUNT;
+  const slice = (Math.PI * 2) / setup.ballCount;
 
-  for (let i = 0; i < BALL_COUNT; i += 1) {
+  for (let i = 0; i < setup.ballCount; i += 1) {
     const around = -Math.PI / 2 + i * slice + turn * stepFor(setup.anchors);
     const x = Math.cos(around) * START_RADIUS;
     const y = Math.sin(around) * START_RADIUS;
@@ -385,8 +408,8 @@ export function play(
     rimY[j] = Math.sin(angle);
   }
   const owner = new Int8Array(anchors);
-  const { turn } = openingFor(setup.seed, anchors);
-  for (let i = 0; i < BALL_COUNT; i += 1) {
+  const { turn } = openingFor(setup.seed, anchors, setup.ballCount);
+  for (let i = 0; i < setup.ballCount; i += 1) {
     for (let k = 0; k < setup.threads; k += 1) {
       owner[(i * setup.threads + k + turn) % anchors] = i;
     }
@@ -605,9 +628,10 @@ const lapFor = (length: number): number => Math.min(9, length * 0.3);
 export function generateRound(
   seed: number,
   threads: number = OPENING_THREADS,
+  balls: number = BALL_COUNT,
   tuning: Tuning = DEFAULT_TUNING,
 ): Round {
-  const deal = (attempt: number) => setupFor(seed, attempt, threads);
+  const deal = (attempt: number) => setupFor(seed, attempt, threads, balls);
   const length = lengthFor(seed);
   const settleBy = length;
   const settleFrom = Math.max(3, length - lapFor(length));

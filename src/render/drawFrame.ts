@@ -21,11 +21,28 @@ import {
   THREAD_WIDTH,
 } from '../sim/style';
 
+/**
+ * What a ball wears, if anything.
+ *
+ * A glyph is anything you can type — an emoji, a flag, a letter — drawn in the
+ * middle of the disc. Colour emoji bring their own colours and ignore the fill;
+ * a plain character takes the ink. An image is drawn clipped to the circle and
+ * cropped to fill it, so a rectangular logo does not squash.
+ *
+ * Both empty is the default: the ball is just its colour, as it always was.
+ */
+export interface BallFace {
+  glyph?: string;
+  image?: CanvasImageSource | null;
+}
+
 export interface Viewport {
   width: number;
   height: number;
   /** Print the negative: white ground, and every colour its complement. */
   invert?: boolean;
+  /** One entry per ball, by index. Missing or empty means colour only. */
+  faces?: readonly (BallFace | null | undefined)[];
 }
 
 /**
@@ -46,7 +63,7 @@ function ink(hex: string, invert: boolean): string {
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
-  { width, height, invert = false }: Viewport,
+  { width, height, invert = false, faces }: Viewport,
 ): void {
   const radius = width * ARENA;
   const cx = width / 2;
@@ -120,6 +137,38 @@ export function drawFrame(
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);
     ctx.fill();
+
+    const face = faces?.[ball.index];
+    if (face?.image) {
+      // Cropped to fill rather than stretched: a logo that is not square keeps
+      // its proportions and loses its edges instead of being squashed.
+      const source = face.image;
+      const sw = 'width' in source ? Number(source.width) : 0;
+      const sh = 'height' in source ? Number(source.height) : 0;
+      if (sw > 0 && sh > 0) {
+        const side = Math.min(sw, sh);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(bx, by, r, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(source, (sw - side) / 2, (sh - side) / 2, side, side, bx - r, by - r, r * 2, r * 2);
+        ctx.restore();
+      }
+    } else if (face?.glyph) {
+      // Sized to sit inside the disc with a little air. Colour emoji paint
+      // themselves; a plain character takes the ground colour so it reads
+      // against the ball rather than disappearing into it.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(bx, by, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.font = `${r * 1.5}px "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = ink('#000000', invert);
+      ctx.fillText(face.glyph, bx, by);
+      ctx.restore();
+    }
 
     ctx.strokeStyle = ink('#ffffff', invert);
     ctx.lineWidth = radius * BALL_RING;

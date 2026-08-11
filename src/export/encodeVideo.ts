@@ -14,7 +14,7 @@
  */
 
 import { renderRoundAudio } from '../audio/render';
-import { drawFrame } from '../render/drawFrame';
+import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
 
@@ -47,6 +47,8 @@ export interface EncodeOptions {
   audio: AudioBuffer | null;
   /** White ground and complementary colours instead of the usual black. */
   invert?: boolean;
+  /** What each ball wears, by index. */
+  faces?: readonly (BallFace | null | undefined)[];
   onProgress?: (done: number, total: number) => void;
   onStage?: (stage: EncodeStage) => void;
   signal?: AbortSignal;
@@ -299,6 +301,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
         width: WIDTH,
         height: HEIGHT,
         invert: options.invert,
+        faces: options.faces,
       });
       // Awaiting is what applies back-pressure: it resolves when the encoder is
       // ready for more, so raw frames never pile up in memory. The first one is
@@ -336,6 +339,6 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
 }
 
 export const fileNameFor = (round: Round, extension: string, invert = false): string =>
-  `balls-${round.setup.seed}-${round.setup.threads}t-${Math.round(round.duration)}s${
-    invert ? '-white' : ''
-  }.${extension}`;
+  `balls-${round.setup.seed}-${round.setup.ballCount}b-${round.setup.threads}t-${Math.round(
+    round.duration,
+  )}s${invert ? '-white' : ''}.${extension}`;
