@@ -98,10 +98,10 @@ const WOBBLE = 0;
  * chute — so this and `POP` are where most of the life in a busy bowl comes
  * from.
  */
-const SHOVE = 0.7;
+const SHOVE = 0.5;
 
 /** How hard a merge kicks what it makes upwards, in bowl radii per second. */
-const POP = 0.8;
+const POP = 0.6;
 
 /**
  * Half the neck, in bowl radii. Measured: 41.5 px of 576.
@@ -121,12 +121,16 @@ export const NECK = 0.139;
  * as floating.
  *
  * A loose piece drifting through open space measures far weaker still, but that
- * is not a free fall: it is a piece leaning on something. The arc is the honest
- * sample, and this sits at half of it — the same rebound then climbs twice as
- * far and stays up twice as long, which is the difference between a twitch and
- * something worth watching.
+ * is not a free fall: it is a piece leaning on something.
+ *
+ * This ended up at a sixteenth of the arc, which is well below either
+ * measurement and is a choice rather than a reading. Two things come out of it
+ * and both were asked for: a rebound climbs sixteen times as far and hangs
+ * sixteen times as long, and the pile stops being pressed together by its own
+ * weight — the bowl fills with pieces drifting through it instead of a heap
+ * sitting in the bottom of it. Nothing here is trying to be earth.
  */
-const GRAVITY = 1;
+const GRAVITY = 0.18;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -143,7 +147,7 @@ const PASSES = 3;
  * point — the energy budget here is tiny, because a piece arrives at the speed
  * of the chute and nothing else puts anything in.
  */
-const BOUNCE = 0.65;
+const BOUNCE = 0.8;
 
 /**
  * The wall gives more back than another piece does.
@@ -153,7 +157,7 @@ const BOUNCE = 0.65;
  * with something else. Nearly all of it comes back: the wall is where a piece
  * that has run out of ideas gets sent somewhere new.
  */
-const WALL_BOUNCE = 0.8;
+const WALL_BOUNCE = 0.9;
 
 /**
  * Below this a contact takes everything instead of bouncing.

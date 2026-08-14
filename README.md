@@ -215,7 +215,11 @@ around.
 
 The low gravity is what makes it read as soft rather than sharp: the same
 rebound climbs further and stays up longer, so the bowl is busy without anything
-in it snapping about. Measured on the same seed: **four fifths of the pieces are
+in it snapping about. It ended up at a sixteenth of what the reference measures,
+which is a choice and not a reading — a rebound now climbs sixteen times as far
+and hangs sixteen times as long, and the pile stops being pressed together by its
+own weight. Three fifths of the pieces are in the upper half of the bowl at any
+moment, drifting through it rather than heaped in the bottom of it. Measured on the same seed: **four fifths of the pieces are
 moving at any moment**, at half again the speed, where before it was under half
 of them. Sixteen drops run sixty-five seconds to a minute fifty-three, every one
 ending on the eighth element and none inside a minute.
