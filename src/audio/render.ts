@@ -22,6 +22,7 @@
  * that uses it. Nothing else in the project has that exposure.
  */
 
+import type { DropRound } from '../sim/drop';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
 
@@ -49,14 +50,27 @@ function sprite(): Promise<AudioBuffer> {
   return decoded;
 }
 
-export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
+/** One tick: when, which slot of the sprite, how loud. */
+interface Hit {
+  t: number;
+  slot: number;
+  gain: number;
+}
+
+/**
+ * The soundtrack, from a list of ticks.
+ *
+ * Both modes make one the same way — the same recording at every moment their
+ * simulation says something happened — so only the list of moments differs.
+ */
+async function renderHits(duration: number, list: readonly Hit[]): Promise<AudioBuffer> {
   const hits = await sprite();
   // Exactly as long as the picture, not a frame more. A second of room used to
   // be left here so a tail could not be clipped, and it made a video that is
   // 61 seconds of picture report itself as 62: the container takes the longest
   // track. Nothing is lost — the last events land seconds before the end, and a
   // tick is a seventh of a second long.
-  const length = Math.round(round.duration * SAMPLE_RATE);
+  const length = Math.round(duration * SAMPLE_RATE);
   // Mono. Every hit is the same mono recording played at the same level, so the
   // two channels were identical and the second one cost eleven megabytes on a
   // minute-long round — memory a phone would rather spend on the encoder.
@@ -79,6 +93,15 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
     source.start(time, index * SLOT, SLOT);
   };
 
+  for (const hit of list) {
+    if (hit.t >= 0 && hit.t < duration) play(hit.t, hit.slot, hit.gain);
+  }
+
+  return ctx.startRendering();
+}
+
+export function renderRoundAudio(round: Round): Promise<AudioBuffer> {
+  const list: Hit[] = [];
   for (const event of round.events) {
     switch (event.kind) {
       // The wall, rope changing hands, two balls meeting: all the same noise,
@@ -87,18 +110,55 @@ export async function renderRoundAudio(round: Round): Promise<AudioBuffer> {
       case 'take':
       case 'break':
       case 'clash':
-        play(event.t, TICK, 0.8);
+        list.push({ t: event.t, slot: TICK, gain: 0.8 });
         break;
       case 'death':
-        play(event.t, OCTAVE, 0.9);
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.9 });
         break;
       case 'win':
-        [0, 0.12, 0.24].forEach((offset, i) => play(event.t + offset, i === 2 ? OCTAVE : TICK, 0.85));
+        [0, 0.12, 0.24].forEach((offset, i) =>
+          list.push({
+            t: event.t + offset,
+            slot: i === 2 ? OCTAVE : TICK,
+            gain: 0.85,
+          }),
+        );
         break;
     }
   }
+  return renderHits(round.duration, list);
+}
 
-  return ctx.startRendering();
+/**
+ * The drop's sound.
+ *
+ * The same tick, on the same terms: a fruit landing and two fruits becoming one
+ * are the same noise, because that is what the fight does and there is no reason
+ * for the two modes to sound like different sites. The octave is kept for the
+ * one thing worth marking — a pair at the top of the ladder bursting.
+ */
+export function renderDropAudio(round: DropRound): Promise<AudioBuffer> {
+  const list: Hit[] = [];
+  for (const event of round.events) {
+    switch (event.kind) {
+      case 'land':
+        list.push({ t: event.t, slot: TICK, gain: 0.7 });
+        break;
+      case 'merge':
+        list.push({ t: event.t, slot: TICK, gain: 0.85 });
+        break;
+      case 'burst':
+        [0, 0.1, 0.2].forEach((offset, i) =>
+          list.push({
+            t: event.t + offset,
+            slot: i === 2 ? OCTAVE : TICK,
+            gain: 0.85,
+          }),
+        );
+        break;
+    }
+  }
+  return renderHits(round.duration, list);
 }
 
 /** Interleaved float samples, which is what the encoder wants. */

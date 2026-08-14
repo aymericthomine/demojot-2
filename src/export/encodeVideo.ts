@@ -13,10 +13,24 @@
  * it does not.
  */
 
-import { renderRoundAudio } from '../audio/render';
-import { drawFrame, type BallFace } from '../render/drawFrame';
-import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
+
+/**
+ * What the encoder needs to know about a video, and nothing more.
+ *
+ * There are two kinds of video on this site now — the fight and the drop — and
+ * they share nothing but a frame rate. Rather than teach the encoder about both,
+ * each hands it a reel: how many frames, what to call the file, and a function
+ * that paints frame `n`. Painting is also where a frame is released, since only
+ * the maker of a reel knows what it was holding.
+ */
+export interface Reel {
+  durationInFrames: number;
+  duration: number;
+  /** The file name, without the dot or the extension. */
+  name: string;
+  paint(ctx: CanvasRenderingContext2D, index: number): void;
+}
 
 export interface EncodeResult {
   blob: Blob;
@@ -43,12 +57,8 @@ export type EncodeStage =
   | 'writing';
 
 export interface EncodeOptions {
-  round: Round;
+  reel: Reel;
   audio: AudioBuffer | null;
-  /** White ground and complementary colours instead of the usual black. */
-  invert?: boolean;
-  /** What each ball wears, by index. */
-  faces?: readonly (BallFace | null | undefined)[];
   onProgress?: (done: number, total: number) => void;
   onStage?: (stage: EncodeStage) => void;
   signal?: AbortSignal;
@@ -203,7 +213,7 @@ export async function reserveEncoder(
 }
 
 export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult> {
-  const { round, audio } = options;
+  const { reel, audio } = options;
 
   const { lib, codec } = await reserveEncoder(options.onStage);
   const {
@@ -218,9 +228,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   } = lib;
 
   const webm = codec === 'vp9' || codec === 'vp8';
-  const format = webm
-    ? new WebMOutputFormat()
-    : new Mp4OutputFormat({ fastStart: 'in-memory' });
+  const format = webm ? new WebMOutputFormat() : new Mp4OutputFormat({ fastStart: 'in-memory' });
   const target = new BufferTarget();
   const output = new Output({ format, target });
 
@@ -235,21 +243,12 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   });
   output.addVideoTrack(video, { frameRate: FPS });
 
-  // The page normally hands the soundtrack over ready-made; make it here if not.
-  // Either way the sound is allowed to fail: a video with no sound is a poor
-  // result, but a page that hangs for ever is not a result at all, so every step
-  // of it is on a clock and a failure is reported rather than fatal.
-  let silent: string | undefined;
-  let track = audio;
-  if (!track) {
-    options.onStage?.('sound');
-    track = await withWatchdog(renderRoundAudio(round), 'Building the soundtrack', PROBE_MS).catch(
-      (error: Error) => {
-        silent = error.message;
-        return null;
-      },
-    );
-  }
+  // The soundtrack is built by the page — each mode has its own — and it is
+  // allowed to have failed. A video with no sound is a poor result; a page that
+  // hangs for ever is not a result at all, so a soundtrack that did not arrive
+  // is reported rather than fatal.
+  const track = audio;
+  let silent: string | undefined = track ? undefined : 'the soundtrack could not be built';
 
   let audioSource: InstanceType<typeof AudioBufferSource> | null = null;
   if (track) {
@@ -266,7 +265,10 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       return null;
     });
     if (audioCodec) {
-      audioSource = new AudioBufferSource({ codec: audioCodec, bitrate: 160_000 });
+      audioSource = new AudioBufferSource({
+        codec: audioCodec,
+        bitrate: 160_000,
+      });
       output.addAudioTrack(audioSource);
     } else if (!silent) {
       silent = 'this browser has no audio encoder';
@@ -291,31 +293,22 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       await audioSource.add(track);
     }
 
-    const total = round.durationInFrames;
+    const total = reel.durationInFrames;
     options.onStage?.('frames');
     options.onProgress?.(0, total);
 
     for (let frame = 0; frame < total; frame += 1) {
       if (options.signal?.aborted) throw new EncodeCancelled();
-      drawFrame(ctx as unknown as CanvasRenderingContext2D, round.frames[frame], {
-        width: WIDTH,
-        height: HEIGHT,
-        invert: options.invert,
-        faces: options.faces,
-        // From the round, never from the page: the fight was played with balls
-        // this wide, so drawing them any other size would show rope being taken
-        // at a distance.
-        size: round.setup.size,
-      });
+      // Painting also lets the frame go. A sixty-second round is three and a
+      // half thousand snapshots and the encoder never looks back, so releasing
+      // each one as it is drawn keeps the tail of a long encode cheaper than its
+      // head.
+      reel.paint(ctx as unknown as CanvasRenderingContext2D, frame);
       // Awaiting is what applies back-pressure: it resolves when the encoder is
       // ready for more, so raw frames never pile up in memory. The first one is
       // watched, because an encoder that is never going to produce anything
       // hangs here rather than throwing.
       const added = video.add(frame / FPS, 1 / FPS);
-      // Done with it. A sixty-one second round is three and a half thousand
-      // snapshots and the encoder never looks back, so letting each one go as it
-      // is drawn keeps the tail of a long encode cheaper than its head.
-      round.frames[frame] = undefined as unknown as (typeof round.frames)[number];
       // The first one gets a long leash: it carries the encoder's warm-up and
       // the first keyframe, and a phone is slow enough that a tight limit would
       // fail work that was going to finish.
@@ -323,7 +316,6 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
       options.onProgress?.(frame + 1, total);
       if (frame % 4 === 3) await breathe();
     }
-
   } catch (error) {
     await output.cancel();
     throw error;
@@ -342,7 +334,4 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   };
 }
 
-export const fileNameFor = (round: Round, extension: string, invert = false): string =>
-  `balls-${round.setup.seed}-${round.setup.ballCount}b-${round.setup.threads}t-${Math.round(
-    round.duration,
-  )}s${round.setup.size === 1 ? '' : `-x${round.setup.size}`}${invert ? '-white' : ''}.${extension}`;
+export const fileNameFor = (reel: Reel, extension: string): string => `${reel.name}.${extension}`;

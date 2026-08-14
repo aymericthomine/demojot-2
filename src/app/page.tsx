@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { renderRoundAudio } from "../audio/render";
+import { renderDropAudio, renderRoundAudio } from "../audio/render";
 import {
   describeSupport,
   encodeVideo,
@@ -23,7 +23,17 @@ import {
   reserveEncoder,
   EncodeCancelled,
   type EncodeStage,
+  type Reel,
 } from "../export/encodeVideo";
+import { battleReel, dropReel } from "../export/reels";
+import {
+  FEWEST_RANKS,
+  MOST_RANKS,
+  clampRanks,
+  lengthFor,
+  playDrop,
+} from "../sim/drop";
+import { FRUITS } from "../sim/fruit";
 import {
   BALL_COUNT,
   FEWEST_BALLS,
@@ -36,11 +46,39 @@ import {
   generateRound,
   openingFor,
   type BallSize,
-  type Round,
   type ThreadCount,
 } from "../sim/simulate";
 import { COLORS, FPS, HEIGHT, WIDTH } from "../sim/style";
 import type { BallFace } from "../render/drawFrame";
+import type { FruitFace } from "../render/drawDrop";
+
+/**
+ * The two things this site makes.
+ *
+ * They share the seed, the clock, the sound and the encoder, and nothing else:
+ * the fight is a fixed set of threads changing hands, the drop is fruit piling
+ * up and merging. Adding the second did not touch the first.
+ */
+type Mode = "battle" | "drop";
+
+/** Everything a press of the button needs, so the two modes share one runner. */
+type Job =
+  | {
+      mode: "battle";
+      seed: number;
+      invert: boolean;
+      threads: ThreadCount;
+      balls: number;
+      size: BallSize;
+      faces: readonly BallFace[];
+    }
+  | {
+      mode: "drop";
+      seed: number;
+      invert: boolean;
+      ranks: number;
+      faces: readonly FruitFace[];
+    };
 
 type Stage =
   | { kind: "idle" }
@@ -54,7 +92,8 @@ type Stage =
     }
   | {
       kind: "done";
-      round: Round;
+      /** One line about what came out, which each mode writes for itself. */
+      summary: string;
       url: string;
       name: string;
       size: number;
@@ -89,11 +128,28 @@ const STEP_LABEL: Record<EncodeStage, string> = {
 const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
 
 export default function HomePage() {
+  const [mode, setMode] = useState<Mode>("battle");
   const [seed, setSeed] = useState(() => randomSeed());
   const [invert, setInvert] = useState(false);
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
   const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
+  const [ranks, setRanks] = useState(MOST_RANKS);
+  // One entry per rank of the ladder, by index, same as the balls: kept at full
+  // length so changing the ladder never loses what was already set.
+  const [fruits, setFruits] = useState<FruitFace[]>(() =>
+    Array.from({ length: MOST_RANKS }, () => ({})),
+  );
+
+  const setFruit = (rank: number, patch: Partial<FruitFace>) =>
+    setFruits((old) =>
+      old.map((f, i) => (i === rank ? { ...f, ...patch } : f)),
+    );
+
+  const setFruitImage = async (rank: number, file: File | null) => {
+    const image = file ? await createImageBitmap(file).catch(() => null) : null;
+    setFruit(rank, { image });
+  };
   // One entry per ball, by index, kept at full length so changing the count
   // never loses what was already set on the balls that stay.
   const [faces, setFaces] = useState<BallFace[]>(() =>
@@ -160,99 +216,112 @@ export default function HomePage() {
     linkRef.current?.click();
   }, [stage]);
 
-  const run = useCallback(
-    (
-      forSeed: number,
-      negative: boolean,
-      perBall: ThreadCount,
-      howMany: number,
-      wide: BallSize,
-      dressed: readonly BallFace[],
-    ) => {
-      if (abortRef.current) return;
-      const controller = new AbortController();
-      abortRef.current = controller;
+  const run = useCallback((job: Job) => {
+    if (abortRef.current) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-      if (urlRef.current) {
-        URL.revokeObjectURL(urlRef.current);
-        urlRef.current = null;
-      }
-      setStage({ kind: "fighting" });
+    if (urlRef.current) {
+      URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    }
+    setStage({ kind: "fighting" });
 
-      // A tick's grace so the button paints its new state before the fight takes
-      // the thread for a moment.
-      window.setTimeout(() => {
-        void (async () => {
-          try {
-            const startedAt = performance.now();
-            let step: EncodeStage = "loading";
-            let done = 0;
-            let total = 0;
-            const show = (remaining: number | null) =>
-              setStage({ kind: "encoding", step, done, total, remaining });
-            const onStage = (next: EncodeStage) => {
-              step = next;
-              show(null);
-            };
+    // A tick's grace so the button paints its new state before the fight takes
+    // the thread for a moment.
+    window.setTimeout(() => {
+      void (async () => {
+        try {
+          const startedAt = performance.now();
+          let step: EncodeStage = "loading";
+          let done = 0;
+          let total = 0;
+          const show = (remaining: number | null) =>
+            setStage({ kind: "encoding", step, done, total, remaining });
+          const onStage = (next: EncodeStage) => {
+            step = next;
             show(null);
+          };
+          show(null);
 
-            // The encoder is reserved before the round exists. Asking a phone for
-            // a hardware encoder once twenty-five thousand snapshots and a
-            // soundtrack are already resident is asking under memory pressure, and
-            // that is a request which stalls rather than fails.
-            await reserveEncoder(onStage);
+          // The encoder is reserved before the round exists. Asking a phone for
+          // a hardware encoder once twenty-five thousand snapshots and a
+          // soundtrack are already resident is asking under memory pressure, and
+          // that is a request which stalls rather than fails.
+          await reserveEncoder(onStage);
 
-            const round = generateRound(forSeed, perBall, howMany, wide);
+          let reel: Reel;
+          let audio: AudioBuffer | null;
+          let summary: string;
+          if (job.mode === "battle") {
+            const round = generateRound(
+              job.seed,
+              job.threads,
+              job.balls,
+              job.size,
+            );
             total = round.durationInFrames;
             onStage("sound");
-            const audio = await renderRoundAudio(round).catch(() => null);
-
-            const result = await encodeVideo({
-              round,
-              audio,
-              invert: negative,
-              faces: dressed,
-              signal: controller.signal,
-              onStage,
-              onProgress: (at, of) => {
-                done = at;
-                total = of;
-                const elapsed = (performance.now() - startedAt) / 1000;
-                // Ten frames in is enough for the rate to mean something; before
-                // that an estimate is just a number that jumps around.
-                show(done >= 10 ? (elapsed / done) * (total - done) : null);
-              },
+            audio = await renderRoundAudio(round).catch(() => null);
+            reel = battleReel(round, {
+              invert: job.invert,
+              faces: job.faces,
             });
-
-            const url = URL.createObjectURL(result.blob);
-            urlRef.current = url;
-            setStage({
-              kind: "done",
-              round,
-              url,
-              name: fileNameFor(round, result.extension, negative),
-              size: result.blob.size,
-              codec: result.codec,
-              silent: result.silent,
-            });
-          } catch (cause) {
-            setStage(
-              cause instanceof EncodeCancelled
-                ? { kind: "idle" }
-                : {
-                    kind: "failed",
-                    message:
-                      cause instanceof Error ? cause.message : String(cause),
-                  },
+            summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
+          } else {
+            const round = playDrop(
+              { seed: job.seed, ranks: job.ranks },
+              lengthFor(job.seed),
             );
-          } finally {
-            abortRef.current = null;
+            total = round.durationInFrames;
+            onStage("sound");
+            audio = await renderDropAudio(round).catch(() => null);
+            reel = dropReel(round, { invert: job.invert, faces: job.faces });
+            summary = `${round.duration.toFixed(1)}s · best ${FRUITS[round.best].name}`;
           }
-        })();
-      }, 20);
-    },
-    [],
-  );
+
+          const result = await encodeVideo({
+            reel,
+            audio,
+            signal: controller.signal,
+            onStage,
+            onProgress: (at, of) => {
+              done = at;
+              total = of;
+              const elapsed = (performance.now() - startedAt) / 1000;
+              // Ten frames in is enough for the rate to mean something; before
+              // that an estimate is just a number that jumps around.
+              show(done >= 10 ? (elapsed / done) * (total - done) : null);
+            },
+          });
+
+          const url = URL.createObjectURL(result.blob);
+          urlRef.current = url;
+          setStage({
+            kind: "done",
+            summary,
+            url,
+            name: fileNameFor(reel, result.extension),
+            size: result.blob.size,
+            codec: result.codec,
+            silent: result.silent,
+          });
+        } catch (cause) {
+          setStage(
+            cause instanceof EncodeCancelled
+              ? { kind: "idle" }
+              : {
+                  kind: "failed",
+                  message:
+                    cause instanceof Error ? cause.message : String(cause),
+                },
+          );
+        } finally {
+          abortRef.current = null;
+        }
+      })();
+    }, 20);
+  }, []);
 
   const busy = stage.kind === "fighting" || stage.kind === "encoding";
   const percent =
@@ -261,17 +330,35 @@ export default function HomePage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-5 py-10">
       <header>
-        <h1 className="text-2xl font-semibold tracking-tight">Ball Battle</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {mode === "battle" ? "Ball Battle" : "Fruit Drop"}
+        </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
-          Seven balls, one ring, and a fixed set of threads pinned to the wall —
-          thirty-five of them, or seventy. The anchors never move; run through
-          somebody else&apos;s thread and it comes away with you, turning your
-          colour. Full hands break rope instead of taking it, and a ball holding
-          none is out.
+          {mode === "battle"
+            ? "Balls in a ring fighting over threads pinned to the wall. The anchors never move; run through somebody else's thread and it comes away with you, turning your colour. Full hands break rope instead of taking it, and a ball holding none is out."
+            : "A chute drops a fruit into the bowl three times a second. Two of the same kind that touch become one of the next kind up — strawberry, tangerine, kiwi, lemon, apple, and on up the ladder. Nothing is aimed and nothing is lost; the pile does the rest."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
+        <div className="mb-3 flex gap-2">
+          {(["battle", "drop"] as const).map((choice) => (
+            <button
+              key={choice}
+              type="button"
+              onClick={() => setMode(choice)}
+              disabled={busy}
+              className={`flex-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40 ${
+                mode === choice
+                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+              }`}
+            >
+              {choice === "battle" ? "Ball battle" : "Fruit drop"}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-2">
           <label className="flex flex-1 items-center gap-2 rounded-xl border border-[#23262f] bg-black/40 px-3 py-2">
             <span className="text-xs text-[#8b90a0]">Seed</span>
@@ -296,132 +383,234 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <span className="px-1 text-sm text-[#8b90a0]">Threads per ball</span>
-          {THREAD_CHOICES.map((count) => (
-            <button
-              key={count}
-              type="button"
-              onClick={() => setThreads(count)}
-              disabled={busy}
-              className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                threads === count
-                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-              }`}
-            >
-              {count}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-2 flex items-center gap-2">
-          <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
-          <input
-            type="number"
-            min={FEWEST_BALLS}
-            max={MOST_BALLS}
-            value={balls}
-            disabled={busy}
-            onChange={(event) =>
-              setBalls(clampBalls(Number(event.target.value)))
-            }
-            className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
-          />
-          <span className="text-[11px] text-[#5c616e]">
-            {FEWEST_BALLS}–{MOST_BALLS}
-          </span>
-        </div>
-
-        <div className="mt-2 flex items-center gap-2">
-          <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
-          {SIZE_CHOICES.map((choice) => (
-            <button
-              key={choice}
-              type="button"
-              onClick={() => setSize(choice)}
-              disabled={busy}
-              className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                size === choice
-                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-              }`}
-            >
-              ×{choice}
-            </button>
-          ))}
-        </div>
-
-        <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
-          <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
-            Dress the balls — emoji, flag, letter or a logo
-          </summary>
-          <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
-            {Array.from({ length: balls }, (_, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <label className="relative size-6 shrink-0 cursor-pointer">
-                  <span
-                    className={`block size-6 rounded-full border ${
-                      faces[i]?.color ? "border-emerald-400" : "border-white/40"
-                    }`}
-                    style={{ background: faces[i]?.color ?? dealt[i] }}
-                  />
-                  <input
-                    type="color"
-                    value={faces[i]?.color ?? dealt[i] ?? "#ffffff"}
-                    disabled={busy}
-                    onChange={(event) => setColor(i, event.target.value)}
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                  />
-                </label>
-                {faces[i]?.color && (
-                  <button
-                    type="button"
-                    onClick={() => setColor(i, undefined)}
-                    disabled={busy}
-                    title="Back to the colour the seed dealt"
-                    className="text-[11px] text-[#5c616e] hover:text-white"
-                  >
-                    ↺
-                  </button>
-                )}
-                <input
-                  type="text"
-                  value={faces[i]?.glyph ?? ""}
+        {mode === "battle" && (
+          <>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">
+                Threads per ball
+              </span>
+              {THREAD_CHOICES.map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  onClick={() => setThreads(count)}
                   disabled={busy}
-                  placeholder="🔥"
-                  onChange={(event) =>
-                    setGlyph(i, event.target.value.slice(0, 4))
-                  }
-                  className="w-12 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 text-center text-sm outline-none disabled:opacity-40"
-                />
-                <label
-                  className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] ${
-                    faces[i]?.image
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    threads === count
                       ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                      : "border-[#23262f] bg-white/[0.04] text-[#8b90a0] hover:border-[#3a3f4d]"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
                   }`}
                 >
-                  {faces[i]?.image ? "logo ✓" : "logo"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={busy}
-                    onChange={(event) =>
-                      void setImage(i, event.target.files?.[0] ?? null)
-                    }
-                    className="hidden"
-                  />
-                </label>
+                  {count}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
+              <input
+                type="number"
+                min={FEWEST_BALLS}
+                max={MOST_BALLS}
+                value={balls}
+                disabled={busy}
+                onChange={(event) =>
+                  setBalls(clampBalls(Number(event.target.value)))
+                }
+                className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
+              />
+              <span className="text-[11px] text-[#5c616e]">
+                {FEWEST_BALLS}–{MOST_BALLS}
+              </span>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
+              {SIZE_CHOICES.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setSize(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    size === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  ×{choice}
+                </button>
+              ))}
+            </div>
+
+            <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
+              <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
+                Dress the balls — emoji, flag, letter or a logo
+              </summary>
+              <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
+                {Array.from({ length: balls }, (_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <label className="relative size-6 shrink-0 cursor-pointer">
+                      <span
+                        className={`block size-6 rounded-full border ${
+                          faces[i]?.color
+                            ? "border-emerald-400"
+                            : "border-white/40"
+                        }`}
+                        style={{ background: faces[i]?.color ?? dealt[i] }}
+                      />
+                      <input
+                        type="color"
+                        value={faces[i]?.color ?? dealt[i] ?? "#ffffff"}
+                        disabled={busy}
+                        onChange={(event) => setColor(i, event.target.value)}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                      />
+                    </label>
+                    {faces[i]?.color && (
+                      <button
+                        type="button"
+                        onClick={() => setColor(i, undefined)}
+                        disabled={busy}
+                        title="Back to the colour the seed dealt"
+                        className="text-[11px] text-[#5c616e] hover:text-white"
+                      >
+                        ↺
+                      </button>
+                    )}
+                    <input
+                      type="text"
+                      value={faces[i]?.glyph ?? ""}
+                      disabled={busy}
+                      placeholder="🔥"
+                      onChange={(event) =>
+                        setGlyph(i, event.target.value.slice(0, 4))
+                      }
+                      className="w-12 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 text-center text-sm outline-none disabled:opacity-40"
+                    />
+                    <label
+                      className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] ${
+                        faces[i]?.image
+                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                          : "border-[#23262f] bg-white/[0.04] text-[#8b90a0] hover:border-[#3a3f4d]"
+                      }`}
+                    >
+                      {faces[i]?.image ? "logo ✓" : "logo"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={busy}
+                        onChange={(event) =>
+                          void setImage(i, event.target.files?.[0] ?? null)
+                        }
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p className="px-3 pb-3 text-[11px] leading-relaxed text-[#5c616e]">
-            A logo wins over a glyph on the same ball. Leave both empty and the
-            ball is just its colour. Flags are emoji — 🇫🇷 🇧🇷 — and paste like
-            any other character.
-          </p>
-        </details>
+              <p className="px-3 pb-3 text-[11px] leading-relaxed text-[#5c616e]">
+                A logo wins over a glyph on the same ball. Leave both empty and
+                the ball is just its colour. Flags are emoji — 🇫🇷 🇧🇷 — and paste
+                like any other character.
+              </p>
+            </details>
+          </>
+        )}
+
+        {mode === "drop" && (
+          <>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Fruits</span>
+              <input
+                type="number"
+                min={FEWEST_RANKS}
+                max={MOST_RANKS}
+                value={ranks}
+                disabled={busy}
+                onChange={(event) =>
+                  setRanks(clampRanks(Number(event.target.value)))
+                }
+                className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
+              />
+              <span className="text-[11px] text-[#5c616e]">
+                {FEWEST_RANKS}–{MOST_RANKS} · a short ladder gets to the top and
+                bursts
+              </span>
+            </div>
+
+            <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
+              <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
+                Your own fruit — one image per rank
+              </summary>
+              <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
+                {FRUITS.slice(0, ranks).map((fruit, rank) => (
+                  <div key={fruit.name} className="flex items-center gap-2">
+                    <label className="relative size-6 shrink-0 cursor-pointer">
+                      <span
+                        className={`block size-6 rounded-full border ${
+                          fruits[rank]?.color
+                            ? "border-emerald-400"
+                            : "border-white/40"
+                        }`}
+                        style={{
+                          background: fruits[rank]?.color ?? fruit.color,
+                        }}
+                      />
+                      <input
+                        type="color"
+                        value={fruits[rank]?.color ?? fruit.color}
+                        disabled={busy}
+                        onChange={(event) =>
+                          setFruit(rank, { color: event.target.value })
+                        }
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                      />
+                    </label>
+                    <input
+                      type="text"
+                      value={fruits[rank]?.glyph ?? ""}
+                      disabled={busy}
+                      placeholder={fruit.glyph}
+                      onChange={(event) =>
+                        setFruit(rank, {
+                          glyph: event.target.value.slice(0, 4),
+                        })
+                      }
+                      className="w-12 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 text-center text-sm outline-none disabled:opacity-40"
+                    />
+                    <label
+                      className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] ${
+                        fruits[rank]?.image
+                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                          : "border-[#23262f] bg-white/[0.04] text-[#8b90a0] hover:border-[#3a3f4d]"
+                      }`}
+                    >
+                      {fruits[rank]?.image ? "image ✓" : "image"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={busy}
+                        onChange={(event) =>
+                          void setFruitImage(
+                            rank,
+                            event.target.files?.[0] ?? null,
+                          )
+                        }
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <p className="px-3 pb-3 text-[11px] leading-relaxed text-[#5c616e]">
+                Ranks run smallest first. An image is cropped square and clipped
+                to the circle, so a cut-out photograph on transparent ground
+                works best; it wins over the emoji. The colour is the halo.
+              </p>
+            </details>
+          </>
+        )}
 
         <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
           <input
@@ -436,12 +625,20 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run(seed, invert, threads, balls, size, faces)}
+          onClick={() =>
+            run(
+              mode === "battle"
+                ? { mode, seed, invert, threads, balls, size, faces }
+                : { mode, seed, invert, ranks, faces: fruits },
+            )
+          }
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
           {stage.kind === "fighting"
-            ? "Fighting…"
+            ? mode === "battle"
+              ? "Fighting…"
+              : "Dropping…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}
@@ -502,8 +699,7 @@ export default function HomePage() {
                 </span>
               )}
               <span className="text-[11px] text-[#8b90a0]">
-                {stage.round.duration.toFixed(1)}s · winner #
-                {stage.round.winner + 1} · {megabytes(stage.size)} ·{" "}
+                {stage.summary} · {megabytes(stage.size)} ·{" "}
                 {stage.codec.toUpperCase()}
               </span>
             </div>

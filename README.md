@@ -1,9 +1,17 @@
 # Ball Battle
 
-A generator for vertical 9:16 videos: seven balls fight inside a ring over a fixed
-set of thirty-five threads pinned to the wall, taking them off each other until one
-ball is left holding rope. Picture and sound are both computed — there is no
-footage, no samples, and nothing downloaded.
+Two generators for vertical 9:16 videos, in one page. They share the seed, the
+clock, the sound and the encoder, and nothing else.
+
+**Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
+wall, taking them off each other until one ball is left holding rope.
+
+**Fruit drop** — a chute lets go of a fruit into a bowl three times a second, and
+two of the same kind that touch become one of the next kind up. Strawberry,
+tangerine, kiwi, lemon, apple, and on up an eleven-rung ladder.
+
+Both are computed frame by frame in the browser: no footage, no rendering
+service, nothing uploaded anywhere.
 
 Every video **opens on the same figure** — seven wedges dividing the rim edge to
 edge, an empty middle, the same seven colours on screen — but not on the same
@@ -19,7 +27,7 @@ fixed length and one sound, that is a fingerprint, and a platform looking for
 duplicates looks there first — so the figure stays and the arrangement moves.
 
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
-cannot · soundtrack synthesised from the collisions*
+cannot · soundtrack built from the collisions*
 
 ## Run it
 
@@ -78,7 +86,7 @@ npm run typecheck
 npm run lint
 ```
 
-## The rules
+## Ball battle — the rules
 
 Four of them, and they are the whole game.
 
@@ -140,6 +148,44 @@ an instant otherwise.
 afterwards: a ball takes every thread it touches, so it is never on the far side
 of one. Checked on every frame of five full rounds spanning every ball count,
 thread count and ball size: zero crossings.
+
+## Fruit drop
+
+The bowl is a flask: a circle with its top arc missing between two vertical
+walls, which is where the chute comes in. Fruit falls in, piles up, and merges.
+Nothing is aimed — there is no player — so the video is what the pile does.
+
+Two things were measured off the reference rather than chosen, and both decide
+how it reads:
+
+- **The bowl is wider than the frame.** Radius 0.519 of the frame width, centred
+  a little above the middle, so the ring is clipped by a few pixels either side.
+  The outline is 8 px of 576, the neck 83 px across.
+- **The chute is a conveyor, not a fall.** The column above the bowl is evenly
+  spaced from the top of the frame down to the pile — 67 px apart, moving 6.5 px
+  a frame, both constant. Fruit falling under gravity would spread out as it
+  went. So a fruit descends at a fixed speed until it meets something, and only
+  then starts behaving like a body with weight.
+
+Growth up the ladder is 1.20 per rank, which is also measured: a strawberry is
+40 px across in that frame and the dragon fruit seven ranks up is 122.
+
+**A column down the exact middle of a round bowl builds a tower, not a pile.**
+Every contact normal points straight up, nothing is ever pushed sideways, and
+the first version spent the whole video growing one stack of fruit up the chute.
+Two things fix it, and both are small: a fruit is let go within half a radius of
+the middle, and a merge shoves what it makes off to one side. The column still
+reads as straight.
+
+A fruit of rank `k` costs `2^k` strawberries, so at three a second a minute-long
+video pays for about rank seven — which is where the reference gets to as well.
+The ranks above that are for a lucky pile, and if a pair ever reaches the top of
+the ladder they burst instead of merging, which gives the room back and lets the
+chute keep feeding for as long as the clock runs.
+
+**Your own fruit.** Each rank takes an image — cropped square, clipped to the
+circle, so a cut-out photograph on transparent ground works best — or an emoji,
+or just its colour. The colour is the halo either way.
 
 ## Measured against the reference, not guessed
 
