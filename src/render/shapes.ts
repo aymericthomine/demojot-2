@@ -141,7 +141,18 @@ const HEART = fit([
   [-0.36, -1],
 ]);
 
-const CUTS: readonly Outline[] = [ROUND, PEAR, MARQUISE, EMERALD, OVAL, HEART, PRINCESS, BRILLIANT];
+/**
+ * One cut for the whole ladder.
+ *
+ * The other outlines above were a jeweller's tray — a heart, a marquise, a
+ * princess — and they are kept because the routine below draws any of them and
+ * they cost nothing to leave in. But a bowl of one cut at eight sizes reads as
+ * one thing growing, which is what this is, so every rank gets the round.
+ */
+const CUTS: readonly Outline[] = [ROUND, ROUND, ROUND, ROUND, ROUND, ROUND, ROUND, ROUND];
+
+/** Drawn by nothing at the moment, and kept for when a set wants them. */
+export const OTHER_CUTS = { PEAR, MARQUISE, EMERALD, OVAL, HEART, PRINCESS, BRILLIANT };
 
 /** Traces an outline at a size and a place. */
 function trace(ctx: CanvasRenderingContext2D, cut: Outline, x: number, y: number, r: number): void {

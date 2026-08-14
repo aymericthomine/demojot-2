@@ -176,6 +176,18 @@ const CALM = 0.01;
 const LOUD = 0.6;
 
 /**
+ * How hard two pieces that are already overlapping push each other apart.
+ *
+ * The relaxation passes separate them by moving them, which resolves the overlap
+ * and leaves both exactly where they were put — a pile pressed together stays
+ * pressed together, and that is what reads as jamming at the bottom of the bowl.
+ * This turns the overlap into speed as well as position, so a crowd loosens
+ * itself instead of setting. Per second, per radius of overlap, so an ordinary
+ * resting contact is worth almost nothing and a real crush is worth a shove.
+ */
+const UNPACK = 3;
+
+/**
  * How much of a slide survives a contact.
  *
  * Nearly all of it, because pieces in the reference slide over one another
@@ -185,7 +197,7 @@ const LOUD = 0.6;
  * them dozens of times a second, and a twelfth per contact was quietly the
  * largest brake in the bowl.
  */
-const RUB = 0.97;
+const RUB = 1;
 
 /**
  * Bled off every substep, so a pile stops trembling.
@@ -196,15 +208,19 @@ const RUB = 0.97;
 const DRAG = 0.9998;
 
 /**
- * What a piece weighs, by its area.
+ * What a piece weighs.
  *
- * Everything used to weigh the same, which is why a big one landing on a small
- * one shared the blow evenly and neither went anywhere interesting. A rank is a
- * fifth wider than the one below it, so it is nearly half again as heavy, and
- * the top of the ladder weighs twenty times the bottom: a big one arriving punts
- * whatever it lands on, and a small one arriving off the chute barely moves it.
+ * By its width, not its area. Everything used to weigh the same, which is why a
+ * big one landing on a small one shared the blow evenly and neither went
+ * anywhere interesting — so weight was worth having. But area put twenty times
+ * between the ends of the ladder, and at that ratio the big ones at the bottom
+ * of the bowl stopped being pieces and became a floor: nothing could move them,
+ * so nothing above them could go anywhere either. Width puts three and a half
+ * between the ends, which is enough that an arriving piece throws what it lands
+ * on in proportion to its size, and little enough that the bottom of the bowl
+ * still shifts.
  */
-const massOf = (rank: number): number => radiusOf(rank) ** 2;
+const massOf = (rank: number): number => radiusOf(rank);
 
 /** Below this speed a resting piece is simply stopped. */
 const STILL = 0.001;
@@ -626,6 +642,12 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
               a.y -= ny * overlap * (share / ma);
               b.x += nx * overlap * (share / mb);
               b.y += ny * overlap * (share / mb);
+              // And pushed apart in speed, not only in place.
+              const unpack = overlap * UNPACK;
+              a.vx -= nx * unpack * (share / ma);
+              a.vy -= ny * unpack * (share / ma);
+              b.vx += nx * unpack * (share / mb);
+              b.vy += ny * unpack * (share / mb);
 
               const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
               if (closing < 0) {

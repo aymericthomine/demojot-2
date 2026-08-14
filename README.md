@@ -177,13 +177,22 @@ how it reads:
   visibly different colours on opposite sides of the same ring, which is not what
   the reference does.
 
-**A piece weighs what its area says it weighs.** Everything used to weigh the
-same, so a big one landing on a small one shared the blow evenly and neither went
-anywhere interesting. A rank is a fifth wider than the one below it and so nearly
-half again as heavy, and the top of the ladder weighs twenty times the bottom.
-Measured over one drop, mean speed by rank: 0.50 bowl radii a second at the
-bottom of the ladder against 0.06 near the top — the small ones get punted and
-the big ones sit.
+**A piece weighs what it is wide.** Everything used to weigh the same, so a big
+one landing on a small one shared the blow evenly and neither went anywhere
+interesting. Weight by *area* was the first attempt and it overshot: twenty times
+between the ends of the ladder turned the big ones at the bottom into a floor
+rather than pieces, so nothing could move them and nothing above them could go
+anywhere either. Width puts three and a half between the ends — enough that an
+arriving piece throws what it lands on in proportion to its size, little enough
+that the bottom still shifts. Mean speed by rank over one drop: 0.55 bowl radii a
+second at the bottom of the ladder, 0.25 near the top.
+
+**And overlap is turned into speed, not only position.** The relaxation passes
+separate two pieces by moving them, which leaves both exactly where they were
+put: a pile pressed together stays pressed together, and that is what reads as
+jamming. A crowd now pushes itself apart — worth almost nothing for a resting
+contact and a real shove for a crush. With sliding made frictionless as well,
+nineteen pieces in twenty are moving at any moment.
 
 **The bowl does not settle into a heap.** Four numbers decide that and all four
 were set too cautiously. The wall gives back more than half of what hits it — it
@@ -297,11 +306,10 @@ different on every device and cannot be tuned; these are drawn out of arcs and
 polygons and gradients, which means a gem is the same gem everywhere and its
 colour is a number this repository owns. A brilliant cut has a table, a girdle
 and a pavilion; the ringed planet gives up some of its width so the ring has
-somewhere to go without hanging over its neighbours. The gems get a different
-cut at every rank — round, pear, marquise, emerald, oval, heart, princess,
-brilliant — because eight of the same octagon at eight sizes is a size ladder
-and not a jeweller's tray, and the reference has a heart and a kite and a
-faceted ball in the same bowl.
+somewhere to go without hanging over its neighbours. The gems are one cut at eight
+sizes: a tray of hearts and marquises and princesses was tried and it read as a
+collection rather than as one thing growing, which is what this is. The other
+outlines are still in the file and the faceting routine draws any of them.
 
 Each set is scaled until its silhouette meets the circle the simulation is
 actually using. A piece drawn inside its circle rather than out to it looks like
