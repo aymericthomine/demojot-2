@@ -54,30 +54,121 @@ function shade(hex: string, amount: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 }
 
-/** A regular polygon, rotated so a flat edge sits on top. */
-function polygon(
+/**
+ * The cuts, as outlines on a unit circle.
+ *
+ * One per rank, because eight of the same octagon at eight sizes is a size
+ * ladder and not a jeweller's tray — the reference has a heart and a kite and a
+ * faceted ball in the same bowl. Every outline is normalised so its furthest
+ * point sits at 1, which is the circle the simulation is using: anything drawn
+ * beyond that would hang over its neighbours, and anything well inside it looks
+ * like it is floating.
+ */
+type Outline = readonly (readonly [number, number])[];
+
+/** A regular polygon as an outline, flat edge up. */
+const ring = (sides: number, squashY = 1): Outline =>
+  Array.from({ length: sides }, (_, i) => {
+    const a = Math.PI / sides + (i / sides) * Math.PI * 2;
+    return [Math.cos(a), Math.sin(a) * squashY] as const;
+  });
+
+/** Scaled so the furthest point of an outline lands exactly on the circle. */
+function fit(points: Outline): Outline {
+  const far = Math.max(...points.map(([x, y]) => Math.hypot(x, y)));
+  return points.map(([x, y]) => [x / far, y / far] as const);
+}
+
+const ROUND = fit(ring(8));
+const BRILLIANT = fit(ring(12));
+const OVAL = fit(ring(12, 0.74));
+
+/** A princess cut: a square standing on its point. */
+const PRINCESS = fit([
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+]);
+
+/** An emerald cut: a tall rectangle with its corners taken off. */
+const EMERALD = fit([
+  [-0.4, -1],
+  [0.4, -1],
+  [0.68, -0.72],
+  [0.68, 0.72],
+  [0.4, 1],
+  [-0.4, 1],
+  [-0.68, 0.72],
+  [-0.68, -0.72],
+]);
+
+/** A marquise: an eye, pointed at both ends. */
+const MARQUISE = fit([
+  [0, -1],
+  [0.34, -0.45],
+  [0.42, 0],
+  [0.34, 0.45],
+  [0, 1],
+  [-0.34, 0.45],
+  [-0.42, 0],
+  [-0.34, -0.45],
+]);
+
+/** A pear: round at the bottom, drawn to a point at the top. */
+const PEAR = fit([
+  [0, -1],
+  [0.36, -0.34],
+  [0.5, 0.16],
+  [0.36, 0.62],
+  [0, 0.8],
+  [-0.36, 0.62],
+  [-0.5, 0.16],
+  [-0.36, -0.34],
+]);
+
+/** A heart: two lobes and a point, as eight straight edges. */
+const HEART = fit([
+  [0, -0.62],
+  [0.36, -1],
+  [0.78, -0.86],
+  [0.9, -0.32],
+  [0.52, 0.36],
+  [0, 0.88],
+  [-0.52, 0.36],
+  [-0.9, -0.32],
+  [-0.78, -0.86],
+  [-0.36, -1],
+]);
+
+const CUTS: readonly Outline[] = [ROUND, PEAR, MARQUISE, EMERALD, OVAL, HEART, PRINCESS, BRILLIANT];
+
+/** Traces an outline at a size and a place. */
+function trace(ctx: CanvasRenderingContext2D, cut: Outline, x: number, y: number, r: number): void {
+  ctx.beginPath();
+  cut.forEach(([px, py], i) => {
+    const sx = x + px * r;
+    const sy = y + py * r;
+    if (i === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  });
+  ctx.closePath();
+}
+
+/**
+ * Any cut, faceted: a table in the middle, and a crown of facets around it that
+ * alternate light and dark so the stone reads as cut rather than as a sticker.
+ */
+function gem(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   r: number,
-  sides: number,
-  turn: number,
+  hue: string,
+  rank: number,
 ): void {
-  ctx.beginPath();
-  for (let i = 0; i < sides; i += 1) {
-    const a = turn + (i / sides) * Math.PI * 2;
-    const px = x + Math.cos(a) * r;
-    const py = y + Math.sin(a) * r;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-}
-
-/** A round brilliant seen from above: a table, a crown, and eight facets. */
-function gem(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, hue: string): void {
-  const turn = Math.PI / 8;
-  polygon(ctx, x, y, r, 8, turn);
+  const cut = CUTS[Math.min(rank, CUTS.length - 1)];
+  trace(ctx, cut, x, y, r);
   const body = ctx.createLinearGradient(x - r, y - r, x + r, y + r);
   body.addColorStop(0, shade(hue, 0.45));
   body.addColorStop(0.5, hue);
@@ -85,21 +176,20 @@ function gem(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, hue
   ctx.fillStyle = body;
   ctx.fill();
 
-  // The crown facets, every other one caught by the light.
-  const inner = r * 0.5;
-  for (let i = 0; i < 8; i += 1) {
-    const a0 = turn + (i / 8) * Math.PI * 2;
-    const a1 = turn + ((i + 1) / 8) * Math.PI * 2;
+  const table = 0.46;
+  for (let i = 0; i < cut.length; i += 1) {
+    const [ax, ay] = cut[i];
+    const [bx, by] = cut[(i + 1) % cut.length];
     ctx.beginPath();
-    ctx.moveTo(x + Math.cos(a0) * r, y + Math.sin(a0) * r);
-    ctx.lineTo(x + Math.cos(a1) * r, y + Math.sin(a1) * r);
-    ctx.lineTo(x + Math.cos((a0 + a1) / 2) * inner, y + Math.sin((a0 + a1) / 2) * inner);
+    ctx.moveTo(x + ax * r, y + ay * r);
+    ctx.lineTo(x + bx * r, y + by * r);
+    ctx.lineTo(x + ((ax + bx) / 2) * r * table, y + ((ay + by) / 2) * r * table);
     ctx.closePath();
     ctx.fillStyle = i % 2 ? shade(hue, 0.3) : shade(hue, -0.25);
     ctx.fill();
   }
 
-  polygon(ctx, x, y, inner, 8, turn);
+  trace(ctx, cut, x, y, r * table);
   ctx.fillStyle = shade(hue, 0.55);
   ctx.fill();
   ctx.strokeStyle = shade(hue, 0.8);
@@ -346,7 +436,7 @@ export function drawShape(
 ): void {
   const hue = shapeColor(set, rank);
   const r = radius * FILL[set];
-  if (set === 'gems') gem(ctx, x, y, r, hue);
+  if (set === 'gems') gem(ctx, x, y, r, hue, rank);
   else if (set === 'diamonds') diamond(ctx, x, y + r * DIAMOND_LIFT, r, hue);
   else if (set === 'jellies') jelly(ctx, x, y, r, hue);
   else planet(ctx, x, y, r, hue, Math.min(rank, 7));

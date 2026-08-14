@@ -177,6 +177,14 @@ how it reads:
   visibly different colours on opposite sides of the same ring, which is not what
   the reference does.
 
+**A piece weighs what its area says it weighs.** Everything used to weigh the
+same, so a big one landing on a small one shared the blow evenly and neither went
+anywhere interesting. A rank is a fifth wider than the one below it and so nearly
+half again as heavy, and the top of the ladder weighs twenty times the bottom.
+Measured over one drop, mean speed by rank: 0.50 bowl radii a second at the
+bottom of the ladder against 0.06 near the top — the small ones get punted and
+the big ones sit.
+
 **The bowl does not settle into a heap.** Four numbers decide that and all four
 were set too cautiously. The wall gives back more than half of what hits it — it
 is the one thing in the bowl that cannot move, so it is the only contact that
@@ -289,7 +297,11 @@ different on every device and cannot be tuned; these are drawn out of arcs and
 polygons and gradients, which means a gem is the same gem everywhere and its
 colour is a number this repository owns. A brilliant cut has a table, a girdle
 and a pavilion; the ringed planet gives up some of its width so the ring has
-somewhere to go without hanging over its neighbours.
+somewhere to go without hanging over its neighbours. The gems get a different
+cut at every rank — round, pear, marquise, emerald, oval, heart, princess,
+brilliant — because eight of the same octagon at eight sizes is a size ladder
+and not a jeweller's tray, and the reference has a heart and a kite and a
+faceted ball in the same bowl.
 
 Each set is scaled until its silhouette meets the circle the simulation is
 actually using. A piece drawn inside its circle rather than out to it looks like

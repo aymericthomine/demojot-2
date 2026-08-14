@@ -195,6 +195,17 @@ const RUB = 0.97;
  */
 const DRAG = 0.9998;
 
+/**
+ * What a piece weighs, by its area.
+ *
+ * Everything used to weigh the same, which is why a big one landing on a small
+ * one shared the blow evenly and neither went anywhere interesting. A rank is a
+ * fifth wider than the one below it, so it is nearly half again as heavy, and
+ * the top of the ladder weighs twenty times the bottom: a big one arriving punts
+ * whatever it lands on, and a small one arriving off the chute barely moves it.
+ */
+const massOf = (rank: number): number => radiusOf(rank) ** 2;
+
 /** Below this speed a resting piece is simply stopped. */
 const STILL = 0.001;
 
@@ -586,7 +597,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
 
       shelve();
       for (let pass = 0; pass < PASSES; pass += 1) {
-        // Fruit against fruit. Equal weights, so an overlap is shared.
+        // Piece against piece, each carrying its own weight.
         for (let cell = 0; cell < CELLS; cell += 1) {
           const from = counts[cell];
           const to = counts[cell + 1];
@@ -606,11 +617,15 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
               const gap = Math.sqrt(gapSq);
               const nx = dx / gap;
               const ny = dy / gap;
-              const overlap = (reach - gap) / 2;
-              a.x -= nx * overlap;
-              a.y -= ny * overlap;
-              b.x += nx * overlap;
-              b.y += ny * overlap;
+              // The lighter one gives way. Two of a kind still split it evenly.
+              const ma = massOf(a.rank);
+              const mb = massOf(b.rank);
+              const share = 1 / (1 / ma + 1 / mb);
+              const overlap = reach - gap;
+              a.x -= nx * overlap * (share / ma);
+              a.y -= ny * overlap * (share / ma);
+              b.x += nx * overlap * (share / mb);
+              b.y += ny * overlap * (share / mb);
 
               const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
               if (closing < 0) {
@@ -629,21 +644,24 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
                   }
                   if (-closing > LOUD) events.push({ t: time, kind: 'land', rank: a.rank });
                 }
-                const swap = closing * (1 + (hard ? BOUNCE : 0)) * 0.5;
-                a.vx += swap * nx;
-                a.vy += swap * ny;
-                b.vx -= swap * nx;
-                b.vy -= swap * ny;
+                // One impulse, split between them by weight rather than in
+                // half: what a piece takes away from a knock is the whole
+                // difference between a heavy one landing and a light one.
+                const blow = -closing * (1 + (hard ? BOUNCE : 0)) * share;
+                a.vx -= (blow / ma) * nx;
+                a.vy -= (blow / ma) * ny;
+                b.vx += (blow / mb) * nx;
+                b.vy += (blow / mb) * ny;
                 // What is left of the sliding is rubbed off, which is the
                 // difference between a pile and a heap of marbles.
                 const tx = -ny;
                 const ty = nx;
                 const slide = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
-                const rub = slide * (1 - RUB) * 0.5;
-                a.vx += rub * tx;
-                a.vy += rub * ty;
-                b.vx -= rub * tx;
-                b.vy -= rub * ty;
+                const rub = slide * (1 - RUB) * share;
+                a.vx += (rub / ma) * tx;
+                a.vy += (rub / ma) * ty;
+                b.vx -= (rub / mb) * tx;
+                b.vy -= (rub / mb) * ty;
               }
             }
           }
