@@ -41,6 +41,57 @@ const FEED_SPEED = 0.651;
 const FEED_EVERY = 0.344;
 
 /**
+ * The chute speeds up if the video is running long.
+ *
+ * The video ends when the last element is made, and the last element costs a
+ * hundred and twenty-eight of the first, so at a fixed cadence it arrives
+ * anywhere between a minute and a half and three minutes — the pile decides, and
+ * the pile is not reliable. Rather than deal the round again and again looking
+ * for one that finishes in time, at a second and a half a try, the chute simply
+ * feeds faster the longer it goes on: nothing is searched, the ending is
+ * guaranteed, and it reads as the thing getting busier.
+ *
+ * The first three quarters of a minute run at exactly the measured cadence, so
+ * the part of the video anybody watches is the reference's, and so that no drop
+ * can finish inside a minute.
+ */
+const RAMP_FROM = 55;
+const RAMP_TO = 95;
+const FEED_FLOOR = 0.16;
+const feedEvery = (t: number, base: number): number =>
+  t <= RAMP_FROM
+    ? base
+    : base + (FEED_FLOOR - base) * Math.min(1, (t - RAMP_FROM) / (RAMP_TO - RAMP_FROM));
+
+/** How long the finished pile is held on screen after the last element is made. */
+const TAIL = 3;
+
+/**
+ * No video is shorter than this, whatever the pile does.
+ *
+ * The ladder is normally finished somewhere past a minute and a quarter, but a
+ * lucky pile finished one drop in twenty-four inside a minute, and a minute is
+ * the floor that was asked for. When that happens the chute simply keeps going
+ * to the line — the ladder is full, so any further pair at the top bursts, which
+ * is a livelier way to spend twenty seconds than holding on a still bowl.
+ */
+const MINIMUM = 62;
+
+/**
+ * How close two of a kind have to be to become one, as a multiple of touching.
+ *
+ * A hair over touching, and it earns its keep. Nothing aims here — there is no
+ * player — so a pair that never quite meets is the whole reason a drop runs
+ * long, and the difference between merging on contact and merging at a tenth of
+ * a radius apart is half a minute off the tail of the video. It is invisible:
+ * the halos of two pieces that close have been overlapping for a while.
+ */
+const MERGE_REACH = 1.12;
+
+/** Nothing runs longer than this, whatever the pile is doing. */
+const HARD_STOP = 170;
+
+/**
  * Where the column comes from, in bowl radii above the middle.
  *
  * Just off the top of the frame — the middle of the bowl sits at 0.488 of the
@@ -88,18 +139,21 @@ const MOUTH = -Math.sqrt(1 - NECK * NECK);
 /**
  * Gravity, in bowl radii per second squared.
  *
- * Weak on purpose, and measured: a loose fruit in the reference drifts down at
- * about thirty pixels a second and gathers speed so slowly it reads as floating.
- * That is the whole feel of the thing, and it is also what keeps the falling
- * column looking like a column — a fruit under earth gravity would double its
- * spacing every few tenths of a second and the bowl would be empty between one
- * fruit and the next.
+ * Weak, and measured off a rebound rather than off a fall. A piece coming off
+ * the pile in the reference climbs eighteen pixels in a fifth of a second and
+ * comes back down in about the same, which puts gravity near three bowl radii a
+ * second squared — a twentieth of earth's, and the reason the whole thing reads
+ * as floating.
  *
- * Weak gravity is also what makes the bounce worth having. A rebound of a third
- * of the impact climbs back a fifth of the bowl and takes two thirds of a second
- * to do it, where the same rebound under a hard gravity would be a twitch.
+ * A loose piece drifting through open space measures far weaker still, but that
+ * is not a free fall: it is a piece leaning on something. The arc is the honest
+ * sample, so this sits just under it.
+ *
+ * Weak gravity is also what makes the bounce worth having: a quarter of an
+ * impact climbs back a tenth of the bowl and takes a third of a second to do it,
+ * where the same rebound under a hard gravity would be a twitch.
  */
-const GRAVITY = 1.6;
+const GRAVITY = 2.4;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -108,12 +162,13 @@ const PASSES = 3;
 /**
  * How much of an impact comes back as bounce.
  *
- * A third, which is a fruit and not a marble: dropped the height of the bowl it
- * comes back up about a tenth of it. It only applies to a real impact — below
+ * A quarter, which is fruit and not a marble: dropped the height of the bowl it
+ * comes back up about a tenth of it, which is the rebound measured off the
+ * reference to within a few pixels. It only applies to a real impact — below
  * `CALM` a contact takes everything, or a pile of a dozen fruit would tremble
  * for the whole video instead of settling.
  */
-const BOUNCE = 0.34;
+const BOUNCE = 0.28;
 const CALM = 0.45;
 
 /**
@@ -133,6 +188,33 @@ const DRAG = 0.9985;
 
 /** Below this speed a resting fruit is simply stopped. */
 const STILL = 0.02;
+
+/**
+ * The neighbour grid.
+ *
+ * Every pair of pieces used to be tested against every other, three times a
+ * substep and eight substeps a frame. At sixty pieces in the bowl that is a
+ * hundred thousand tests a frame and a ninety-second drop took sixteen seconds
+ * to play out — fine on a laptop, a frozen page on a phone, and far too slow to
+ * play one twice.
+ *
+ * So the bowl is divided into cells a little wider than a middling piece, each
+ * piece is filed under every cell its box covers, and only pieces that share a
+ * cell are tested. Two pieces that touch have overlapping boxes and therefore
+ * share a cell, so nothing is missed; a pair sharing several cells is settled in
+ * the one holding the point between them, so nothing is done twice.
+ */
+const CELL = 0.16;
+const GRID_LEFT = -1.05;
+const GRID_TOP = CHUTE_TOP - 0.1;
+const GRID_W = Math.ceil(2.1 / CELL);
+const GRID_H = Math.ceil((1.05 - GRID_TOP) / CELL);
+const CELLS = GRID_W * GRID_H;
+const cellOf = (x: number, y: number): number => {
+  const ix = Math.min(GRID_W - 1, Math.max(0, Math.floor((x - GRID_LEFT) / CELL)));
+  const iy = Math.min(GRID_H - 1, Math.max(0, Math.floor((y - GRID_TOP) / CELL)));
+  return iy * GRID_W + ix;
+};
 
 export type DropEventKind = 'land' | 'merge' | 'burst';
 
@@ -162,6 +244,8 @@ export interface DropSetup {
   seed: number;
   /** How many ranks are in play. Fewer means the pile turns over faster. */
   ranks: number;
+  /** Seconds between two releases. Left out means the measured cadence. */
+  every?: number;
 }
 
 export interface DropRound {
@@ -216,14 +300,15 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
   let nextId = 0;
 
   const dt = 1 / (FPS * SUBSTEPS);
-  const total = Math.round(seconds * FPS);
+  const total = Math.round(Math.min(seconds, HARD_STOP) * FPS);
 
   /**
    * The column starts full, exactly as the reference opens: strawberries all the
    * way from the top of the frame down to the mouth of the bowl, evenly spaced.
    * An empty chute would spend the first second of every video showing nothing.
    */
-  const spacing = FEED_SPEED * FEED_EVERY;
+  const base = setup.every ?? FEED_EVERY;
+  const spacing = FEED_SPEED * base;
   const wobble = () => (rng.next() - 0.5) * 2 * WOBBLE * radiusOf(0);
   for (let y = -radiusOf(0); y > CHUTE_TOP; y -= spacing) {
     bodies.push({
@@ -240,6 +325,56 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
   }
   let time = 0;
   let sinceFeed = 0;
+  /** When the ladder was finished, and when the video stops because of it. */
+  let topAt = Infinity;
+  let endAt = Infinity;
+
+  // Rebuilt every substep by counting sort, into arrays that are reused rather
+  // than reallocated — this runs half a million times in a long drop.
+  const counts = new Int32Array(CELLS + 1);
+  const at = new Int32Array(CELLS + 1);
+  let filed = new Int32Array(256);
+  const shelve = (): void => {
+    counts.fill(0);
+    let entries = 0;
+    for (const body of bodies) {
+      if (body.riding) continue;
+      const r = radiusOf(body.rank);
+      const lo = cellOf(body.x - r, body.y - r);
+      const hi = cellOf(body.x + r, body.y + r);
+      const x0 = lo % GRID_W;
+      const x1 = hi % GRID_W;
+      const y0 = (lo - x0) / GRID_W;
+      const y1 = (hi - x1) / GRID_W;
+      for (let iy = y0; iy <= y1; iy += 1) {
+        for (let ix = x0; ix <= x1; ix += 1) {
+          counts[iy * GRID_W + ix + 1] += 1;
+          entries += 1;
+        }
+      }
+    }
+    for (let c = 0; c < CELLS; c += 1) counts[c + 1] += counts[c];
+    if (filed.length < entries) filed = new Int32Array(entries * 2);
+    at.set(counts);
+    for (let i = 0; i < bodies.length; i += 1) {
+      const body = bodies[i];
+      if (body.riding) continue;
+      const r = radiusOf(body.rank);
+      const lo = cellOf(body.x - r, body.y - r);
+      const hi = cellOf(body.x + r, body.y + r);
+      const x0 = lo % GRID_W;
+      const x1 = hi % GRID_W;
+      const y0 = (lo - x0) / GRID_W;
+      const y1 = (hi - x1) / GRID_W;
+      for (let iy = y0; iy <= y1; iy += 1) {
+        for (let ix = x0; ix <= x1; ix += 1) {
+          const c = iy * GRID_W + ix;
+          filed[at[c]] = i;
+          at[c] += 1;
+        }
+      }
+    }
+  };
 
   const overlaps = (x: number, y: number, r: number, skip: number): boolean => {
     for (const other of bodies) {
@@ -261,50 +396,64 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
   const settle = (): void => {
     for (let round = 0; round < 4; round += 1) {
       let merged = false;
-      for (let i = 0; i < bodies.length; i += 1) {
-        const a = bodies[i];
-        if (a.riding) continue;
-        for (let j = i + 1; j < bodies.length; j += 1) {
-          const b = bodies[j];
-          if (b.riding || b.rank !== a.rank) continue;
-          const reach = radiusOf(a.rank) + radiusOf(b.rank);
-          const dx = b.x - a.x;
-          const dy = b.y - a.y;
-          if (dx * dx + dy * dy > reach * reach) continue;
+      if (round > 0) shelve();
+      for (let cell = 0; cell < CELLS && !merged; cell += 1) {
+        const from = counts[cell];
+        const to = counts[cell + 1];
+        for (let ai = from; ai < to && !merged; ai += 1) {
+          const i = filed[ai];
+          const a = bodies[i];
+          for (let bi = ai + 1; bi < to; bi += 1) {
+            const j = filed[bi];
+            const b = bodies[j];
+            if (b.rank !== a.rank) continue;
+            const reach = (radiusOf(a.rank) + radiusOf(b.rank)) * MERGE_REACH;
+            const dx = b.x - a.x;
+            const dy = b.y - a.y;
+            if (dx * dx + dy * dy > reach * reach) continue;
 
-          const x = (a.x + b.x) / 2;
-          const y = (a.y + b.y) / 2;
-          const vx = (a.vx + b.vx) / 2;
-          const vy = (a.vy + b.vy) / 2;
-          const rank = a.rank;
-          bodies.splice(j, 1);
-          bodies.splice(i, 1);
-          if (rank >= top) {
-            events.push({ t: time, kind: 'burst', rank });
-          } else {
-            bodies.push({
-              id: nextId++,
-              rank: rank + 1,
-              x,
-              y,
-              // Shoved off to one side. Two fruits meeting head-on leave their
-              // replacement with nowhere to go but up the middle, and a pile
-              // that only ever grows upwards is a tower.
-              vx: vx + (rng.next() - 0.5) * 2 * SHOVE,
-              // And kicked upwards, so a merge is a thing that happens rather
-              // than a swap of one sprite for another.
-              vy: vy - POP,
-              riding: false,
-              fresh: SWELL,
-              hitAt: time,
-            });
-            best = Math.max(best, rank + 1);
-            events.push({ t: time, kind: 'merge', rank: rank + 1 });
+            const x = (a.x + b.x) / 2;
+            const y = (a.y + b.y) / 2;
+            const vx = (a.vx + b.vx) / 2;
+            const vy = (a.vy + b.vy) / 2;
+            const rank = a.rank;
+            // Indices into `bodies`, and the higher one first so the lower stays
+            // where it is.
+            const [lo, hi] = i < j ? [i, j] : [j, i];
+            bodies.splice(hi, 1);
+            bodies.splice(lo, 1);
+            if (rank >= top) {
+              // Nothing above the top of the ladder to become. The bowl has been
+              // filled, and that is the end of the video.
+              events.push({ t: time, kind: 'burst', rank });
+              best = Math.max(best, rank);
+              if (topAt === Infinity) topAt = time;
+            } else {
+              bodies.push({
+                id: nextId++,
+                rank: rank + 1,
+                x,
+                y,
+                // Shoved off to one side. Two fruits meeting head-on leave their
+                // replacement with nowhere to go but up the middle, and a pile
+                // that only ever grows upwards is a tower.
+                vx: vx + (rng.next() - 0.5) * 2 * SHOVE,
+                // And kicked upwards, so a merge is a thing that happens rather
+                // than a swap of one sprite for another.
+                vy: vy - POP,
+                riding: false,
+                fresh: SWELL,
+                hitAt: time,
+              });
+              best = Math.max(best, rank + 1);
+              events.push({ t: time, kind: 'merge', rank: rank + 1 });
+              // The last element on the ladder is what the video was for.
+              if (rank + 1 >= top && topAt === Infinity) topAt = time;
+            }
+            merged = true;
+            break;
           }
-          merged = true;
-          break;
         }
-        if (merged) break;
       }
       if (!merged) return;
     }
@@ -324,16 +473,18 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
     } else {
       frames.length = frame + 1;
     }
-    if (frame + 1 >= total) break;
+    if (frame + 1 >= total || (frame + 1) / FPS >= endAt) break;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
       time += dt;
       sinceFeed += dt;
+      // Wrapping up: the ladder is finished and the clock has passed the floor.
+      if (endAt === Infinity && topAt !== Infinity && time >= MINIMUM) endAt = time + TAIL;
 
       // The chute lets go on a fixed beat, and holds if the pile has come up to
       // meet it. Feeding into a blocked mouth is how a bowl overflows out of its
       // own ring.
-      if (sinceFeed >= FEED_EVERY) {
+      if (endAt === Infinity && sinceFeed >= feedEvery(time, base)) {
         const x = wobble();
         if (!overlaps(x, CHUTE_TOP, radiusOf(0), -1)) {
           sinceFeed = 0;
@@ -376,54 +527,60 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
         body.y += body.vy * dt;
       }
 
+      shelve();
       for (let pass = 0; pass < PASSES; pass += 1) {
         // Fruit against fruit. Equal weights, so an overlap is shared.
-        for (let i = 0; i < bodies.length; i += 1) {
-          const a = bodies[i];
-          if (a.riding) continue;
-          for (let j = i + 1; j < bodies.length; j += 1) {
-            const b = bodies[j];
-            if (b.riding) continue;
-            const reach = radiusOf(a.rank) + radiusOf(b.rank);
-            const dx = b.x - a.x;
-            const dy = b.y - a.y;
-            const gapSq = dx * dx + dy * dy;
-            if (gapSq >= reach * reach || gapSq === 0) continue;
+        for (let cell = 0; cell < CELLS; cell += 1) {
+          const from = counts[cell];
+          const to = counts[cell + 1];
+          for (let ai = from; ai < to; ai += 1) {
+            const a = bodies[filed[ai]];
+            for (let bi = ai + 1; bi < to; bi += 1) {
+              const b = bodies[filed[bi]];
+              const reach = radiusOf(a.rank) + radiusOf(b.rank);
+              const dx = b.x - a.x;
+              const dy = b.y - a.y;
+              const gapSq = dx * dx + dy * dy;
+              if (gapSq >= reach * reach || gapSq === 0) continue;
+              // Settled where the point between them falls, so a pair filed under
+              // two cells is not pushed apart twice.
+              if (cellOf(a.x + dx / 2, a.y + dy / 2) !== cell) continue;
 
-            const gap = Math.sqrt(gapSq);
-            const nx = dx / gap;
-            const ny = dy / gap;
-            const overlap = (reach - gap) / 2;
-            a.x -= nx * overlap;
-            a.y -= ny * overlap;
-            b.x += nx * overlap;
-            b.y += ny * overlap;
+              const gap = Math.sqrt(gapSq);
+              const nx = dx / gap;
+              const ny = dy / gap;
+              const overlap = (reach - gap) / 2;
+              a.x -= nx * overlap;
+              a.y -= ny * overlap;
+              b.x += nx * overlap;
+              b.y += ny * overlap;
 
-            const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
-            if (closing < 0) {
-              // A knock worth hearing, and worth bouncing. Slow contacts — a
-              // pile shuffling into place — take everything and make no noise.
-              const hard = -closing > CALM;
-              if (-closing > LOUD && time - a.hitAt > 0.09) {
-                a.hitAt = time;
-                b.hitAt = time;
-                events.push({ t: time, kind: 'land', rank: a.rank });
+              const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+              if (closing < 0) {
+                // A knock worth hearing, and worth bouncing. Slow contacts — a
+                // pile shuffling into place — take everything and make no noise.
+                const hard = -closing > CALM;
+                if (-closing > LOUD && time - a.hitAt > 0.09) {
+                  a.hitAt = time;
+                  b.hitAt = time;
+                  events.push({ t: time, kind: 'land', rank: a.rank });
+                }
+                const swap = closing * (1 + (hard ? BOUNCE : 0)) * 0.5;
+                a.vx += swap * nx;
+                a.vy += swap * ny;
+                b.vx -= swap * nx;
+                b.vy -= swap * ny;
+                // What is left of the sliding is rubbed off, which is the
+                // difference between a pile and a heap of marbles.
+                const tx = -ny;
+                const ty = nx;
+                const slide = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
+                const rub = slide * (1 - RUB) * 0.5;
+                a.vx += rub * tx;
+                a.vy += rub * ty;
+                b.vx -= rub * tx;
+                b.vy -= rub * ty;
               }
-              const swap = closing * (1 + (hard ? BOUNCE : 0)) * 0.5;
-              a.vx += swap * nx;
-              a.vy += swap * ny;
-              b.vx -= swap * nx;
-              b.vy -= swap * ny;
-              // What is left of the sliding is rubbed off, which is the
-              // difference between a pile and a heap of marbles.
-              const tx = -ny;
-              const ty = nx;
-              const slide = (b.vx - a.vx) * tx + (b.vy - a.vy) * ty;
-              const rub = slide * (1 - RUB) * 0.5;
-              a.vx += rub * tx;
-              a.vy += rub * ty;
-              b.vx -= rub * tx;
-              b.vy -= rub * ty;
             }
           }
         }
@@ -478,9 +635,10 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
   };
 }
 
-/** How many ranks a round may use. Fewer ranks means the pile turns over. */
-export const FEWEST_RANKS = 5;
-export const MOST_RANKS = FRUITS.length;
-
-export const clampRanks = (n: number): number =>
-  Math.max(FEWEST_RANKS, Math.min(MOST_RANKS, Math.round(n) || MOST_RANKS));
+/**
+ * How many things are on the ladder.
+ *
+ * Eight, always. The video ends when the eighth is made, and the eighth costs a
+ * hundred and twenty-eight of the first, which is what sets the length.
+ */
+export const ELEMENTS = FRUITS.length;

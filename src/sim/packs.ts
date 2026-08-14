@@ -3,7 +3,7 @@
  *
  * The reference videos are the same machine dressed differently — one drops
  * fruit, one drops gems, one drops planets — so the dressing is the cheapest
- * variety this thing has. A pack is eleven glyphs in size order, smallest
+ * variety this thing has. A pack is eight glyphs in size order, smallest
  * first, because the ladder is a size ladder: a pea has to be a rank below a
  * melon or the merges read backwards.
  *
@@ -14,7 +14,7 @@
 
 export interface Pack {
   name: string;
-  /** Eleven `[glyph, halo]` pairs, smallest first. */
+  /** Eight `[glyph, halo]` pairs, smallest first. */
   items: readonly (readonly [string, string])[];
 }
 
@@ -28,10 +28,7 @@ export const PACKS: readonly Pack[] = [
       ['🍋', '#eab308'],
       ['🍎', '#ef4444'],
       ['🍑', '#fb923c'],
-      ['🍐', '#a3e635'],
-      ['🥭', '#f59e0b'],
       ['🍍', '#facc15'],
-      ['🍈', '#86efac'],
       ['🍉', '#22c55e'],
     ],
   },
@@ -42,11 +39,8 @@ export const PACKS: readonly Pack[] = [
       ['🔹', '#38bdf8'],
       ['🔶', '#f97316'],
       ['🔷', '#3b82f6'],
-      ['🟠', '#fb923c'],
       ['🟡', '#facc15'],
       ['🟢', '#22c55e'],
-      ['🔵', '#2563eb'],
-      ['🟣', '#a855f7'],
       ['💎', '#67e8f9'],
       ['👑', '#fbbf24'],
     ],
@@ -57,14 +51,11 @@ export const PACKS: readonly Pack[] = [
       ['☄️', '#f97316'],
       ['🌑', '#6b7280'],
       ['⭐', '#facc15'],
-      ['🌟', '#fbbf24'],
       ['🌙', '#fde68a'],
       ['🌕', '#fef3c7'],
       ['🪐', '#f59e0b'],
       ['🌎', '#3b82f6'],
-      ['🔥', '#fb923c'],
       ['🌞', '#f97316'],
-      ['💥', '#fbbf24'],
     ],
   },
   {
@@ -75,11 +66,8 @@ export const PACKS: readonly Pack[] = [
       ['🐞', '#ef4444'],
       ['🦋', '#38bdf8'],
       ['🐸', '#22c55e'],
-      ['🐭', '#a8a29e'],
       ['🐰', '#f5f5f4'],
-      ['🐱', '#fbbf24'],
       ['🐶', '#d97706'],
-      ['🐷', '#f9a8d4'],
       ['🐻', '#f59e0b'],
     ],
   },
@@ -91,12 +79,9 @@ export const PACKS: readonly Pack[] = [
       ['🧁', '#fbcfe8'],
       ['🍪', '#d97706'],
       ['🍩', '#f9a8d4'],
-      ['🍫', '#b45309'],
       ['🍰', '#fda4af'],
       ['🎂', '#fbbf24'],
-      ['🍮', '#fcd34d'],
       ['🍨', '#fde68a'],
-      ['🍧', '#a5f3fc'],
     ],
   },
   {
@@ -105,12 +90,9 @@ export const PACKS: readonly Pack[] = [
       ['🐚', '#fbcfe8'],
       ['🦐', '#fb7185'],
       ['🦀', '#ef4444'],
-      ['🐡', '#fbbf24'],
       ['🐠', '#f97316'],
       ['🐟', '#38bdf8'],
-      ['🦑', '#f9a8d4'],
       ['🐙', '#c084fc'],
-      ['🦭', '#9ca3af'],
       ['🐬', '#60a5fa'],
       ['🐳', '#2563eb'],
     ],
@@ -121,14 +103,11 @@ export const PACKS: readonly Pack[] = [
       ['🏓', '#ef4444'],
       ['🎾', '#d9f99d'],
       ['⚾', '#f5f5f4'],
-      ['🥎', '#fde047'],
       ['🏐', '#e5e7eb'],
       ['⚽', '#f5f5f4'],
       ['🏀', '#f97316'],
-      ['🏈', '#d97706'],
       ['🎱', '#94a3b8'],
       ['🎳', '#a855f7'],
-      ['🛞', '#94a3b8'],
     ],
   },
   {
@@ -138,11 +117,8 @@ export const PACKS: readonly Pack[] = [
       ['🙂', '#fbbf24'],
       ['😉', '#fde047'],
       ['😎', '#f59e0b'],
-      ['🤓', '#fdba74'],
       ['🥳', '#f472b6'],
-      ['🤠', '#d97706'],
       ['😈', '#a855f7'],
-      ['👻', '#e5e7eb'],
       ['🤡', '#fb7185'],
       ['🤖', '#9ca3af'],
     ],
@@ -152,7 +128,7 @@ export const PACKS: readonly Pack[] = [
 /**
  * Everything the packs know, for the roll that ignores them.
  *
- * A pack is a theme; this is the other thing the button can do — eleven glyphs
+ * A pack is a theme; this is the other thing the button can do — eight glyphs
  * that have no business being in the same bowl, which is its own kind of funny
  * and is what "different combinations" asks for.
  */

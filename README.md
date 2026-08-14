@@ -6,9 +6,9 @@ clock, the sound and the encoder, and nothing else.
 **Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
 wall, taking them off each other until one ball is left holding rope.
 
-**Fruit drop** — a chute lets go of a fruit into a bowl three times a second, and
-two of the same kind that touch become one of the next kind up. Strawberry,
-tangerine, kiwi, lemon, apple, and on up an eleven-rung ladder.
+**Fruit drop** — a chute lets go of a piece into a bowl three times a second, and
+two of the same kind that touch become one of the next kind up. Eight kinds, and
+the video ends when the eighth is made.
 
 Both are computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
@@ -188,11 +188,32 @@ Two things fix it, and both are small: a fruit is let go within half a radius of
 the middle, and a merge shoves what it makes off to one side. The column still
 reads as straight.
 
-A fruit of rank `k` costs `2^k` strawberries, so at three a second a minute-long
-video pays for about rank seven — which is where the reference gets to as well.
-The ranks above that are for a lucky pile, and if a pair ever reaches the top of
-the ladder they burst instead of merging, which gives the room back and lets the
-chute keep feeding for as long as the clock runs.
+**The eighth element is the ending, and it sets the length.** A piece of rank `k`
+costs `2^k` of the first, so the eighth costs a hundred and twenty-eight
+strawberries — between a minute and two and a half at the measured cadence, and
+never inside a minute. The pile decides which, and the pile is not reliable:
+dealing the round again and again looking for one that finishes on time costs a
+second and a half a try. So the chute simply feeds faster the longer it runs —
+flat at the measured cadence for the first three quarters of a minute, then
+gathering pace until the mouth is saturated. Nothing is searched, the ending is
+guaranteed, and it reads as the thing getting busier. Over twenty-four drops:
+sixty-five seconds at the shortest, eighty-four in the middle, two minutes twenty
+at the longest, and every one of them ends on the eighth.
+
+Two of a kind merge a hair before they touch — a tenth of a radius. Nothing aims
+here, so a pair that never quite meets is the whole reason a drop runs long, and
+that tenth is half a minute off the tail of the video. It is invisible: the halos
+of two pieces that close have been overlapping for a while.
+
+**The neighbour grid.** Every pair of pieces used to be tested against every
+other, three times a substep, eight substeps a frame — a hundred thousand tests
+a frame at sixty pieces, and a long drop took sixteen seconds to play out. The
+bowl is now divided into cells a little wider than a middling piece; each piece
+is filed under every cell its box covers, and only pieces sharing a cell are
+tested. Two that touch have overlapping boxes and therefore share a cell, so
+nothing is missed, and a pair sharing two cells is settled in the one holding the
+point between them, so nothing is done twice. Five times faster, and it is what
+makes a two-minute drop bearable on a phone.
 
 **Your own fruit.** Each rank takes an image — cropped square, clipped to the
 circle, so a cut-out photograph on transparent ground works best — or an emoji,
@@ -200,11 +221,26 @@ or just its colour. The colour is the halo either way; emoji paint themselves,
 so the halo is the only colour the page controls.
 
 **🎲 Random emoji** deals the whole ladder at once. Eight themes — fruit, gems,
-planets, animals, sweets, sea, sport, faces — each eleven glyphs in size order,
+planets, animals, sweets, sea, sport, faces — each eight glyphs in size order,
 because the ladder is a size ladder and a bee has to be a rank below a bear or
 the merges read backwards. About one roll in five ignores the themes and deals
-eleven glyphs that have no business being in the same bowl. It never deals the
+eight glyphs that have no business being in the same bowl. It never deals the
 same thing twice running.
+
+**Drawn sets** — gems, diamonds, jelly cats, planets — are not emoji at all.
+Emoji are somebody else's artwork rendered by the machine's font, so they look
+different on every device and cannot be tuned; these are drawn out of arcs and
+polygons and gradients, which means a gem is the same gem everywhere and its
+colour is a number this repository owns. A brilliant cut has a table, a girdle
+and a pavilion; the ringed planet gives up some of its width so the ring has
+somewhere to go without hanging over its neighbours.
+
+**The sound** is one of five, each cut from a different reference video at its
+most isolated hit — the loudest onset with the quietest two hundred milliseconds
+either side, trimmed to its transient and faded so a cut sample cannot click.
+They run from a 2.4 kHz glass tick that is gone in forty milliseconds to a
+560 Hz knock. The octave used to mark the last element is the same sample played
+at twice the rate rather than a second recording.
 
 ## Measured against the reference, not guessed
 

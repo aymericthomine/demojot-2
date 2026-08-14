@@ -17,6 +17,7 @@
 
 import { BOWL, BOWL_X, BOWL_Y, NECK, type DropFrame } from '../sim/drop';
 import { FRUITS, radiusOf } from '../sim/fruit';
+import { drawShape, shapeColor, type ShapeSet } from './shapes';
 
 /**
  * What a rank wears.
@@ -39,6 +40,11 @@ export interface DropViewport {
   invert?: boolean;
   /** One entry per rank. Missing means the glyph and colour off the ladder. */
   faces?: readonly (FruitFace | null | undefined)[];
+  /**
+   * Draw the pieces rather than typing them. Set, and every rank without an
+   * image of its own is drawn from `shapes.ts` instead of an emoji.
+   */
+  shape?: ShapeSet;
 }
 
 /** Outline weight, in bowl radii. Measured: 8 px of 576, in a bowl of 0.519 W. */
@@ -65,7 +71,7 @@ function fade(hex: string, alpha: number): string {
 export function drawDropFrame(
   ctx: CanvasRenderingContext2D,
   frame: DropFrame,
-  { width, height, time, invert = false, faces }: DropViewport,
+  { width, height, time, invert = false, faces, shape }: DropViewport,
 ): void {
   const radius = width * BOWL;
   const cx = width * BOWL_X;
@@ -105,8 +111,9 @@ export function drawDropFrame(
   const dress = (rank: number) => {
     const fruit = FRUITS[Math.min(rank, FRUITS.length - 1)];
     const face = faces?.[rank];
+    const own = shape ? shapeColor(shape, rank) : fruit.color;
     return {
-      color: ink(face?.color ?? fruit.color, invert),
+      color: ink(face?.color ?? own, invert),
       glyph: face?.glyph || fruit.glyph,
       image: face?.image ?? null,
     };
@@ -165,11 +172,19 @@ export function drawDropFrame(
       }
     }
 
+    if (shape) {
+      // Drawn rather than typed: no font involved, so it is the same picture on
+      // every machine.
+      drawShape(ctx, shape, Math.min(piece.rank, 7), x, y, r);
+      continue;
+    }
+
     // The glyph is the fruit here, not a badge on a disc, so it is drawn at the
-    // full width of the circle. A core rather than a disc under it: an emoji has transparent corners, so a disc the
-    // width of the circle would show as a coloured ring around the fruit. Half
-    // the radius sits under the opaque middle of the glyph — and is the whole
-    // fruit on a machine with no emoji font at all.
+    // full width of the circle. A core rather than a disc under it: an emoji has
+    // transparent corners, so a disc the width of the circle would show as a
+    // coloured ring around the fruit. Half the radius sits under the opaque
+    // middle of the glyph — and is the whole fruit on a machine with no emoji
+    // font at all.
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(x, y, r * 0.5, 0, Math.PI * 2);

@@ -25,6 +25,7 @@
 import type { DropRound } from '../sim/drop';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
+import { DEFAULT_KIT, KITS } from './kit';
 
 const SAMPLE_RATE = 48000;
 
@@ -32,23 +33,30 @@ const SAMPLE_RATE = 48000;
 const TICK = 0;
 const OCTAVE = 1;
 
-let decoded: Promise<AudioBuffer> | null = null;
+const decoded = new Map<string, Promise<AudioBuffer>>();
 
-/** The sprite, decoded once and reused. */
-function sprite(): Promise<AudioBuffer> {
-  decoded ??= (async () => {
-    const binary = atob(SPRITE);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    // A throwaway context purely to decode; the samples are resampled to
-    // whatever the rendering context runs at. Given a second of length rather
-    // than a single frame: a context of length 1 is legal but degenerate, and
-    // not every browser is happy being asked to decode through one.
-    const ctx = new OfflineAudioContext(1, SAMPLE_RATE, SAMPLE_RATE);
-    return ctx.decodeAudioData(bytes.buffer);
-  })();
-  return decoded;
+/** Any base64 WAV, decoded once and reused. */
+function decode(key: string, base64: string): Promise<AudioBuffer> {
+  let waiting = decoded.get(key);
+  if (!waiting) {
+    waiting = (async () => {
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      // A throwaway context purely to decode; the samples are resampled to
+      // whatever the rendering context runs at. Given a second of length rather
+      // than a single frame: a context of length 1 is legal but degenerate, and
+      // not every browser is happy being asked to decode through one.
+      const ctx = new OfflineAudioContext(1, SAMPLE_RATE, SAMPLE_RATE);
+      return ctx.decodeAudioData(bytes.buffer);
+    })();
+    decoded.set(key, waiting);
+  }
+  return waiting;
 }
+
+/** The fight's sprite: two slots, the tick and the same tick an octave up. */
+const sprite = (): Promise<AudioBuffer> => decode('fight', SPRITE);
 
 /** One tick: when, which slot of the sprite, how loud. */
 interface Hit {
@@ -63,8 +71,13 @@ interface Hit {
  * Both modes make one the same way — the same recording at every moment their
  * simulation says something happened — so only the list of moments differs.
  */
-async function renderHits(duration: number, list: readonly Hit[]): Promise<AudioBuffer> {
-  const hits = await sprite();
+async function renderHits(
+  duration: number,
+  list: readonly Hit[],
+  source: () => Promise<AudioBuffer>,
+  slot = SLOT,
+): Promise<AudioBuffer> {
+  const hits = await source();
   // Exactly as long as the picture, not a frame more. A second of room used to
   // be left here so a tail could not be clipped, and it made a video that is
   // 61 seconds of picture report itself as 62: the container takes the longest
@@ -83,14 +96,20 @@ async function renderHits(duration: number, list: readonly Hit[]): Promise<Audio
   master.gain.value = 0.22;
   master.connect(ctx.destination);
 
-  /** One hit: a slot of the sprite, at a level. */
+  /**
+   * One hit. Slot 1 is the octave above — a second slot of the sprite where
+   * there is one, and otherwise the same sample played twice as fast, which is
+   * the same thing and costs nothing to ship.
+   */
   const play = (time: number, index: number, gain: number): void => {
-    const source = ctx.createBufferSource();
-    source.buffer = hits;
+    const node = ctx.createBufferSource();
+    node.buffer = hits;
+    const octave = index === OCTAVE && hits.duration <= slot * 1.5;
+    if (octave) node.playbackRate.value = 2;
     const amp = ctx.createGain();
     amp.gain.value = gain;
-    source.connect(amp).connect(master);
-    source.start(time, index * SLOT, SLOT);
+    node.connect(amp).connect(master);
+    node.start(time, octave ? 0 : index * slot, slot);
   };
 
   for (const hit of list) {
@@ -126,7 +145,7 @@ export function renderRoundAudio(round: Round): Promise<AudioBuffer> {
         break;
     }
   }
-  return renderHits(round.duration, list);
+  return renderHits(round.duration, list, sprite);
 }
 
 /**
@@ -137,7 +156,8 @@ export function renderRoundAudio(round: Round): Promise<AudioBuffer> {
  * for the two modes to sound like different sites. The octave is kept for the
  * one thing worth marking — a pair at the top of the ladder bursting.
  */
-export function renderDropAudio(round: DropRound): Promise<AudioBuffer> {
+export function renderDropAudio(round: DropRound, kit = DEFAULT_KIT): Promise<AudioBuffer> {
+  const chosen = KITS[kit] ?? KITS[DEFAULT_KIT];
   const list: Hit[] = [];
   for (const event of round.events) {
     switch (event.kind) {
@@ -158,7 +178,7 @@ export function renderDropAudio(round: DropRound): Promise<AudioBuffer> {
         break;
     }
   }
-  return renderHits(round.duration, list);
+  return renderHits(round.duration, list, () => decode(chosen.name, chosen.sample), 0.16);
 }
 
 /** Interleaved float samples, which is what the encoder wants. */

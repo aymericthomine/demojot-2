@@ -26,15 +26,11 @@ import {
   type Reel,
 } from "../export/encodeVideo";
 import { battleReel, dropReel } from "../export/reels";
-import {
-  FEWEST_RANKS,
-  MOST_RANKS,
-  clampRanks,
-  lengthFor,
-  playDrop,
-} from "../sim/drop";
+import { ELEMENTS, playDrop } from "../sim/drop";
 import { FRUITS } from "../sim/fruit";
 import { dealPack } from "../sim/packs";
+import { DEFAULT_KIT, KITS } from "../audio/kit";
+import { SHAPE_LABEL, SHAPE_SETS, type ShapeSet } from "../render/shapes";
 import {
   BALL_COUNT,
   FEWEST_BALLS,
@@ -77,7 +73,8 @@ type Job =
       mode: "drop";
       seed: number;
       invert: boolean;
-      ranks: number;
+      kit: number;
+      shape: ShapeSet | null;
       faces: readonly FruitFace[];
     };
 
@@ -135,11 +132,12 @@ export default function HomePage() {
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
   const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
-  const [ranks, setRanks] = useState(MOST_RANKS);
+  const [kit, setKit] = useState(DEFAULT_KIT);
+  const [shape, setShape] = useState<ShapeSet | null>(null);
   // One entry per rank of the ladder, by index, same as the balls: kept at full
   // length so changing the ladder never loses what was already set.
   const [fruits, setFruits] = useState<FruitFace[]>(() =>
-    Array.from({ length: MOST_RANKS }, () => ({})),
+    Array.from({ length: ELEMENTS }, () => ({})),
   );
 
   const setFruit = (rank: number, patch: Partial<FruitFace>) =>
@@ -159,6 +157,8 @@ export default function HomePage() {
   const rollFruits = () => {
     const dealt = dealPack(Math.random(), dressed ?? undefined);
     setDressed(dealt.name);
+    // A roll is a set of emoji, so it turns the drawn set off.
+    setShape(null);
     // Images are left alone: an uploaded picture beats a glyph anyway, and
     // losing one to a button labelled "emoji" would be a surprise.
     setFruits((old) =>
@@ -168,7 +168,14 @@ export default function HomePage() {
 
   const clearFruits = () => {
     setDressed(null);
-    setFruits(Array.from({ length: MOST_RANKS }, () => ({})));
+    setFruits(Array.from({ length: ELEMENTS }, () => ({})));
+  };
+
+  const pickShape = (choice: ShapeSet | null) => {
+    setShape(choice);
+    // The drawn sets bring their own colours and shapes, so anything a roll or
+    // a picker left behind would fight with them.
+    if (choice) clearFruits();
   };
   // One entry per ball, by index, kept at full length so changing the count
   // never loses what was already set on the balls that stay.
@@ -289,19 +296,20 @@ export default function HomePage() {
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
           } else {
-            const round = playDrop(
-              { seed: job.seed, ranks: job.ranks },
-              lengthFor(job.seed),
-            );
+            // No length is asked for: the drop ends when the eighth element is
+            // made, which is never inside a minute.
+            const round = playDrop({ seed: job.seed, ranks: ELEMENTS }, 200);
             total = round.durationInFrames;
             onStage("sound");
-            audio = await renderDropAudio(round).catch(() => null);
-            reel = dropReel(round, { invert: job.invert, faces: job.faces });
-            // The glyph rather than the fruit's name: the ladder may well be
-            // wearing planets by now, and "best pear" would be a lie.
-            const best =
-              job.faces[round.best]?.glyph || FRUITS[round.best].glyph;
-            summary = `${round.duration.toFixed(1)}s · best ${best}`;
+            audio = await renderDropAudio(round, job.kit).catch(() => null);
+            reel = dropReel(round, {
+              invert: job.invert,
+              faces: job.faces,
+              shape: job.shape ?? undefined,
+            });
+            // Not a glyph and not a fruit's name: the ladder may be wearing
+            // diamonds, and every drop ends on the eighth anyway.
+            summary = `${round.duration.toFixed(1)}s · ${round.best + 1} of ${ELEMENTS}`;
           }
 
           const result = await encodeVideo({
@@ -360,7 +368,7 @@ export default function HomePage() {
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
             ? "Balls in a ring fighting over threads pinned to the wall. The anchors never move; run through somebody else's thread and it comes away with you, turning your colour. Full hands break rope instead of taking it, and a ball holding none is out."
-            : "A chute drops a fruit into the bowl three times a second. Two of the same kind that touch become one of the next kind up — strawberry, tangerine, kiwi, lemon, apple, and on up the ladder. Nothing is aimed and nothing is lost; the pile does the rest."}
+            : "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."}
         </p>
       </header>
 
@@ -544,24 +552,47 @@ export default function HomePage() {
 
         {mode === "drop" && (
           <>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">Fruits</span>
-              <input
-                type="number"
-                min={FEWEST_RANKS}
-                max={MOST_RANKS}
-                value={ranks}
-                disabled={busy}
-                onChange={(event) =>
-                  setRanks(clampRanks(Number(event.target.value)))
-                }
-                className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
-              />
-              <span className="text-[11px] text-[#5c616e]">
-                {FEWEST_RANKS}–{MOST_RANKS} · a short ladder gets to the top and
-                bursts
-              </span>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Pieces</span>
+              {([null, ...SHAPE_SETS] as const).map((choice) => (
+                <button
+                  key={choice ?? "emoji"}
+                  type="button"
+                  onClick={() => pickShape(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    shape === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {choice ? SHAPE_LABEL[choice] : "emoji"}
+                </button>
+              ))}
             </div>
+
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Sound</span>
+              {KITS.map((sound, index) => (
+                <button
+                  key={sound.name}
+                  type="button"
+                  onClick={() => setKit(index)}
+                  disabled={busy}
+                  title={sound.note}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    kit === index
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {sound.name}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 px-1 text-[11px] leading-relaxed text-[#5c616e]">
+              {KITS[kit].note}
+            </p>
 
             <div className="mt-2 flex items-center gap-2">
               <button
@@ -592,10 +623,10 @@ export default function HomePage() {
 
             <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
               <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
-                Your own fruit — one image per rank
+                Your own pieces — one image per rank
               </summary>
               <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
-                {FRUITS.slice(0, ranks).map((fruit, rank) => (
+                {FRUITS.map((fruit, rank) => (
                   <div key={fruit.name} className="flex items-center gap-2">
                     <label className="relative size-6 shrink-0 cursor-pointer">
                       <span
@@ -680,7 +711,7 @@ export default function HomePage() {
             run(
               mode === "battle"
                 ? { mode, seed, invert, threads, balls, size, faces }
-                : { mode, seed, invert, ranks, faces: fruits },
+                : { mode, seed, invert, kit, shape, faces: fruits },
             )
           }
           disabled={busy}

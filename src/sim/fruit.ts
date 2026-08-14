@@ -1,16 +1,15 @@
 /**
  * The ladder.
  *
- * Eleven fruits, each a fifth wider than the one below it. That growth rate is
+ * Eight elements, each a fifth wider than the one below it. That growth rate is
  * not a guess: measured off the reference, a strawberry is 40 px across in a
  * 576 px frame and the dragon fruit six ranks up is 122 px, which is 1.20 per
  * rank to two figures.
  *
- * Two of the same rank that touch become one of the next, so a fruit of rank
- * `k` costs `2^k` strawberries. At the rate the chute feeds — near three a
- * second — a minute-long video pays for about rank seven. The ranks above that
- * exist for the long videos and for a lucky pile; nobody is reaching the
- * watermelon, and that is the same in the reference.
+ * Two of the same rank that touch become one of the next, so the last element
+ * costs a hundred and twenty-eight of the first. That is what sets the length of
+ * a video: the drop ends when the watermelon is made, which at the measured
+ * cadence takes between a minute and two and a half.
  *
  * The glyphs are the default dress. Each rank takes an image instead if one is
  * given, which is what the reference does with cut-out photographs.
@@ -39,10 +38,7 @@ const LADDER: readonly (readonly [string, string, string])[] = [
   ['lemon', '🍋', '#eab308'],
   ['apple', '🍎', '#ef4444'],
   ['peach', '🍑', '#fb923c'],
-  ['pear', '🍐', '#a3e635'],
-  ['mango', '🥭', '#f59e0b'],
   ['pineapple', '🍍', '#facc15'],
-  ['melon', '🍈', '#86efac'],
   ['watermelon', '🍉', '#22c55e'],
 ];
 

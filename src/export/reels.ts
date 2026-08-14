@@ -10,6 +10,7 @@
 
 import type { Reel } from './encodeVideo';
 import { drawDropFrame, type FruitFace } from '../render/drawDrop';
+import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { DropRound } from '../sim/drop';
 import type { Round } from '../sim/simulate';
@@ -26,6 +27,8 @@ export interface BattleDress extends Dress {
 
 export interface DropDress extends Dress {
   faces?: readonly (FruitFace | null | undefined)[];
+  /** Draw the pieces from `shapes.ts` rather than typing emoji. */
+  shape?: ShapeSet;
 }
 
 /** Frames are dropped as they are painted; the array is the round's own. */
@@ -62,7 +65,7 @@ export function dropReel(round: DropRound, dress: DropDress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `fruits-${round.setup.seed}-${round.setup.ranks}f-${Math.round(round.duration)}s${
+    name: `drop-${round.setup.seed}-${dress.shape ?? 'emoji'}-${Math.round(round.duration)}s${
       dress.invert ? '-white' : ''
     }`,
     paint(ctx, index) {
@@ -74,6 +77,7 @@ export function dropReel(round: DropRound, dress: DropDress = {}): Reel {
         time: index / FPS,
         invert: dress.invert,
         faces: dress.faces,
+        shape: dress.shape,
       });
       release(round.frames, index);
     },
