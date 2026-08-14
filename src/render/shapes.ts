@@ -315,17 +315,39 @@ function planet(
   }
 }
 
+/**
+ * How much of its circle each set has to be scaled by to fill it.
+ *
+ * The simulation only knows circles, so a piece drawn inside its circle rather
+ * than out to it looks like it is floating: two pieces resting against each
+ * other show a gap the width of whatever the artwork left over, and on a white
+ * ground there is no halo to cover it. An octagon's flat faces sit at 0.92 of
+ * its radius, a lit sphere was drawn at 0.88, a brilliant cut is shorter than it
+ * is wide. Each is pushed out until its silhouette meets the circle where
+ * neighbours actually touch.
+ */
+const FILL: Record<ShapeSet, number> = {
+  gems: 1.08,
+  diamonds: 1.12,
+  jellies: 1.07,
+  planets: 1.13,
+};
+
+/** A brilliant cut sits low in its circle, so it is lifted back to the middle. */
+const DIAMOND_LIFT = -0.165;
+
 export function drawShape(
   ctx: CanvasRenderingContext2D,
   set: ShapeSet,
   rank: number,
   x: number,
   y: number,
-  r: number,
+  radius: number,
 ): void {
   const hue = shapeColor(set, rank);
+  const r = radius * FILL[set];
   if (set === 'gems') gem(ctx, x, y, r, hue);
-  else if (set === 'diamonds') diamond(ctx, x, y, r, hue);
+  else if (set === 'diamonds') diamond(ctx, x, y + r * DIAMOND_LIFT, r, hue);
   else if (set === 'jellies') jelly(ctx, x, y, r, hue);
   else planet(ctx, x, y, r, hue, Math.min(rank, 7));
 }

@@ -40,29 +40,6 @@ const FEED_SPEED = 0.651;
 /** Seconds between two fruits leaving the chute. Measured: 67 px of spacing. */
 const FEED_EVERY = 0.344;
 
-/**
- * The chute speeds up if the video is running long.
- *
- * The video ends when the last element is made, and the last element costs a
- * hundred and twenty-eight of the first, so at a fixed cadence it arrives
- * anywhere between a minute and a half and three minutes — the pile decides, and
- * the pile is not reliable. Rather than deal the round again and again looking
- * for one that finishes in time, at a second and a half a try, the chute simply
- * feeds faster the longer it goes on: nothing is searched, the ending is
- * guaranteed, and it reads as the thing getting busier.
- *
- * The first three quarters of a minute run at exactly the measured cadence, so
- * the part of the video anybody watches is the reference's, and so that no drop
- * can finish inside a minute.
- */
-const RAMP_FROM = 55;
-const RAMP_TO = 95;
-const FEED_FLOOR = 0.16;
-const feedEvery = (t: number, base: number): number =>
-  t <= RAMP_FROM
-    ? base
-    : base + (FEED_FLOOR - base) * Math.min(1, (t - RAMP_FROM) / (RAMP_TO - RAMP_FROM));
-
 /** How long the finished pile is held on screen after the last element is made. */
 const TAIL = 3;
 
@@ -101,15 +78,17 @@ const HARD_STOP = 170;
 const CHUTE_TOP = -1.78;
 
 /**
- * How far off the middle of the chute a fruit may be let go, in its own radii.
+ * How far off the middle of the chute a piece may be let go, in its own radii.
  *
- * Not decoration. A column that falls down the exact middle of a round bowl
- * builds a tower rather than a pile: every contact normal points straight up, so
- * nothing is ever pushed sideways, and the whole video is one stack of fruit
- * growing up the chute. Half a radius of slack is barely visible in the column
- * and is enough to make each landing fall off to one side.
+ * Nothing: the column comes down the exact middle, evenly spaced, which is what
+ * the reference does and what it is asked to do. It used to be half a radius,
+ * because a column down the exact middle of a round bowl builds a tower rather
+ * than a pile — every contact normal points straight up, so nothing is ever
+ * pushed sideways. What breaks the symmetry now is the shove a merge gives what
+ * it makes, which is enough on its own: the pile spreads across four fifths of
+ * the bowl, and the column stays straight.
  */
-const WOBBLE = 0.5;
+const WOBBLE = 0;
 
 /** Sideways shove a merge gives what it makes, in bowl radii per second. */
 const SHOVE = 0.45;
@@ -234,6 +213,11 @@ export interface Piece {
   y: number;
   /** Seconds since this one was made by a merge, or -1 if it fell in. */
   fresh: number;
+  /**
+   * The ring after a knock: positive is squashed flat, negative is stretched
+   * tall. Decays to nothing over about a third of a second.
+   */
+  shake: number;
 }
 
 export interface DropFrame {
@@ -244,6 +228,8 @@ export interface DropSetup {
   seed: number;
   /** How many ranks are in play. Fewer means the pile turns over faster. */
   ranks: number;
+  /** Which deal of this seed — see `generateDrop`. */
+  attempt?: number;
   /** Seconds between two releases. Left out means the measured cadence. */
   every?: number;
 }
@@ -271,10 +257,25 @@ interface Body {
   fresh: number;
   /** When this one last took a real knock, so one impact is not counted twice. */
   hitAt: number;
+  /** How hard that knock was, 0 to 1. What the ring is drawn from. */
+  force: number;
 }
 
 /** How long the swell after a merge lasts. */
 const SWELL = 0.28;
+
+/**
+ * The ring a piece keeps after being knocked.
+ *
+ * Everything here is a rigid circle, so an impact that ought to deform something
+ * soft simply stops it dead, and a pile of solids reads as a pile of pebbles.
+ * The ring is drawn rather than simulated: a squash that decays over a third of
+ * a second at eleven cycles a second, biggest for the hardest knock. It moves
+ * nothing and merges nothing — it is the picture admitting that a thing was hit.
+ */
+const RING_FOR = 0.34;
+const RING_RATE = 11;
+const RING_MOST = 0.16;
 
 /**
  * How long a video runs, and how the pile is dealt.
@@ -290,7 +291,7 @@ export { lengthFor } from './simulate';
  * `record` off keeps no frames, which is what the occupancy checks use.
  */
 export function playDrop(setup: DropSetup, seconds: number, record = true): DropRound {
-  const rng = createRng(setup.seed ^ 0x5bd1e995);
+  const rng = createRng((setup.seed ^ 0x5bd1e995) + (setup.attempt ?? 0) * 0x9e3779b9);
   const top = Math.min(TOP_RANK, Math.max(3, setup.ranks - 1));
 
   const bodies: Body[] = [];
@@ -321,8 +322,18 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
       riding: true,
       fresh: 0,
       hitAt: -1,
+      force: 0,
     });
   }
+  /** How much of a knock is still ringing in a piece, as a signed squash. */
+  const ring = (body: Body): number => {
+    const since = time - body.hitAt;
+    if (body.hitAt < 0 || since > RING_FOR) return 0;
+    return (
+      body.force * RING_MOST * Math.cos(since * RING_RATE * Math.PI * 2) * (1 - since / RING_FOR)
+    );
+  };
+
   let time = 0;
   let sinceFeed = 0;
   /** When the ladder was finished, and when the video stops because of it. */
@@ -444,6 +455,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
                 riding: false,
                 fresh: SWELL,
                 hitAt: time,
+                force: 0,
               });
               best = Math.max(best, rank + 1);
               events.push({ t: time, kind: 'merge', rank: rank + 1 });
@@ -468,6 +480,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
           x: body.x,
           y: body.y,
           fresh: body.fresh > 0 ? 1 - body.fresh / SWELL : -1,
+          shake: ring(body),
         })),
       });
     } else {
@@ -484,7 +497,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
       // The chute lets go on a fixed beat, and holds if the pile has come up to
       // meet it. Feeding into a blocked mouth is how a bowl overflows out of its
       // own ring.
-      if (endAt === Infinity && sinceFeed >= feedEvery(time, base)) {
+      if (endAt === Infinity && sinceFeed >= base) {
         const x = wobble();
         if (!overlaps(x, CHUTE_TOP, radiusOf(0), -1)) {
           sinceFeed = 0;
@@ -498,6 +511,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
             riding: true,
             fresh: 0,
             hitAt: -1,
+            force: 0,
           });
         }
       }
@@ -560,10 +574,17 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
                 // A knock worth hearing, and worth bouncing. Slow contacts — a
                 // pile shuffling into place — take everything and make no noise.
                 const hard = -closing > CALM;
-                if (-closing > LOUD && time - a.hitAt > 0.09) {
-                  a.hitAt = time;
-                  b.hitAt = time;
-                  events.push({ t: time, kind: 'land', rank: a.rank });
+                if (hard) {
+                  const force = Math.min(1, -closing / 2.5);
+                  if (force > a.force || time - a.hitAt > RING_FOR) {
+                    a.hitAt = time;
+                    a.force = force;
+                  }
+                  if (force > b.force || time - b.hitAt > RING_FOR) {
+                    b.hitAt = time;
+                    b.force = force;
+                  }
+                  if (-closing > LOUD) events.push({ t: time, kind: 'land', rank: a.rank });
                 }
                 const swap = closing * (1 + (hard ? BOUNCE : 0)) * 0.5;
                 a.vx += swap * nx;
@@ -599,9 +620,13 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
           const into = body.vx * nx + body.vy * ny;
           if (into > 0) {
             const hard = into > CALM;
-            if (into > LOUD && time - body.hitAt > 0.09) {
-              body.hitAt = time;
-              events.push({ t: time, kind: 'land', rank: body.rank });
+            if (hard) {
+              const force = Math.min(1, into / 2.5);
+              if (force > body.force || time - body.hitAt > RING_FOR) {
+                body.hitAt = time;
+                body.force = force;
+              }
+              if (into > LOUD) events.push({ t: time, kind: 'land', rank: body.rank });
             }
             const back = 1 + (hard ? BOUNCE : 0);
             body.vx -= into * back * nx;
@@ -642,3 +667,35 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
  * hundred and twenty-eight of the first, which is what sets the length.
  */
 export const ELEMENTS = FRUITS.length;
+
+/** The longest a drop should run. Past this the seed is dealt again. */
+const LONGEST = 110;
+
+/**
+ * Picks the drop this video will show.
+ *
+ * The cadence is fixed — the column comes down at one speed, evenly spaced, and
+ * that is the whole look — so the only thing left to vary is the deal. A play
+ * costs well under a second now that pieces are only tested against their
+ * neighbours, which is what makes dealing again affordable: most seeds land
+ * inside the window on the first or second try.
+ *
+ * Every drop ends on the eighth element and none is shorter than a minute; this
+ * only keeps them from running to two.
+ */
+export function generateDrop(seed: number, ranks = ELEMENTS): DropRound {
+  let best = 0;
+  let bestLength = Infinity;
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    // Played without keeping frames: the search only wants the length, and
+    // holding five thousand snapshots per rejected deal is how a phone runs out
+    // of memory.
+    const length = playDrop({ seed, ranks, attempt }, LONGEST, false).duration;
+    if (length < LONGEST) return playDrop({ seed, ranks, attempt }, LONGEST);
+    if (length < bestLength) {
+      bestLength = length;
+      best = attempt;
+    }
+  }
+  return playDrop({ seed, ranks, attempt: best }, HARD_STOP);
+}

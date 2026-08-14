@@ -145,6 +145,17 @@ export function drawDropFrame(
     const x = toX(piece.x);
     const y = toY(piece.y);
 
+    // The ring left by a knock. Everything here is a rigid circle, so without
+    // this an impact simply stops a piece dead and a pile of anything reads as
+    // a pile of pebbles. Width and height only — nothing moves.
+    const shake = piece.shake;
+    ctx.save();
+    if (shake !== 0) {
+      ctx.translate(x, y);
+      ctx.scale(1 + shake, 1 - shake);
+      ctx.translate(-x, -y);
+    }
+
     if (image) {
       const sw = 'width' in image ? Number(image.width) : 0;
       const sh = 'height' in image ? Number(image.height) : 0;
@@ -168,6 +179,7 @@ export function drawDropFrame(
           r * 2,
         );
         ctx.restore();
+        ctx.restore();
         continue;
       }
     }
@@ -176,6 +188,7 @@ export function drawDropFrame(
       // Drawn rather than typed: no font involved, so it is the same picture on
       // every machine.
       drawShape(ctx, shape, Math.min(piece.rank, 7), x, y, r);
+      ctx.restore();
       continue;
     }
 
@@ -193,5 +206,6 @@ export function drawDropFrame(
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(glyph, x, y);
+    ctx.restore();
   }
 }

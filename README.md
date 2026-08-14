@@ -190,15 +190,21 @@ reads as straight.
 
 **The eighth element is the ending, and it sets the length.** A piece of rank `k`
 costs `2^k` of the first, so the eighth costs a hundred and twenty-eight
-strawberries — between a minute and two and a half at the measured cadence, and
-never inside a minute. The pile decides which, and the pile is not reliable:
-dealing the round again and again looking for one that finishes on time costs a
-second and a half a try. So the chute simply feeds faster the longer it runs —
-flat at the measured cadence for the first three quarters of a minute, then
-gathering pace until the mouth is saturated. Nothing is searched, the ending is
-guaranteed, and it reads as the thing getting busier. Over twenty-four drops:
-sixty-five seconds at the shortest, eighty-four in the middle, two minutes twenty
-at the longest, and every one of them ends on the eighth.
+strawberries — anywhere from a minute to two and a quarter, and the pile decides
+which. The cadence is not touched to fix that: the column comes down at one
+speed, evenly spaced, and that is the whole look. What varies is the deal, and a
+deal that runs past a minute and fifty is simply dealt again. That is affordable
+only because of the grid below — a drop plays out in under a second, so the
+search costs a second or two rather than a minute. Sixteen seeds: sixty-five
+seconds at the shortest, eighty-four in the middle, a minute forty-two at the
+longest, every one ending on the eighth and none inside a minute.
+
+**The column comes down the exact middle.** It used to be let go within half a
+radius of centre, because a column down the middle of a round bowl builds a
+tower rather than a pile — every contact normal points straight up, so nothing
+is ever pushed sideways. What breaks the symmetry now is the shove a merge gives
+what it makes, which turns out to be enough on its own: the pile spreads across
+four fifths of the bowl and the column stays straight.
 
 Two of a kind merge a hair before they touch — a tenth of a radius. Nothing aims
 here, so a pair that never quite meets is the whole reason a drop runs long, and
@@ -227,6 +233,13 @@ the merges read backwards. About one roll in five ignores the themes and deals
 eight glyphs that have no business being in the same bowl. It never deals the
 same thing twice running.
 
+**Everything rings when it is hit.** A piece is a rigid circle, so an impact
+that ought to deform something soft just stops it dead and a pile of anything
+reads as a pile of pebbles. So a knock leaves a squash that decays over a third
+of a second at eleven cycles a second, scaled by how hard the knock was. It is
+drawn, not simulated: nothing moves and nothing merges because of it. Something
+is ringing in about half the frames of a drop, one or two pieces at a time.
+
 **Drawn sets** — gems, diamonds, jelly cats, planets — are not emoji at all.
 Emoji are somebody else's artwork rendered by the machine's font, so they look
 different on every device and cannot be tuned; these are drawn out of arcs and
@@ -234,6 +247,13 @@ polygons and gradients, which means a gem is the same gem everywhere and its
 colour is a number this repository owns. A brilliant cut has a table, a girdle
 and a pavilion; the ringed planet gives up some of its width so the ring has
 somewhere to go without hanging over its neighbours.
+
+Each set is scaled until its silhouette meets the circle the simulation is
+actually using. A piece drawn inside its circle rather than out to it looks like
+it is floating: two resting against each other show a gap the width of whatever
+the artwork left over, and on a white ground there is no halo to cover it. An
+octagon's flat faces sit at 0.92 of its radius, a lit sphere was drawn at 0.88, a
+brilliant cut is shorter than it is wide.
 
 **The sound** is one of five, each cut from a different reference video at its
 most isolated hit — the loudest onset with the quietest two hundred milliseconds

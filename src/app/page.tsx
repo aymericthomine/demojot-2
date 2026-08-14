@@ -26,7 +26,7 @@ import {
   type Reel,
 } from "../export/encodeVideo";
 import { battleReel, dropReel } from "../export/reels";
-import { ELEMENTS, playDrop } from "../sim/drop";
+import { ELEMENTS, generateDrop } from "../sim/drop";
 import { FRUITS } from "../sim/fruit";
 import { dealPack } from "../sim/packs";
 import { DEFAULT_KIT, KITS } from "../audio/kit";
@@ -298,7 +298,7 @@ export default function HomePage() {
           } else {
             // No length is asked for: the drop ends when the eighth element is
             // made, which is never inside a minute.
-            const round = playDrop({ seed: job.seed, ranks: ELEMENTS }, 200);
+            const round = generateDrop(job.seed);
             total = round.durationInFrames;
             onStage("sound");
             audio = await renderDropAudio(round, job.kit).catch(() => null);
