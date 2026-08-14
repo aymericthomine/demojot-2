@@ -121,7 +121,7 @@ export const NECK = 0.139;
  * impact climbs back a tenth of the bowl and takes a third of a second to do it,
  * where the same rebound under a hard gravity would be a twitch.
  */
-const GRAVITY = 2.4;
+const GRAVITY = 1.8;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -130,14 +130,34 @@ const PASSES = 3;
 /**
  * How much of an impact comes back as bounce.
  *
- * A quarter, which is fruit and not a marble: dropped the height of the bowl it
- * comes back up about a tenth of it, which is the rebound measured off the
- * reference to within a few pixels. It only applies to a real impact — below
- * `CALM` a contact takes everything, or a pile of a dozen fruit would tremble
- * for the whole video instead of settling.
+ * Three fifths between two pieces, and it used to be a quarter. The quarter was
+ * the rebound measured off the reference, and it was right about a single
+ * landing and wrong about everything after it: a piece nudged by its neighbour
+ * absorbed the nudge and slumped, so the bowl became a heap sitting in the
+ * bottom of itself. What comes back now is enough that a push passes along and
+ * keeps passing along.
  */
-const BOUNCE = 0.28;
-const CALM = 0.45;
+const BOUNCE = 0.6;
+
+/**
+ * The wall gives more back than another piece does.
+ *
+ * It is the one thing in the bowl that does not move, so it is the only contact
+ * that can return a piece to where it came from rather than sharing the blow
+ * with something else. More than half comes back, which is what keeps the bowl
+ * from becoming a heap sitting in the bottom of it.
+ */
+const WALL_BOUNCE = 0.85;
+
+/**
+ * Below this a contact takes everything instead of bouncing.
+ *
+ * Almost nothing, where it used to be fifteen times higher. The point of it is
+ * to stop the very last tremble, but set anywhere near the speed of an ordinary
+ * nudge it swallows every one of them. Down here it catches only what is already
+ * still.
+ */
+const CALM = 0.03;
 
 /**
  * How hard a contact has to be to make a noise.
@@ -152,19 +172,25 @@ const LOUD = 0.6;
 /**
  * How much of a slide survives a contact.
  *
- * High, because pieces in the reference slide over one another rather than
- * catching: one landing on the shoulder of another slides off into the gap
- * instead of perching there. A twelfth of the sliding is rubbed off per contact,
- * which is enough for a pile to hold its shape and little enough that it keeps
- * finding a tighter one.
+ * Nearly all of it, because pieces in the reference slide over one another
+ * rather than catching: one landing on the shoulder of another slides off into
+ * the gap instead of perching there. It matters more than it looks — pieces at
+ * the bottom are in contact constantly, so anything rubbed off here is taken off
+ * them dozens of times a second, and a twelfth per contact was quietly the
+ * largest brake in the bowl.
  */
-const RUB = 0.92;
+const RUB = 0.97;
 
-/** Bled off every substep so a pile stops trembling and settles. */
-const DRAG = 0.9985;
+/**
+ * Bled off every substep, so a pile stops trembling.
+ *
+ * Barely anything now: a tenth of the speed a second, where it used to be half.
+ * Half a second was all it took for a piece knocked loose to give up.
+ */
+const DRAG = 0.9998;
 
-/** Below this speed a resting fruit is simply stopped. */
-const STILL = 0.02;
+/** Below this speed a resting piece is simply stopped. */
+const STILL = 0.005;
 
 /**
  * The neighbour grid.
@@ -632,7 +658,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
               }
               if (into > LOUD) events.push({ t: time, kind: 'land', rank: body.rank });
             }
-            const back = 1 + (hard ? BOUNCE : 0);
+            const back = 1 + (hard ? WALL_BOUNCE : 0);
             body.vx -= into * back * nx;
             body.vy -= into * back * ny;
             const tx = -ny;

@@ -177,9 +177,20 @@ how it reads:
   visibly different colours on opposite sides of the same ring, which is not what
   the reference does.
 
-**Pieces slide over one another.** Only a twelfth of a slide is rubbed off per
-contact, so a piece landing on the shoulder of another slides off into the gap
-rather than perching there, and a pile keeps finding a tighter shape.
+**The bowl does not settle into a heap.** Four numbers decide that and all four
+were set too cautiously. The wall gives back more than half of what hits it — it
+is the one thing in the bowl that cannot move, so it is the only contact that
+can return a piece to where it came from. Two pieces give back three fifths, so
+a push passes along and keeps passing along instead of being absorbed. Almost
+nothing is rubbed off a slide, which matters more than it looks: pieces at the
+bottom are in contact constantly, so a twelfth per contact was quietly the
+largest brake in the bowl. And the threshold below which a contact takes
+everything instead of bouncing is now fifteen times lower, because anywhere near
+the speed of an ordinary nudge it swallowed every one of them.
+
+Measured on the same seed: three quarters of the pieces are moving at any moment
+where it used to be under half, at half again the speed. The first piece of a
+round bounces thirty-nine pixels off the floor of a 1080-wide frame.
 
 **Gravity is weak, and that is measured too.** A loose fruit in the reference
 drifts down at about thirty pixels a second and gathers speed so slowly it reads
