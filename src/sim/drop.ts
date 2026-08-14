@@ -98,10 +98,10 @@ const WOBBLE = 0;
  * chute — so this and `POP` are where most of the life in a busy bowl comes
  * from.
  */
-const SHOVE = 0.9;
+const SHOVE = 0.7;
 
 /** How hard a merge kicks what it makes upwards, in bowl radii per second. */
-const POP = 1.1;
+const POP = 0.8;
 
 /**
  * Half the neck, in bowl radii. Measured: 41.5 px of 576.
@@ -126,7 +126,7 @@ export const NECK = 0.139;
  * far and stays up twice as long, which is the difference between a twitch and
  * something worth watching.
  */
-const GRAVITY = 1.2;
+const GRAVITY = 1;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -143,7 +143,7 @@ const PASSES = 3;
  * point — the energy budget here is tiny, because a piece arrives at the speed
  * of the chute and nothing else puts anything in.
  */
-const BOUNCE = 0.8;
+const BOUNCE = 0.65;
 
 /**
  * The wall gives more back than another piece does.
@@ -153,7 +153,7 @@ const BOUNCE = 0.8;
  * with something else. Nearly all of it comes back: the wall is where a piece
  * that has run out of ideas gets sent somewhere new.
  */
-const WALL_BOUNCE = 0.95;
+const WALL_BOUNCE = 0.8;
 
 /**
  * Below this a contact takes everything instead of bouncing.
@@ -334,14 +334,21 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
   const total = Math.round(Math.min(seconds, HARD_STOP) * FPS);
 
   /**
-   * The column starts full, exactly as the reference opens: strawberries all the
-   * way from the top of the frame down to the mouth of the bowl, evenly spaced.
-   * An empty chute would spend the first second of every video showing nothing.
+   * The column starts full, exactly as the reference opens: pieces all the way
+   * from the top of the frame down to the mouth of the bowl, evenly spaced. An
+   * empty chute would spend the first second of every video showing nothing.
+   *
+   * Laid out downwards from `CHUTE_TOP` rather than upwards from the mouth, and
+   * that is the whole point of it. Upwards, the last piece landed wherever the
+   * spacing happened to leave it — a sixth of a gap short of the top — and the
+   * first piece the chute released came a gap and a half behind the one in front
+   * of it. That hole then travelled down the column and through the entire
+   * video, which is exactly the thing the even spacing is for.
    */
   const base = setup.every ?? FEED_EVERY;
   const spacing = FEED_SPEED * base;
   const wobble = () => (rng.next() - 0.5) * 2 * WOBBLE * radiusOf(0);
-  for (let y = -radiusOf(0); y > CHUTE_TOP; y -= spacing) {
+  for (let y = CHUTE_TOP; y <= -radiusOf(0); y += spacing) {
     bodies.push({
       id: nextId++,
       rank: 0,

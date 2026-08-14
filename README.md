@@ -188,18 +188,20 @@ largest brake in the bowl. And the threshold below which a contact takes
 everything instead of bouncing is now fifteen times lower, because anywhere near
 the speed of an ordinary nudge it swallowed every one of them.
 
-Then further, because half measures were still a heap: the wall now gives back
-nearly everything, two pieces give back four fifths, gravity is half what the
-reference measures, and a merge kicks twice as hard sideways and upwards. That is
-well past what a real fruit does, and it is the point — the energy budget here is
-tiny, since a piece arrives at the speed of the chute and nothing else puts
-anything in. A merge is the only event that creates movement rather than passing
-it around.
+Then further, because half measures were still a heap: the wall gives back four
+fifths, two pieces give back two thirds, gravity is a third of what the reference
+measures, and a merge kicks half again as hard sideways and upwards. That is past
+what a real fruit does, and it is the point — the energy budget here is tiny,
+since a piece arrives at the speed of the chute and nothing else puts anything
+in. A merge is the only event that creates movement rather than passing it
+around.
 
-Measured on the same seed: **everything in the bowl is moving at any moment**,
-at twice the speed it used to, where before it was under half of them. Sixteen
-drops run sixty-five seconds to a minute thirty-eight, every one ending on the
-eighth element and none inside a minute.
+The low gravity is what makes it read as soft rather than sharp: the same
+rebound climbs further and stays up longer, so the bowl is busy without anything
+in it snapping about. Measured on the same seed: **four fifths of the pieces are
+moving at any moment**, at half again the speed, where before it was under half
+of them. Sixteen drops run sixty-five seconds to a minute fifty-three, every one
+ending on the eighth element and none inside a minute.
 
 **Gravity is weak, and that is measured too.** A loose fruit in the reference
 drifts down at about thirty pixels a second and gathers speed so slowly it reads
@@ -232,6 +234,13 @@ only because of the grid below — a drop plays out in under a second, so the
 search costs a second or two rather than a minute. Sixteen seeds: sixty-five
 seconds at the shortest, eighty-four in the middle, a minute forty-two at the
 longest, every one ending on the eighth and none inside a minute.
+
+**The column is laid out downwards from the top of the frame**, not upwards from
+the mouth of the bowl. Upwards, the last piece of the opening column landed
+wherever the spacing happened to leave it — a sixth of a gap short of the top —
+so the first piece the chute released came a gap and a half behind the one in
+front of it. That hole then travelled down the column and through the whole
+video, which is exactly what the even spacing exists to prevent.
 
 **The column comes down the exact middle.** It used to be let go within half a
 radius of centre, because a column down the middle of a round bowl builds a
