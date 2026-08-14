@@ -15,7 +15,7 @@
  * together light each other rather than cutting each other out.
  */
 
-import { BOWL, BOWL_X, BOWL_Y, NECK, type DropFrame } from '../sim/drop';
+import { BOWL, BOWL_X, BOWL_Y, CHUTE_TOP, NECK, type DropFrame } from '../sim/drop';
 import { FRUITS, radiusOf } from '../sim/fruit';
 import { drawShape, shapeColor, type ShapeSet } from './shapes';
 
@@ -50,30 +50,32 @@ export interface DropViewport {
 /** Outline weight, in bowl radii. Measured: 8 px of 576, in a bowl of 0.519 W. */
 const OUTLINE = 0.0285;
 
+/** How much of the ramp each rail of the neck takes. */
+const RAIL = 0.06;
+
 /**
- * The outline is one colour at a time, and that colour drifts.
+ * The ramp itself: red at the start, blue at the end, and white where it begins.
  *
- * Sampled round the circle at four points in the reference, twenty seconds
- * apart: every point on the ring is the same colour as every other at any given
- * moment — pink at three seconds, lavender at thirty, cream at ninety. It was
- * drawn here as a gradient across the bowl, which put visibly different colours
- * on opposite sides of the same ring and is simply not what the reference does.
- *
- * The colours themselves are pale to the point of white: measured lightness
- * runs from 88 to 93 per cent at full saturation, so this is white with a tint
- * rather than a colour.
+ * Hue runs to 280 rather than all the way round, so the two ends of the outline
+ * meet at the neck as red and violet rather than as the same red twice.
  */
-const TINT_LIGHT = 0.9;
+function rainbow(t: number): string {
+  const clamped = Math.min(1, Math.max(0, t));
+  // The first stretch of the left rail is washed out, which is what makes the
+  // reference's neck read as white on one side and violet on the other.
+  const light = 0.62 + 0.33 * Math.max(0, 1 - clamped / RAIL);
+  // Eased rather than straight: sampled round the reference, the hue barely
+  // moves through the reds down the left of the bowl and then runs quickly
+  // through the greens and blues on the way up the right.
+  return hsl(Math.pow(clamped, 1.3) * 0.78, light);
+}
 
-/** Seconds for the tint to come back round to where it started. */
-const TURN = 45;
-
-/** `hsl` at full saturation and near-white, as a hex this file can invert. */
-function tint(turn: number): string {
+/** `hsl` at full saturation, as a hex this file can invert. */
+function hsl(turn: number, light: number): string {
   const h = ((turn % 1) + 1) % 1;
-  const chroma = (1 - Math.abs(2 * TINT_LIGHT - 1)) * 1;
+  const chroma = (1 - Math.abs(2 * light - 1)) * 1;
   const x = chroma * (1 - Math.abs(((h * 6) % 2) - 1));
-  const m = TINT_LIGHT - chroma / 2;
+  const m = light - chroma / 2;
   const [r, g, b] =
     h < 1 / 6
       ? [chroma, x, 0]
@@ -105,7 +107,7 @@ function fade(hex: string, alpha: number): string {
 export function drawDropFrame(
   ctx: CanvasRenderingContext2D,
   frame: DropFrame,
-  { width, height, time, invert = false, faces, shape }: DropViewport,
+  { width, height, invert = false, faces, shape }: DropViewport,
 ): void {
   const radius = width * BOWL;
   const cx = width * BOWL_X;
@@ -121,16 +123,52 @@ export function drawDropFrame(
   // the chute through.
   const mouth = Math.asin(NECK);
   const wallY = toY(-Math.cos(mouth));
-  ctx.strokeStyle = ink(tint(time / TURN), invert);
   ctx.lineWidth = radius * OUTLINE;
   ctx.lineCap = 'round';
+
+  /**
+   * The outline is a rainbow laid along its own length.
+   *
+   * Sampled every thirty degrees round the reference and at four times twenty
+   * seconds apart: the hue runs from red just below the left of the neck, down
+   * through orange and yellow to green at the bottom, up through cyan to blue on
+   * the right, and it does not move — the same reading at two seconds and at
+   * thirty-two. So it is one ramp along the path rather than anything animated,
+   * and the left rail of the neck, where the ramp starts, is washed out to white.
+   *
+   * Drawn as segments rather than as a canvas gradient, which can only run in a
+   * straight line and would put the same colour on the top and the bottom of the
+   * bowl.
+   */
+  const STEPS = 96;
+  const from = -Math.PI / 2 + mouth;
+  const span = Math.PI * 2 - mouth * 2;
+  const paint = (t: number) => ink(rainbow(t), invert);
+
+  // The left rail: the start of the ramp, and white where it starts. It begins
+  // where the chute does rather than at the top of the frame — measured at 312
+  // px of 1920 in the reference, which is where a piece is let go.
+  const railTop = toY(CHUTE_TOP);
+  ctx.strokeStyle = paint(0);
   ctx.beginPath();
-  ctx.arc(cx, cy, radius, -Math.PI / 2 + mouth, -Math.PI / 2 - mouth + Math.PI * 2);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(toX(-NECK), 0);
+  ctx.moveTo(toX(-NECK), railTop);
   ctx.lineTo(toX(-NECK), wallY);
-  ctx.moveTo(toX(NECK), 0);
+  ctx.stroke();
+
+  // Round the bowl, anticlockwise from the left of the neck, which is the way
+  // the reference's ramp runs.
+  for (let i = 0; i < STEPS; i += 1) {
+    const a0 = from - (i / STEPS) * span;
+    const a1 = from - ((i + 1.02) / STEPS) * span;
+    ctx.strokeStyle = paint(RAIL + (i / STEPS) * (1 - RAIL * 2));
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, a0, a1, true);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = paint(1);
+  ctx.beginPath();
+  ctx.moveTo(toX(NECK), railTop);
   ctx.lineTo(toX(NECK), wallY);
   ctx.stroke();
 

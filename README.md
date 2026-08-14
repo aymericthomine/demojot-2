@@ -161,21 +161,31 @@ how it reads:
 - **The bowl is wider than the frame.** Radius 0.519 of the frame width, centred
   a little above the middle, so the ring is clipped by a few pixels either side.
   The outline is 8 px of 576, the neck 83 px across.
-- **The chute is a conveyor, not a fall.** The column is evenly spaced, 67 px
-  apart at 6.5 px a frame, and neither number drifts — measured across five of
-  the reference videos, all the way from the top of the frame down to the pile.
-  No falling body does that. So a piece comes down at one speed on one line until
-  it meets something — the wall at the start of a round, or whatever is already
-  in the bowl — and weight starts at the moment of contact, with the speed it
-  arrived at. Letting gravity take over at the neck instead stretched the column
-  out and lost it.
-- **The outline is one colour at a time, and that colour drifts.** Sampled round
-  the circle at four points twenty seconds apart: every point on the ring is the
-  same colour as every other at any given moment — pink at three seconds,
-  lavender at thirty, cream at ninety — and all of them are white with a tint,
-  88 to 93 per cent lightness. Drawing it as a gradient across the bowl put
-  visibly different colours on opposite sides of the same ring, which is not what
-  the reference does.
+- **The column falls.** Five earlier reference videos held their column at a
+  constant 67 px of spacing and 6.5 px a frame, which no falling body does, so
+  this was built as a conveyor. The reference it now follows does the opposite
+  and does it cleanly: tracking seven pieces and fitting their speed against how
+  far each had fallen gives 5.0 px a frame at the top of the chute rising to 11.6
+  near the bottom of the bowl, one constant acceleration, and gaps that grow from
+  107 px to 202 px down the column. A piece is let go at 280 px/s and gathers
+  speed the whole way; it stays clear of everything until it meets the wall or
+  the pile.
+- **Gravity is 204 px/s² in a bowl 503 px across** — 0.41 bowl radii a second
+  squared, a seventieth of earth's, which is why everything here floats. It is
+  the same number for the falling column and for the bowl, because a piece does
+  not know which one it is in, and it is the most reliable measurement in this
+  file: one straight line through seven tracks.
+- **The outline is a rainbow laid along its own length.** Sampled every thirty
+  degrees round the reference at four times twenty seconds apart: red just below
+  the left of the neck, orange and yellow down the left, green at the bottom,
+  cyan and blue up the right, violet at the right of the neck — and it does not
+  move, the same reading at two seconds and at thirty-two. So it is one hue ramp
+  along the path, eased so the reds hold the left of the bowl, and the left rail
+  of the neck is washed out to white where the ramp starts. Drawn as ninety-six
+  short strokes, because a canvas gradient runs in a straight line and would put
+  the same colour on the top and the bottom of the bowl.
+- **The bowl is 503 px across in a 1080 px frame, its middle 1144 px down a 1920
+  px one.** Smaller and lower than the earlier videos framed it.
 
 **A piece weighs what it is wide.** Everything used to weigh the same, so a big
 one landing on a small one shared the blow evenly and neither went anywhere

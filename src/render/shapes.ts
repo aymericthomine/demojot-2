@@ -12,15 +12,22 @@
  * hang over its neighbours.
  */
 
-export type ShapeSet = 'gems' | 'diamonds' | 'jellies' | 'planets';
+export type ShapeSet = 'gems' | 'diamonds' | 'jellies' | 'planets' | 'puddings';
 
-export const SHAPE_SETS: readonly ShapeSet[] = ['gems', 'diamonds', 'jellies', 'planets'];
+export const SHAPE_SETS: readonly ShapeSet[] = [
+  'gems',
+  'diamonds',
+  'puddings',
+  'jellies',
+  'planets',
+];
 
 export const SHAPE_LABEL: Record<ShapeSet, string> = {
   gems: 'gems',
   diamonds: 'diamonds',
   jellies: 'jelly cats',
   planets: 'planets',
+  puddings: 'jellies',
 };
 
 /** Eight colours per set: the body of the piece, and the halo it throws. */
@@ -38,6 +45,16 @@ const PALETTE: Record<ShapeSet, readonly string[]> = {
   ],
   jellies: ['#fde68a', '#fbcfe8', '#a7f3d0', '#ddd6fe', '#bfdbfe', '#fed7aa', '#fecdd3', '#e9d5ff'],
   planets: ['#9ca3af', '#f97316', '#fbbf24', '#60a5fa', '#34d399', '#c084fc', '#f472b6', '#fde047'],
+  puddings: [
+    '#dc2626',
+    '#f97316',
+    '#22c55e',
+    '#0ea5e9',
+    '#f59e0b',
+    '#7c3aed',
+    '#e11d48',
+    '#f97316',
+  ],
 };
 
 export const shapeColor = (set: ShapeSet, rank: number): string =>
@@ -432,10 +449,126 @@ const FILL: Record<ShapeSet, number> = {
   diamonds: 1.12,
   jellies: 1.07,
   planets: 1.13,
+  puddings: 1.05,
 };
 
 /** A brilliant cut sits low in its circle, so it is lifted back to the middle. */
 const DIAMOND_LIFT = -0.165;
+
+/**
+ * A turned-out jelly, translucent and glossy.
+ *
+ * Three things by size, which is what the reference does: the little ones are
+ * smooth domes, the middle of the ladder is the fluted mould — a ring of round
+ * lobes, drawn as overlapping circles because a canvas cannot union paths — and
+ * the big ones are faceted, a flat polygon top over a skirt of trapezoids. All
+ * of them get the same treatment underneath: a light centre falling to a deep
+ * edge, a hard white highlight up on the left, and a bright rim.
+ */
+function pudding(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+  hue: string,
+  rank: number,
+): void {
+  const glass = ctx.createRadialGradient(x - r * 0.3, y - r * 0.35, r * 0.05, x, y, r);
+  glass.addColorStop(0, shade(hue, 0.55));
+  glass.addColorStop(0.55, hue);
+  glass.addColorStop(1, shade(hue, -0.4));
+  ctx.fillStyle = glass;
+
+  if (rank <= 1) {
+    // A dome: round on top, sat down on its own base.
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * 0.12, r * 0.92, r * 0.8, 0, Math.PI, 0);
+    ctx.ellipse(x, y + r * 0.12, r * 0.92, r * 0.28, 0, 0, Math.PI);
+    ctx.fill();
+  } else if (rank <= 5) {
+    // The mould: a body with a ring of lobes round it, all one colour, so the
+    // overlaps disappear and what is left is the scalloped outline.
+    const lobes = 6;
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.62, 0, Math.PI * 2);
+    ctx.fill();
+    for (let i = 0; i < lobes; i += 1) {
+      const a = (i / lobes) * Math.PI * 2 + Math.PI / lobes;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(a) * r * 0.62, y + Math.sin(a) * r * 0.62, r * 0.37, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // A gloss on each lobe rather than a line between them. Lines read as the
+    // spokes of a flower; what makes a jelly a jelly is that every rounded part
+    // of it catches the light separately.
+    for (let i = 0; i < lobes; i += 1) {
+      const a = (i / lobes) * Math.PI * 2 + Math.PI / lobes;
+      const lx = x + Math.cos(a) * r * 0.62;
+      const ly = y + Math.sin(a) * r * 0.62;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+      ctx.beginPath();
+      ctx.ellipse(lx - r * 0.1, ly - r * 0.12, r * 0.16, r * 0.09, -0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = shade(hue, 0.3);
+    ctx.beginPath();
+    ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Faceted: a flat top with a skirt of trapezoids under it.
+    const sides = 8;
+    const top = 0.5;
+    const at = (i: number, ring: number, lift: number) => {
+      const a = (i / sides) * Math.PI * 2 + Math.PI / sides;
+      return [x + Math.cos(a) * r * ring, y + Math.sin(a) * r * ring * 0.9 - r * lift] as const;
+    };
+    ctx.beginPath();
+    for (let i = 0; i <= sides; i += 1) {
+      const [px, py] = at(i, 0.96, 0);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.fill();
+    for (let i = 0; i < sides; i += 1) {
+      const [ax, ay] = at(i, 0.96, 0);
+      const [bx, by] = at(i + 1, 0.96, 0);
+      const [cx2, cy2] = at(i + 1, top, 0.28);
+      const [dx2, dy2] = at(i, top, 0.28);
+      ctx.beginPath();
+      ctx.moveTo(ax, ay);
+      ctx.lineTo(bx, by);
+      ctx.lineTo(cx2, cy2);
+      ctx.lineTo(dx2, dy2);
+      ctx.closePath();
+      ctx.fillStyle = i % 2 ? shade(hue, 0.2) : shade(hue, -0.15);
+      ctx.fill();
+      ctx.strokeStyle = shade(hue, 0.6);
+      ctx.lineWidth = Math.max(1, r * 0.02);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    for (let i = 0; i <= sides; i += 1) {
+      const [px, py] = at(i, top, 0.28);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = shade(hue, 0.35);
+    ctx.fill();
+    ctx.strokeStyle = shade(hue, 0.7);
+    ctx.stroke();
+  }
+
+  // The gloss, which is what makes a thing look wet rather than painted.
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.32, y - r * 0.34, r * 0.22, r * 0.13, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.28, y - r * 0.2, r * 0.1, r * 0.06, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+}
 
 export function drawShape(
   ctx: CanvasRenderingContext2D,
@@ -450,5 +583,6 @@ export function drawShape(
   if (set === 'gems') gem(ctx, x, y, r, hue, rank);
   else if (set === 'diamonds') diamond(ctx, x, y + r * DIAMOND_LIFT, r, hue);
   else if (set === 'jellies') jelly(ctx, x, y, r, hue);
+  else if (set === 'puddings') pudding(ctx, x, y, r, hue, Math.min(rank, 7));
   else planet(ctx, x, y, r, hue, Math.min(rank, 7));
 }

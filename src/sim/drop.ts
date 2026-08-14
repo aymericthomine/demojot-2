@@ -27,18 +27,30 @@ import { FRUITS, TOP_RANK, radiusOf } from './fruit';
 import { createRng } from './random';
 import { FPS } from './style';
 
-/** Bowl radius as a fraction of the frame width. Measured: 299 px of 576. */
-export const BOWL = 0.519;
+/** Bowl radius as a fraction of the frame width. Measured: 503 px of 1080. */
+export const BOWL = 0.466;
 
-/** Where the bowl sits in the frame, as fractions of width and height. */
+/**
+ * Where the bowl sits in the frame, as fractions of width and height.
+ *
+ * Lower than it was, and smaller with it: the reference this is taken from
+ * measures a bowl 503 px across in a 1080 px frame with its middle 1144 px down
+ * a 1920 px one. The earlier videos framed it higher and bigger; this is the
+ * one being reproduced.
+ */
 export const BOWL_X = 0.5;
-export const BOWL_Y = 0.488;
+export const BOWL_Y = 0.596;
 
-/** How fast the chute feeds, in bowl radii per second. Measured: 195 px/s of 576. */
-const FEED_SPEED = 0.651;
+/**
+ * How fast a piece leaves the chute, in bowl radii per second.
+ *
+ * Measured at 280 px/s of a 503 px radius, by fitting the speed of seven pieces
+ * against how far each had fallen.
+ */
+const FEED_SPEED = 0.56;
 
-/** Seconds between two fruits leaving the chute. Measured: 67 px of spacing. */
-const FEED_EVERY = 0.344;
+/** Seconds between two releases. Measured: sixteen frames at sixty. */
+const FEED_EVERY = 0.267;
 
 /** How long the finished pile is held on screen after the last element is made. */
 const TAIL = 3;
@@ -75,7 +87,7 @@ const HARD_STOP = 170;
  * height, which is 1.67 bowl radii down from the top edge — so the column runs
  * out of the picture rather than starting inside it.
  */
-const CHUTE_TOP = -1.78;
+export const CHUTE_TOP = -1.78;
 
 /**
  * How far off the middle of the chute a piece may be let go, in its own radii.
@@ -123,14 +135,14 @@ export const NECK = 0.139;
  * A loose piece drifting through open space measures far weaker still, but that
  * is not a free fall: it is a piece leaning on something.
  *
- * This ended up at a sixteenth of the arc, which is well below either
- * measurement and is a choice rather than a reading. Two things come out of it
- * and both were asked for: a rebound climbs sixteen times as far and hangs
- * sixteen times as long, and the pile stops being pressed together by its own
- * weight — the bowl fills with pieces drifting through it instead of a heap
- * sitting in the bottom of it. Nothing here is trying to be earth.
+ * This one is measured off the falling column rather than off a rebound, and
+ * far more reliably than either: the speed of seven pieces fitted against how
+ * far each had fallen gives one constant acceleration, 204 px/s² in a bowl 503
+ * px across. It is a seventieth of earth's, which is why everything here floats
+ * — and it is the same number for the column and for the bowl, because a piece
+ * does not know which one it is in.
  */
-const GRAVITY = 0.18;
+const GRAVITY = 0.41;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -375,18 +387,24 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
    * first piece the chute released came a gap and a half behind the one in front
    * of it. That hole then travelled down the column and through the entire
    * video, which is exactly the thing the even spacing is for.
+   *
+   * Each one is placed where it would be if it had been let go at the top a
+   * whole number of intervals ago, and given the speed it would have by then, so
+   * the opening column already has the spread the falling one has.
    */
   const base = setup.every ?? FEED_EVERY;
-  const spacing = FEED_SPEED * base;
   const wobble = () => (rng.next() - 0.5) * 2 * WOBBLE * radiusOf(0);
-  for (let y = CHUTE_TOP; y <= -radiusOf(0); y += spacing) {
+  for (let k = 0; ; k += 1) {
+    const fallen = k * base;
+    const y = CHUTE_TOP + FEED_SPEED * fallen + 0.5 * GRAVITY * fallen * fallen;
+    if (y > -radiusOf(0)) break;
     bodies.push({
       id: nextId++,
       rank: 0,
       x: wobble(),
       y,
       vx: 0,
-      vy: FEED_SPEED,
+      vy: FEED_SPEED + GRAVITY * fallen,
       riding: true,
       fresh: 0,
       hitAt: -1,
@@ -588,20 +606,21 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
         if (body.fresh > 0) body.fresh = Math.max(0, body.fresh - dt);
 
         if (body.riding) {
-          // A piece comes down at one speed and on one line, from the top of the
-          // frame to whatever it meets — the wall at the start of a round, or
-          // something already in the bowl. Measured across five reference
-          // videos: 67 px of spacing at 6.5 px a frame, neither number drifting,
-          // all the way down to the pile. No falling body does that, and letting
-          // gravity take over at the neck stretched the column out and lost it.
+          // The column falls. It is let go at the top of the chute and gathers
+          // speed the whole way down, which is what the reference does: tracking
+          // seven pieces against how far each had fallen gives 5.0 px a frame at
+          // the top of the chute and 11.6 near the bottom of the bowl, a clean
+          // fit to one constant acceleration. The gaps between them grow with
+          // it — 107 px at the top of the column, 202 px at the bottom.
           //
-          // Weight starts at the moment of contact, with the speed it arrived at.
+          // It stays out of everything's way until it meets something: the wall
+          // at the start of a round, or whatever is already in the bowl.
           const r = radiusOf(body.rank);
-          const ahead = body.y + FEED_SPEED * dt;
+          body.vy += GRAVITY * dt;
+          const ahead = body.y + body.vy * dt;
           const floor = Math.sqrt(Math.max(0, 1 - body.x * body.x)) - r;
           if (ahead >= floor || overlaps(body.x, ahead, r, body.id)) {
             body.riding = false;
-            body.vy = FEED_SPEED;
           } else {
             body.y = ahead;
           }
