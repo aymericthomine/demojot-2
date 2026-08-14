@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { renderDropAudio, renderRoundAudio } from "../audio/render";
+import { previewKit, renderDropAudio, renderRoundAudio } from "../audio/render";
 import {
   describeSupport,
   encodeVideo,
@@ -573,11 +573,24 @@ export default function HomePage() {
 
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span className="px-1 text-sm text-[#8b90a0]">Sound</span>
+              <button
+                type="button"
+                onClick={() => void previewKit(kit)}
+                title="Hear it — four ticks at the rate the chute feeds"
+                className="rounded-lg border border-[#23262f] bg-white/[0.04] px-2.5 py-1 text-sm hover:border-[#3a3f4d]"
+              >
+                ▶
+              </button>
               {KITS.map((sound, index) => (
                 <button
                   key={sound.name}
                   type="button"
-                  onClick={() => setKit(index)}
+                  onClick={() => {
+                    setKit(index);
+                    // Picking one plays it: a row of five words is not a thing
+                    // anybody can choose between by reading.
+                    void previewKit(index);
+                  }}
                   disabled={busy}
                   title={sound.note}
                   className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${

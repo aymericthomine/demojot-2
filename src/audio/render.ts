@@ -191,3 +191,47 @@ export function interleave(buffer: AudioBuffer): Float32Array {
   }
   return out;
 }
+
+/**
+ * Plays a few ticks of a kit, so the picker can be listened to rather than read.
+ *
+ * Four hits at the cadence the chute feeds at, which is what the choice actually
+ * sounds like — one tick in isolation tells you very little. Decoded through the
+ * live context rather than the offline one so the buffer is at the rate the
+ * hardware is running at.
+ */
+let speaker: AudioContext | null = null;
+const heard = new Map<string, Promise<AudioBuffer>>();
+
+export async function previewKit(index: number): Promise<void> {
+  const chosen = KITS[index] ?? KITS[DEFAULT_KIT];
+  speaker ??= new AudioContext();
+  const ctx = speaker;
+  // Browsers start a context suspended until a gesture; this is called from a
+  // click, so resuming here is allowed.
+  if (ctx.state === 'suspended') await ctx.resume();
+
+  let buffer = heard.get(chosen.name);
+  if (!buffer) {
+    buffer = (async () => {
+      const binary = atob(chosen.sample);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+      return ctx.decodeAudioData(bytes.buffer);
+    })();
+    heard.set(chosen.name, buffer);
+  }
+  const sample = await buffer;
+
+  const master = ctx.createGain();
+  master.gain.value = 0.5;
+  master.connect(ctx.destination);
+  [0, 0.34, 0.5, 0.84].forEach((offset, i) => {
+    const node = ctx.createBufferSource();
+    node.buffer = sample;
+    const amp = ctx.createGain();
+    amp.gain.value = i === 3 ? 0.9 : 0.75;
+    node.connect(amp).connect(master);
+    node.start(ctx.currentTime + offset);
+  });
+}

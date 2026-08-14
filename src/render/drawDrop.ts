@@ -50,11 +50,45 @@ export interface DropViewport {
 /** Outline weight, in bowl radii. Measured: 8 px of 576, in a bowl of 0.519 W. */
 const OUTLINE = 0.0285;
 
-/** The outline's colours, in order round the gradient. Sampled off the reference. */
-const FLASK = ['#a7b0f7', '#c9aef0', '#f5c3dd', '#bfe0f5'];
+/**
+ * The outline is one colour at a time, and that colour drifts.
+ *
+ * Sampled round the circle at four points in the reference, twenty seconds
+ * apart: every point on the ring is the same colour as every other at any given
+ * moment — pink at three seconds, lavender at thirty, cream at ninety. It was
+ * drawn here as a gradient across the bowl, which put visibly different colours
+ * on opposite sides of the same ring and is simply not what the reference does.
+ *
+ * The colours themselves are pale to the point of white: measured lightness
+ * runs from 88 to 93 per cent at full saturation, so this is white with a tint
+ * rather than a colour.
+ */
+const TINT_LIGHT = 0.9;
 
-/** Seconds for the gradient to come back round to where it started. */
-const TURN = 22;
+/** Seconds for the tint to come back round to where it started. */
+const TURN = 45;
+
+/** `hsl` at full saturation and near-white, as a hex this file can invert. */
+function tint(turn: number): string {
+  const h = ((turn % 1) + 1) % 1;
+  const chroma = (1 - Math.abs(2 * TINT_LIGHT - 1)) * 1;
+  const x = chroma * (1 - Math.abs(((h * 6) % 2) - 1));
+  const m = TINT_LIGHT - chroma / 2;
+  const [r, g, b] =
+    h < 1 / 6
+      ? [chroma, x, 0]
+      : h < 2 / 6
+        ? [x, chroma, 0]
+        : h < 3 / 6
+          ? [0, chroma, x]
+          : h < 4 / 6
+            ? [0, x, chroma]
+            : h < 5 / 6
+              ? [x, 0, chroma]
+              : [chroma, 0, x];
+  const byte = (v: number) => Math.round((v + m) * 255);
+  return `#${((byte(r) << 16) | (byte(g) << 8) | byte(b)).toString(16).padStart(6, '0')}`;
+}
 
 function ink(hex: string, invert: boolean): string {
   if (!invert) return hex;
@@ -87,14 +121,7 @@ export function drawDropFrame(
   // the chute through.
   const mouth = Math.asin(NECK);
   const wallY = toY(-Math.cos(mouth));
-  const sweep = ctx.createLinearGradient(
-    cx - radius * Math.cos((time / TURN) * Math.PI * 2),
-    cy - radius * Math.sin((time / TURN) * Math.PI * 2),
-    cx + radius * Math.cos((time / TURN) * Math.PI * 2),
-    cy + radius * Math.sin((time / TURN) * Math.PI * 2),
-  );
-  FLASK.forEach((hex, i) => sweep.addColorStop(i / (FLASK.length - 1), ink(hex, invert)));
-  ctx.strokeStyle = sweep;
+  ctx.strokeStyle = ink(tint(time / TURN), invert);
   ctx.lineWidth = radius * OUTLINE;
   ctx.lineCap = 'round';
   ctx.beginPath();

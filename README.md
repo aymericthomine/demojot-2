@@ -162,10 +162,24 @@ how it reads:
   a little above the middle, so the ring is clipped by a few pixels either side.
   The outline is 8 px of 576, the neck 83 px across.
 - **The chute is a conveyor, not a fall.** The column is evenly spaced, 67 px
-  apart at 6.5 px a frame, and neither number drifts — measured across four of
-  the reference videos. No falling body does that. So a fruit descends at a fixed
-  speed while it is in the neck, and starts behaving like a body with weight the
-  moment the neck ends.
+  apart at 6.5 px a frame, and neither number drifts — measured across five of
+  the reference videos, all the way from the top of the frame down to the pile.
+  No falling body does that. So a piece comes down at one speed on one line until
+  it meets something — the wall at the start of a round, or whatever is already
+  in the bowl — and weight starts at the moment of contact, with the speed it
+  arrived at. Letting gravity take over at the neck instead stretched the column
+  out and lost it.
+- **The outline is one colour at a time, and that colour drifts.** Sampled round
+  the circle at four points twenty seconds apart: every point on the ring is the
+  same colour as every other at any given moment — pink at three seconds,
+  lavender at thirty, cream at ninety — and all of them are white with a tint,
+  88 to 93 per cent lightness. Drawing it as a gradient across the bowl put
+  visibly different colours on opposite sides of the same ring, which is not what
+  the reference does.
+
+**Pieces slide over one another.** Only a twelfth of a slide is rubbed off per
+contact, so a piece landing on the shoulder of another slides off into the gap
+rather than perching there, and a pile keeps finding a tighter shape.
 
 **Gravity is weak, and that is measured too.** A loose fruit in the reference
 drifts down at about thirty pixels a second and gathers speed so slowly it reads
@@ -260,7 +274,10 @@ most isolated hit — the loudest onset with the quietest two hundred millisecon
 either side, trimmed to its transient and faded so a cut sample cannot click.
 They run from a 2.4 kHz glass tick that is gone in forty milliseconds to a
 560 Hz knock. The octave used to mark the last element is the same sample played
-at twice the rate rather than a second recording.
+at twice the rate rather than a second recording. **▶** plays four ticks at the
+rate the chute feeds, which is what the choice actually sounds like — one tick in
+isolation tells you very little — and picking one plays it, since a row of five
+words is not something anybody can choose between by reading.
 
 ## Measured against the reference, not guessed
 

@@ -105,17 +105,6 @@ const POP = 0.5;
 export const NECK = 0.139;
 
 /**
- * Where the chute lets go — the height at which the neck meets the bowl.
- *
- * Above this line a fruit is on the conveyor, evenly spaced, exactly as the
- * reference's column is: measured across four videos it holds 67 px of spacing
- * at 6.5 px a frame from the top of the frame to the pile, and neither number
- * drifts, which no falling body does. Below it there is nothing to hold a fruit
- * up, so it falls, and that is where the weight in the picture comes from.
- */
-const MOUTH = -Math.sqrt(1 - NECK * NECK);
-
-/**
  * Gravity, in bowl radii per second squared.
  *
  * Weak, and measured off a rebound rather than off a fall. A piece coming off
@@ -155,12 +144,21 @@ const CALM = 0.45;
  *
  * Higher than the bounce threshold, and deliberately: a pile settling is dozens
  * of small knocks a second, and ticking on every one of them turns a drop into
- * rain. This is roughly the speed of a fruit that has fallen a third of the bowl.
+ * rain. A piece arrives at the speed of the chute, so this sits just under it —
+ * a landing ticks, the shuffling afterwards does not.
  */
-const LOUD = 1.1;
+const LOUD = 0.6;
 
-/** Sliding is slowed on contact, which is what lets a pile hold its shape. */
-const RUB = 0.82;
+/**
+ * How much of a slide survives a contact.
+ *
+ * High, because pieces in the reference slide over one another rather than
+ * catching: one landing on the shoulder of another slides off into the gap
+ * instead of perching there. A twelfth of the sliding is rubbed off per contact,
+ * which is enough for a pile to hold its shape and little enough that it keeps
+ * finding a tighter one.
+ */
+const RUB = 0.92;
 
 /** Bled off every substep so a pile stops trembling and settles. */
 const DRAG = 0.9985;
@@ -520,12 +518,18 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
         if (body.fresh > 0) body.fresh = Math.max(0, body.fresh - dt);
 
         if (body.riding) {
-          // Constant speed down the chute, and then the neck ends and it is
-          // simply falling. Anything it meets on the way stops the ride early —
-          // a pile that has come up into the neck is something to land on.
+          // A piece comes down at one speed and on one line, from the top of the
+          // frame to whatever it meets — the wall at the start of a round, or
+          // something already in the bowl. Measured across five reference
+          // videos: 67 px of spacing at 6.5 px a frame, neither number drifting,
+          // all the way down to the pile. No falling body does that, and letting
+          // gravity take over at the neck stretched the column out and lost it.
+          //
+          // Weight starts at the moment of contact, with the speed it arrived at.
           const r = radiusOf(body.rank);
           const ahead = body.y + FEED_SPEED * dt;
-          if (ahead >= MOUTH || overlaps(body.x, ahead, r, body.id)) {
+          const floor = Math.sqrt(Math.max(0, 1 - body.x * body.x)) - r;
+          if (ahead >= floor || overlaps(body.x, ahead, r, body.id)) {
             body.riding = false;
             body.vy = FEED_SPEED;
           } else {
@@ -669,7 +673,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
 export const ELEMENTS = FRUITS.length;
 
 /** The longest a drop should run. Past this the seed is dealt again. */
-const LONGEST = 110;
+const LONGEST = 115;
 
 /**
  * Picks the drop this video will show.
