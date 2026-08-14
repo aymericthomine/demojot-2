@@ -90,11 +90,18 @@ const CHUTE_TOP = -1.78;
  */
 const WOBBLE = 0;
 
-/** Sideways shove a merge gives what it makes, in bowl radii per second. */
-const SHOVE = 0.45;
+/**
+ * Sideways shove a merge gives what it makes, in bowl radii per second.
+ *
+ * A merge is the only event in the bowl that creates movement rather than
+ * passing it around — everything else is a piece arriving at the speed of the
+ * chute — so this and `POP` are where most of the life in a busy bowl comes
+ * from.
+ */
+const SHOVE = 0.9;
 
 /** How hard a merge kicks what it makes upwards, in bowl radii per second. */
-const POP = 0.5;
+const POP = 1.1;
 
 /**
  * Half the neck, in bowl radii. Measured: 41.5 px of 576.
@@ -115,13 +122,11 @@ export const NECK = 0.139;
  *
  * A loose piece drifting through open space measures far weaker still, but that
  * is not a free fall: it is a piece leaning on something. The arc is the honest
- * sample, so this sits just under it.
- *
- * Weak gravity is also what makes the bounce worth having: a quarter of an
- * impact climbs back a tenth of the bowl and takes a third of a second to do it,
- * where the same rebound under a hard gravity would be a twitch.
+ * sample, and this sits at half of it — the same rebound then climbs twice as
+ * far and stays up twice as long, which is the difference between a twitch and
+ * something worth watching.
  */
-const GRAVITY = 1.8;
+const GRAVITY = 1.2;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
@@ -130,24 +135,25 @@ const PASSES = 3;
 /**
  * How much of an impact comes back as bounce.
  *
- * Three fifths between two pieces, and it used to be a quarter. The quarter was
- * the rebound measured off the reference, and it was right about a single
- * landing and wrong about everything after it: a piece nudged by its neighbour
- * absorbed the nudge and slumped, so the bowl became a heap sitting in the
- * bottom of itself. What comes back now is enough that a push passes along and
- * keeps passing along.
+ * Four fifths between two pieces, and it started at a quarter. The quarter was
+ * the rebound measured off a single landing in the reference, and it was right
+ * about that and wrong about everything after it: a piece nudged by its
+ * neighbour absorbed the nudge and slumped, so the bowl became a heap sitting in
+ * the bottom of itself. This is well past what a real fruit does and that is the
+ * point — the energy budget here is tiny, because a piece arrives at the speed
+ * of the chute and nothing else puts anything in.
  */
-const BOUNCE = 0.6;
+const BOUNCE = 0.8;
 
 /**
  * The wall gives more back than another piece does.
  *
  * It is the one thing in the bowl that does not move, so it is the only contact
  * that can return a piece to where it came from rather than sharing the blow
- * with something else. More than half comes back, which is what keeps the bowl
- * from becoming a heap sitting in the bottom of it.
+ * with something else. Nearly all of it comes back: the wall is where a piece
+ * that has run out of ideas gets sent somewhere new.
  */
-const WALL_BOUNCE = 0.85;
+const WALL_BOUNCE = 0.95;
 
 /**
  * Below this a contact takes everything instead of bouncing.
@@ -157,7 +163,7 @@ const WALL_BOUNCE = 0.85;
  * nudge it swallows every one of them. Down here it catches only what is already
  * still.
  */
-const CALM = 0.03;
+const CALM = 0.01;
 
 /**
  * How hard a contact has to be to make a noise.
@@ -190,7 +196,7 @@ const RUB = 0.97;
 const DRAG = 0.9998;
 
 /** Below this speed a resting piece is simply stopped. */
-const STILL = 0.005;
+const STILL = 0.001;
 
 /**
  * The neighbour grid.

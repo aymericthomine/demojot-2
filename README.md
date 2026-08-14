@@ -188,9 +188,18 @@ largest brake in the bowl. And the threshold below which a contact takes
 everything instead of bouncing is now fifteen times lower, because anywhere near
 the speed of an ordinary nudge it swallowed every one of them.
 
-Measured on the same seed: three quarters of the pieces are moving at any moment
-where it used to be under half, at half again the speed. The first piece of a
-round bounces thirty-nine pixels off the floor of a 1080-wide frame.
+Then further, because half measures were still a heap: the wall now gives back
+nearly everything, two pieces give back four fifths, gravity is half what the
+reference measures, and a merge kicks twice as hard sideways and upwards. That is
+well past what a real fruit does, and it is the point — the energy budget here is
+tiny, since a piece arrives at the speed of the chute and nothing else puts
+anything in. A merge is the only event that creates movement rather than passing
+it around.
+
+Measured on the same seed: **everything in the bowl is moving at any moment**,
+at twice the speed it used to, where before it was under half of them. Sixteen
+drops run sixty-five seconds to a minute thirty-eight, every one ending on the
+eighth element and none inside a minute.
 
 **Gravity is weak, and that is measured too.** A loose fruit in the reference
 drifts down at about thirty pixels a second and gathers speed so slowly it reads
