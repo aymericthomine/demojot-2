@@ -161,11 +161,22 @@ how it reads:
 - **The bowl is wider than the frame.** Radius 0.519 of the frame width, centred
   a little above the middle, so the ring is clipped by a few pixels either side.
   The outline is 8 px of 576, the neck 83 px across.
-- **The chute is a conveyor, not a fall.** The column above the bowl is evenly
-  spaced from the top of the frame down to the pile — 67 px apart, moving 6.5 px
-  a frame, both constant. Fruit falling under gravity would spread out as it
-  went. So a fruit descends at a fixed speed until it meets something, and only
-  then starts behaving like a body with weight.
+- **The chute is a conveyor, not a fall.** The column is evenly spaced, 67 px
+  apart at 6.5 px a frame, and neither number drifts — measured across four of
+  the reference videos. No falling body does that. So a fruit descends at a fixed
+  speed while it is in the neck, and starts behaving like a body with weight the
+  moment the neck ends.
+
+**Gravity is weak, and that is measured too.** A loose fruit in the reference
+drifts down at about thirty pixels a second and gathers speed so slowly it reads
+as floating. It is worth keeping for two reasons beyond fidelity: a fruit under
+earth gravity would double its spacing every few tenths of a second, so the bowl
+would be empty between one fruit and the next; and weak gravity is what makes a
+bounce worth having. A third of an impact comes back, which climbs about a fifth
+of the bowl and takes two thirds of a second to do it — under a hard gravity the
+same rebound would be a twitch. Below a threshold a contact takes everything
+instead, or a pile of thirty would tremble for the whole video rather than
+settle.
 
 Growth up the ladder is 1.20 per rank, which is also measured: a strawberry is
 40 px across in that frame and the dragon fruit seven ranks up is 122.
@@ -185,7 +196,15 @@ chute keep feeding for as long as the clock runs.
 
 **Your own fruit.** Each rank takes an image — cropped square, clipped to the
 circle, so a cut-out photograph on transparent ground works best — or an emoji,
-or just its colour. The colour is the halo either way.
+or just its colour. The colour is the halo either way; emoji paint themselves,
+so the halo is the only colour the page controls.
+
+**🎲 Random emoji** deals the whole ladder at once. Eight themes — fruit, gems,
+planets, animals, sweets, sea, sport, faces — each eleven glyphs in size order,
+because the ladder is a size ladder and a bee has to be a rank below a bear or
+the merges read backwards. About one roll in five ignores the themes and deals
+eleven glyphs that have no business being in the same bowl. It never deals the
+same thing twice running.
 
 ## Measured against the reference, not guessed
 

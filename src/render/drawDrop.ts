@@ -15,7 +15,7 @@
  * together light each other rather than cutting each other out.
  */
 
-import { BOWL, BOWL_X, BOWL_Y, type DropFrame } from '../sim/drop';
+import { BOWL, BOWL_X, BOWL_Y, NECK, type DropFrame } from '../sim/drop';
 import { FRUITS, radiusOf } from '../sim/fruit';
 
 /**
@@ -43,9 +43,6 @@ export interface DropViewport {
 
 /** Outline weight, in bowl radii. Measured: 8 px of 576, in a bowl of 0.519 W. */
 const OUTLINE = 0.0285;
-
-/** Half the neck, in bowl radii. Measured: 41.5 px of 576. */
-export const NECK = 0.139;
 
 /** The outline's colours, in order round the gradient. Sampled off the reference. */
 const FLASK = ['#a7b0f7', '#c9aef0', '#f5c3dd', '#bfe0f5'];

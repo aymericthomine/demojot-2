@@ -63,21 +63,67 @@ const WOBBLE = 0.5;
 /** Sideways shove a merge gives what it makes, in bowl radii per second. */
 const SHOVE = 0.45;
 
+/** How hard a merge kicks what it makes upwards, in bowl radii per second. */
+const POP = 0.5;
+
+/**
+ * Half the neck, in bowl radii. Measured: 41.5 px of 576.
+ *
+ * The simulation needs it as much as the painter does: the neck is where the
+ * chute ends and the fall begins.
+ */
+export const NECK = 0.139;
+
+/**
+ * Where the chute lets go — the height at which the neck meets the bowl.
+ *
+ * Above this line a fruit is on the conveyor, evenly spaced, exactly as the
+ * reference's column is: measured across four videos it holds 67 px of spacing
+ * at 6.5 px a frame from the top of the frame to the pile, and neither number
+ * drifts, which no falling body does. Below it there is nothing to hold a fruit
+ * up, so it falls, and that is where the weight in the picture comes from.
+ */
+const MOUTH = -Math.sqrt(1 - NECK * NECK);
+
 /**
  * Gravity, in bowl radii per second squared.
  *
- * Only what a fruit does after it lands is under gravity — the fall itself is
- * the conveyor — so this is really the strength of the settling, and it is set
- * so a fruit knocked off a pile crosses the bowl in about a second.
+ * Weak on purpose, and measured: a loose fruit in the reference drifts down at
+ * about thirty pixels a second and gathers speed so slowly it reads as floating.
+ * That is the whole feel of the thing, and it is also what keeps the falling
+ * column looking like a column — a fruit under earth gravity would double its
+ * spacing every few tenths of a second and the bowl would be empty between one
+ * fruit and the next.
+ *
+ * Weak gravity is also what makes the bounce worth having. A rebound of a third
+ * of the impact climbs back a fifth of the bowl and takes two thirds of a second
+ * to do it, where the same rebound under a hard gravity would be a twitch.
  */
-const GRAVITY = 5.2;
+const GRAVITY = 1.6;
 
 /** Physics substeps per frame, and relaxation passes per substep. */
 const SUBSTEPS = 8;
 const PASSES = 3;
 
-/** How much bounce is left after a contact. Fruit does not bounce much. */
-const BOUNCE = 0.12;
+/**
+ * How much of an impact comes back as bounce.
+ *
+ * A third, which is a fruit and not a marble: dropped the height of the bowl it
+ * comes back up about a tenth of it. It only applies to a real impact — below
+ * `CALM` a contact takes everything, or a pile of a dozen fruit would tremble
+ * for the whole video instead of settling.
+ */
+const BOUNCE = 0.34;
+const CALM = 0.45;
+
+/**
+ * How hard a contact has to be to make a noise.
+ *
+ * Higher than the bounce threshold, and deliberately: a pile settling is dozens
+ * of small knocks a second, and ticking on every one of them turns a drop into
+ * rain. This is roughly the speed of a fruit that has fallen a third of the bowl.
+ */
+const LOUD = 1.1;
 
 /** Sliding is slowed on contact, which is what lets a pile hold its shape. */
 const RUB = 0.82;
@@ -139,6 +185,8 @@ interface Body {
   riding: boolean;
   /** Seconds left of the swell a merge leaves behind. */
   fresh: number;
+  /** When this one last took a real knock, so one impact is not counted twice. */
+  hitAt: number;
 }
 
 /** How long the swell after a merge lasts. */
@@ -187,6 +235,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
       vy: FEED_SPEED,
       riding: true,
       fresh: 0,
+      hitAt: -1,
     });
   }
   let time = 0;
@@ -242,9 +291,12 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
               // replacement with nowhere to go but up the middle, and a pile
               // that only ever grows upwards is a tower.
               vx: vx + (rng.next() - 0.5) * 2 * SHOVE,
-              vy,
+              // And kicked upwards, so a merge is a thing that happens rather
+              // than a swap of one sprite for another.
+              vy: vy - POP,
               riding: false,
               fresh: SWELL,
+              hitAt: time,
             });
             best = Math.max(best, rank + 1);
             events.push({ t: time, kind: 'merge', rank: rank + 1 });
@@ -294,6 +346,7 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
             vy: FEED_SPEED,
             riding: true,
             fresh: 0,
+            hitAt: -1,
           });
         }
       }
@@ -302,15 +355,14 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
         if (body.fresh > 0) body.fresh = Math.max(0, body.fresh - dt);
 
         if (body.riding) {
-          // Constant speed until it meets something. The moment it does it stops
-          // riding and starts falling, keeping the speed it came in with.
+          // Constant speed down the chute, and then the neck ends and it is
+          // simply falling. Anything it meets on the way stops the ride early —
+          // a pile that has come up into the neck is something to land on.
           const r = radiusOf(body.rank);
           const ahead = body.y + FEED_SPEED * dt;
-          const floor = Math.sqrt(Math.max(0, 1 - body.x * body.x)) - r;
-          if (ahead >= floor || overlaps(body.x, ahead, r, body.id)) {
+          if (ahead >= MOUTH || overlaps(body.x, ahead, r, body.id)) {
             body.riding = false;
             body.vy = FEED_SPEED;
-            events.push({ t: time, kind: 'land', rank: body.rank });
           } else {
             body.y = ahead;
           }
@@ -349,7 +401,15 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
 
             const closing = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
             if (closing < 0) {
-              const swap = closing * (1 + BOUNCE) * 0.5;
+              // A knock worth hearing, and worth bouncing. Slow contacts — a
+              // pile shuffling into place — take everything and make no noise.
+              const hard = -closing > CALM;
+              if (-closing > LOUD && time - a.hitAt > 0.09) {
+                a.hitAt = time;
+                b.hitAt = time;
+                events.push({ t: time, kind: 'land', rank: a.rank });
+              }
+              const swap = closing * (1 + (hard ? BOUNCE : 0)) * 0.5;
               a.vx += swap * nx;
               a.vy += swap * ny;
               b.vx -= swap * nx;
@@ -381,8 +441,14 @@ export function playDrop(setup: DropSetup, seconds: number, record = true): Drop
           body.y = ny * wall;
           const into = body.vx * nx + body.vy * ny;
           if (into > 0) {
-            body.vx -= into * (1 + BOUNCE) * nx;
-            body.vy -= into * (1 + BOUNCE) * ny;
+            const hard = into > CALM;
+            if (into > LOUD && time - body.hitAt > 0.09) {
+              body.hitAt = time;
+              events.push({ t: time, kind: 'land', rank: body.rank });
+            }
+            const back = 1 + (hard ? BOUNCE : 0);
+            body.vx -= into * back * nx;
+            body.vy -= into * back * ny;
             const tx = -ny;
             const ty = nx;
             const slide = body.vx * tx + body.vy * ty;

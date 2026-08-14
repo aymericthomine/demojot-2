@@ -34,6 +34,7 @@ import {
   playDrop,
 } from "../sim/drop";
 import { FRUITS } from "../sim/fruit";
+import { dealPack } from "../sim/packs";
 import {
   BALL_COUNT,
   FEWEST_BALLS,
@@ -149,6 +150,25 @@ export default function HomePage() {
   const setFruitImage = async (rank: number, file: File | null) => {
     const image = file ? await createImageBitmap(file).catch(() => null) : null;
     setFruit(rank, { image });
+  };
+
+  // What the ladder is currently wearing, so the roll can say so and never deal
+  // the same theme twice in a row.
+  const [dressed, setDressed] = useState<string | null>(null);
+
+  const rollFruits = () => {
+    const dealt = dealPack(Math.random(), dressed ?? undefined);
+    setDressed(dealt.name);
+    // Images are left alone: an uploaded picture beats a glyph anyway, and
+    // losing one to a button labelled "emoji" would be a surprise.
+    setFruits((old) =>
+      old.map((face, rank) => ({ ...face, ...(dealt.faces[rank] ?? {}) })),
+    );
+  };
+
+  const clearFruits = () => {
+    setDressed(null);
+    setFruits(Array.from({ length: MOST_RANKS }, () => ({})));
   };
   // One entry per ball, by index, kept at full length so changing the count
   // never loses what was already set on the balls that stay.
@@ -277,7 +297,11 @@ export default function HomePage() {
             onStage("sound");
             audio = await renderDropAudio(round).catch(() => null);
             reel = dropReel(round, { invert: job.invert, faces: job.faces });
-            summary = `${round.duration.toFixed(1)}s · best ${FRUITS[round.best].name}`;
+            // The glyph rather than the fruit's name: the ladder may well be
+            // wearing planets by now, and "best pear" would be a lie.
+            const best =
+              job.faces[round.best]?.glyph || FRUITS[round.best].glyph;
+            summary = `${round.duration.toFixed(1)}s · best ${best}`;
           }
 
           const result = await encodeVideo({
@@ -537,6 +561,33 @@ export default function HomePage() {
                 {FEWEST_RANKS}–{MOST_RANKS} · a short ladder gets to the top and
                 bursts
               </span>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={rollFruits}
+                disabled={busy}
+                className="rounded-lg border border-[#23262f] bg-white/[0.04] px-3 py-1 text-sm hover:border-[#3a3f4d] disabled:opacity-40"
+              >
+                🎲 Random emoji
+              </button>
+              {dressed && (
+                <>
+                  <span className="text-[11px] text-emerald-300">
+                    {dressed}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearFruits}
+                    disabled={busy}
+                    title="Back to the fruit"
+                    className="text-[11px] text-[#5c616e] hover:text-white"
+                  >
+                    ↺
+                  </button>
+                </>
+              )}
             </div>
 
             <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
