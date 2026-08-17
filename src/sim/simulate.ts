@@ -45,16 +45,23 @@ export const BALL_COUNT = 7;
 /**
  * How many balls a round may have.
  *
- * Three, not two. A two-ball round never finishes: each is penned in its own
- * half of the ring and can only reach the rope on the boundary between them, so
- * they trade the same threads and neither runs out — played to a five-minute
- * clock, ten seeds out of ten were still going. Three settles seven times in ten
- * over the same clock, and inside the search window every deal found an ending.
+ * Two is allowed, and for a while it was not: a two-ball round appeared never to
+ * finish, because each ball is penned in its own half of the ring and can only
+ * reach the rope on the boundary between them, so they trade the same threads
+ * and neither runs out — played to a five-minute clock, ten seeds out of ten
+ * were still going.
+ *
+ * That was measured before the holding limit became something the search moves.
+ * A duel does finish, and reliably, as long as the limit is tight enough that
+ * rope is broken rather than passed back and forth: at a limit of one and a
+ * fifth what a ball opens with, eleven deals in twelve settle on five threads and
+ * five in twelve on twenty. The ladder bisection finds that rung on its own,
+ * because every looser one runs past the clock.
  *
  * Twelve is the palette, and the point at which a wedge is narrow enough that a
  * ball barely fits inside its own opening.
  */
-export const FEWEST_BALLS = 3;
+export const FEWEST_BALLS = 2;
 export const MOST_BALLS = 12;
 export const clampBalls = (n: number): number =>
   Math.max(FEWEST_BALLS, Math.min(MOST_BALLS, Math.round(n) || BALL_COUNT));
@@ -329,7 +336,8 @@ function closestOnSegment(
   const dx = bx - ax;
   const dy = by - ay;
   const lengthSq = dx * dx + dy * dy;
-  const t = lengthSq > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
+  const t =
+    lengthSq > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / lengthSq)) : 0;
   const cx = ax + dx * t;
   const cy = ay + dy * t;
   return { distanceSq: (px - cx) ** 2 + (py - cy) ** 2, t };
@@ -423,12 +431,7 @@ function snapshot(balls: Live[]): Frame {
  * how long it lasted and throws it away, and keeping five thousand snapshots per
  * discarded attempt is how a phone runs out of memory.
  */
-export function play(
-  setup: RoundSetup,
-  tuning: Tuning,
-  record = true,
-  runFor = HARD_CAP,
-): Round {
+export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = HARD_CAP): Round {
   const balls = start(setup, tuning);
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
@@ -696,7 +699,7 @@ const lapFor = (length: number): number => Math.min(12, length * 0.2);
  * winner — the last two trade the same rope until the clock stops.
  */
 const HOLD_LADDER = [
-  1.2, 1.4, 1.6, 1.8, 2.0, 2.3, 2.6, 3.0, 3.4, 4.0, 4.6, 5.3, 6.2, 7.2, 8.4,
+  1.05, 1.2, 1.4, 1.6, 1.8, 2.0, 2.3, 2.6, 3.0, 3.4, 4.0, 4.6, 5.3, 6.2, 7.2, 8.4,
 ];
 
 /**

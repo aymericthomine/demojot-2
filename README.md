@@ -36,10 +36,17 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-**Balls** is three to twelve. Not two: a two-ball round never finishes, because
-each is penned in its own half of the ring and can only reach the rope on the
-boundary between them, so they trade the same threads for ever — ten seeds out of
-ten were still going on a five-minute clock. Twelve is the palette.
+**Balls** is two to twelve. Two was barred for a long time, on a measurement that
+had gone stale: a duel appeared never to finish, because each ball is penned in
+its own half of the ring and can only reach the rope on the boundary between
+them, so they trade the same threads for ever — ten seeds out of ten were still
+going on a five-minute clock. That was true before the holding limit became
+something the search moves. A duel does finish, as long as the limit is tight
+enough that rope is broken rather than passed back and forth, and the ladder
+bisection finds that rung on its own because every looser one runs past the
+clock. It wanted one rung tighter than the ladder had, so the ladder got one:
+thirty duels across five, ten and twenty threads, thirty knockouts. Twelve is the
+palette.
 
 **Dress the balls** with an emoji, a flag, a letter or a logo, or leave them as
 colours. A glyph is drawn in the middle of the disc — colour emoji bring their own
