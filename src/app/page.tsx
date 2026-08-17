@@ -318,7 +318,6 @@ export default function HomePage() {
             reel = battleReel(round, {
               invert: job.invert,
               faces: job.faces,
-              theme: job.mode === "beast" ? "beast" : undefined,
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
           } else {
@@ -748,11 +747,7 @@ export default function HomePage() {
           </>
         )}
 
-        {/* The themed mode paints its own ground, so there is nothing to invert. */}
-        <label
-          hidden={steady}
-          className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40"
-        >
+        <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
           <input
             type="checkbox"
             checked={invert}

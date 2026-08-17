@@ -27,7 +27,14 @@ export const BALL_RADIUS = 0.069;
 export const THREAD_WIDTH = 0.0062;
 /** The white ring of the arena. */
 export const RIM_WIDTH = 0.013;
-/** The white outline around each ball. */
+/**
+ * The white outline that used to go round each ball.
+ *
+ * Nothing draws it any more. It was measured off the reference along with
+ * everything else here, and it earned its place while a ball was a plain disc —
+ * but a ball can be an image or an emoji now, and a white hoop round a club
+ * badge is a white hoop round a club badge.
+ */
 export const BALL_RING = 0.008;
 /** Length of the coloured tick left on the rim where a thread is pinned. */
 export const ANCHOR_TICK = 0.018;
