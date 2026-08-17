@@ -169,7 +169,15 @@ export function openingFor(
   seed: number,
   anchors: number,
   balls: number = BALL_COUNT,
+  steady = false,
 ): { turn: number; palette: number[] } {
+  // Steady is the one opening that never moves: no turn, no shuffle, the first
+  // colour on the first ball. It exists for a mode whose whole point is that
+  // every video starts on the same picture, which is the opposite of what the
+  // rest of this function is for.
+  if (steady) {
+    return { turn: 0, palette: Array.from({ length: balls }, (_, i) => i) };
+  }
   const rng = createRng(seed ^ 0x9e3779b9);
   const turn = rng.int(0, anchors - 1);
   const palette = Array.from({ length: balls }, (_, i) => i);
@@ -295,6 +303,8 @@ export interface RoundSetup {
   anchors: number;
   /** Ball radius as a multiple of the measured one. Physics and picture both. */
   size: number;
+  /** Open on the fixed figure rather than one the seed turns and recolours. */
+  steady?: boolean;
 }
 
 export interface Round {
@@ -349,6 +359,7 @@ export function setupFor(
   threads: number = OPENING_THREADS,
   balls: number = BALL_COUNT,
   size: number = NORMAL_SIZE,
+  steady = false,
 ): RoundSetup {
   const ballCount = clampBalls(balls);
   return {
@@ -358,13 +369,19 @@ export function setupFor(
     threads,
     anchors: anchorsFor(threads, ballCount),
     size: clampSize(size),
+    steady,
   };
 }
 
 /** The opening: the same figure in every video, turned and recoloured. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
-  const { turn, palette } = openingFor(setup.seed, setup.anchors, setup.ballCount);
+  const { turn, palette } = openingFor(
+    setup.seed,
+    setup.anchors,
+    setup.ballCount,
+    setup.steady,
+  );
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / setup.ballCount;
   const ring = startRadiusFor(setup);
@@ -462,7 +479,7 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
     rimY[j] = Math.sin(angle);
   }
   const owner = new Int8Array(anchors);
-  const { turn } = openingFor(setup.seed, anchors, setup.ballCount);
+  const { turn } = openingFor(setup.seed, anchors, setup.ballCount, setup.steady);
   for (let i = 0; i < setup.ballCount; i += 1) {
     for (let k = 0; k < setup.threads; k += 1) {
       owner[(i * setup.threads + k + turn) % anchors] = i;
@@ -722,9 +739,10 @@ export function generateRound(
   threads: number = OPENING_THREADS,
   balls: number = BALL_COUNT,
   size: number = NORMAL_SIZE,
+  steady = false,
   tuning: Tuning = DEFAULT_TUNING,
 ): Round {
-  const deal = (attempt: number) => setupFor(seed, attempt, threads, balls, size);
+  const deal = (attempt: number) => setupFor(seed, attempt, threads, balls, size, steady);
   const length = lengthFor(seed);
   const settleBy = length;
   const settleFrom = Math.max(3, length - lapFor(length));

@@ -29,6 +29,16 @@ duplicates looks there first — so the figure stays and the arrangement moves.
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack built from the collisions*
 
+**MrBeast** is the same fight with the dials taken away: seven balls, five
+threads each, and the one opening that never turns or recolours, so every video
+starts on the same picture. That is the opposite of what the opening does in Ball
+Battle, where it is turned by a whole number of anchors and recoloured precisely
+so that two videos do not share a first frame — here sharing it is the point.
+Twelve seeds: one opening between them, lengths from sixty-three to seventy-nine
+seconds, every one with a winner. The seed still decides which way the balls are
+fired and how long the video runs. Dressing the balls stays, since that is how a
+logo gets onto one.
+
 ## Run it
 
 ```bash

@@ -56,17 +56,29 @@ import type { FruitFace } from "../render/drawDrop";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "drop";
+type Mode = "battle" | "drop" | "beast";
+
+/**
+ * What the fixed mode is fixed to.
+ *
+ * Seven balls on five threads each, the opening that never turns or recolours,
+ * and nothing else to decide. The seed still picks which way the balls are fired
+ * and how long the video runs, which is all the variety this mode wants: every
+ * one of them opens on the same picture, which is the point of it.
+ */
+const BEAST = { threads: 5, balls: 7, size: NORMAL_SIZE } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
 type Job =
   | {
-      mode: "battle";
+      mode: "battle" | "beast";
       seed: number;
       invert: boolean;
       threads: ThreadCount;
       balls: number;
       size: BallSize;
+      /** Open on the fixed figure. True for the mode that has nothing to set. */
+      steady: boolean;
       faces: readonly BallFace[];
     }
   | {
@@ -132,6 +144,13 @@ export default function HomePage() {
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
   const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
+  // MrBeast is Ball Battle with the dials taken away, so everything downstream
+  // reads these rather than the state the missing dials would have set.
+  const steady = mode === "beast";
+  const useThreads = steady ? BEAST.threads : threads;
+  const useBalls = steady ? BEAST.balls : balls;
+  const useSize = steady ? BEAST.size : size;
+
   const [kit, setKit] = useState(DEFAULT_KIT);
   const [shape, setShape] = useState<ShapeSet | null>(null);
   // One entry per rank of the ladder, by index, same as the balls: kept at full
@@ -191,9 +210,14 @@ export default function HomePage() {
   // was simply the wrong colour: the seed shuffles the palette, so ball three is
   // not the third colour in the list.
   const dealt = useMemo(() => {
-    const { palette } = openingFor(seed, anchorsFor(threads, balls), balls);
+    const { palette } = openingFor(
+      seed,
+      anchorsFor(useThreads, useBalls),
+      useBalls,
+      steady,
+    );
     return palette.map((c) => COLORS[c % COLORS.length]);
-  }, [seed, threads, balls]);
+  }, [seed, useThreads, useBalls, steady]);
 
   const setColor = (index: number, color: string | undefined) =>
     setFaces((old) => old.map((f, i) => (i === index ? { ...f, color } : f)));
@@ -280,12 +304,13 @@ export default function HomePage() {
           let reel: Reel;
           let audio: AudioBuffer | null;
           let summary: string;
-          if (job.mode === "battle") {
+          if (job.mode !== "drop") {
             const round = generateRound(
               job.seed,
               job.threads,
               job.balls,
               job.size,
+              job.steady,
             );
             total = round.durationInFrames;
             onStage("sound");
@@ -363,18 +388,24 @@ export default function HomePage() {
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col justify-center gap-6 px-5 py-10">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">
-          {mode === "battle" ? "Ball Battle" : "Fruit Drop"}
+          {mode === "battle"
+            ? "Ball Battle"
+            : mode === "drop"
+              ? "Fruit Drop"
+              : "MrBeast"}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
             ? "Balls in a ring fighting over threads pinned to the wall. The anchors never move; run through somebody else's thread and it comes away with you, turning your colour. Full hands break rope instead of taking it, and a ball holding none is out."
-            : "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."}
+            : mode === "drop"
+              ? "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."
+              : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
         <div className="mb-3 flex gap-2">
-          {(["battle", "drop"] as const).map((choice) => (
+          {(["battle", "drop", "beast"] as const).map((choice) => (
             <button
               key={choice}
               type="button"
@@ -386,7 +417,11 @@ export default function HomePage() {
                   : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
               }`}
             >
-              {choice === "battle" ? "Ball battle" : "Fruit drop"}
+              {choice === "battle"
+                ? "Ball battle"
+                : choice === "drop"
+                  ? "Fruit drop"
+                  : "MrBeast"}
             </button>
           ))}
         </div>
@@ -415,72 +450,77 @@ export default function HomePage() {
           </button>
         </div>
 
-        {mode === "battle" && (
+        {mode !== "drop" && (
           <>
-            <div className="mt-2 flex items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">
-                Threads per ball
-              </span>
-              {THREAD_CHOICES.map((count) => (
-                <button
-                  key={count}
-                  type="button"
-                  onClick={() => setThreads(count)}
-                  disabled={busy}
-                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                    threads === count
-                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                  }`}
-                >
-                  {count}
-                </button>
-              ))}
-            </div>
+            {/* The dials, which is the whole difference between the two fights. */}
+            {mode === "battle" && (
+              <>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="px-1 text-sm text-[#8b90a0]">
+                    Threads per ball
+                  </span>
+                  {THREAD_CHOICES.map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setThreads(count)}
+                      disabled={busy}
+                      className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                        threads === count
+                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                          : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
-              <input
-                type="number"
-                min={FEWEST_BALLS}
-                max={MOST_BALLS}
-                value={balls}
-                disabled={busy}
-                onChange={(event) =>
-                  setBalls(clampBalls(Number(event.target.value)))
-                }
-                className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
-              />
-              <span className="text-[11px] text-[#5c616e]">
-                {FEWEST_BALLS}–{MOST_BALLS}
-              </span>
-            </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
+                  <input
+                    type="number"
+                    min={FEWEST_BALLS}
+                    max={MOST_BALLS}
+                    value={balls}
+                    disabled={busy}
+                    onChange={(event) =>
+                      setBalls(clampBalls(Number(event.target.value)))
+                    }
+                    className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
+                  />
+                  <span className="text-[11px] text-[#5c616e]">
+                    {FEWEST_BALLS}–{MOST_BALLS}
+                  </span>
+                </div>
 
-            <div className="mt-2 flex items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
-              {SIZE_CHOICES.map((choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  onClick={() => setSize(choice)}
-                  disabled={busy}
-                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                    size === choice
-                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                  }`}
-                >
-                  ×{choice}
-                </button>
-              ))}
-            </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
+                  {SIZE_CHOICES.map((choice) => (
+                    <button
+                      key={choice}
+                      type="button"
+                      onClick={() => setSize(choice)}
+                      disabled={busy}
+                      className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                        size === choice
+                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                          : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                      }`}
+                    >
+                      ×{choice}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
 
             <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
               <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
                 Dress the balls — emoji, flag, letter or a logo
               </summary>
               <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
-                {Array.from({ length: balls }, (_, i) => (
+                {Array.from({ length: useBalls }, (_, i) => (
                   <div key={i} className="flex items-center gap-2">
                     <label className="relative size-6 shrink-0 cursor-pointer">
                       <span
@@ -722,18 +762,27 @@ export default function HomePage() {
           type="button"
           onClick={() =>
             run(
-              mode === "battle"
-                ? { mode, seed, invert, threads, balls, size, faces }
-                : { mode, seed, invert, kit, shape, faces: fruits },
+              mode === "drop"
+                ? { mode, seed, invert, kit, shape, faces: fruits }
+                : {
+                    mode,
+                    seed,
+                    invert,
+                    threads: useThreads,
+                    balls: useBalls,
+                    size: useSize,
+                    steady,
+                    faces,
+                  },
             )
           }
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
           {stage.kind === "fighting"
-            ? mode === "battle"
-              ? "Fighting…"
-              : "Dropping…"
+            ? mode === "drop"
+              ? "Dropping…"
+              : "Fighting…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}
