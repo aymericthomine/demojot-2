@@ -450,70 +450,66 @@ export default function HomePage() {
           </button>
         </div>
 
-        {mode !== "drop" && (
+        {/* MrBeast has nothing to set — not the dials, not the dressing. */}
+        {mode === "battle" && (
           <>
-            {/* The dials, which is the whole difference between the two fights. */}
-            {mode === "battle" && (
-              <>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="px-1 text-sm text-[#8b90a0]">
-                    Threads per ball
-                  </span>
-                  {THREAD_CHOICES.map((count) => (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => setThreads(count)}
-                      disabled={busy}
-                      className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                        threads === count
-                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                          : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                      }`}
-                    >
-                      {count}
-                    </button>
-                  ))}
-                </div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">
+                Threads per ball
+              </span>
+              {THREAD_CHOICES.map((count) => (
+                <button
+                  key={count}
+                  type="button"
+                  onClick={() => setThreads(count)}
+                  disabled={busy}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    threads === count
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
 
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
-                  <input
-                    type="number"
-                    min={FEWEST_BALLS}
-                    max={MOST_BALLS}
-                    value={balls}
-                    disabled={busy}
-                    onChange={(event) =>
-                      setBalls(clampBalls(Number(event.target.value)))
-                    }
-                    className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
-                  />
-                  <span className="text-[11px] text-[#5c616e]">
-                    {FEWEST_BALLS}–{MOST_BALLS}
-                  </span>
-                </div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Balls</span>
+              <input
+                type="number"
+                min={FEWEST_BALLS}
+                max={MOST_BALLS}
+                value={balls}
+                disabled={busy}
+                onChange={(event) =>
+                  setBalls(clampBalls(Number(event.target.value)))
+                }
+                className="w-16 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 font-mono text-sm outline-none disabled:opacity-40"
+              />
+              <span className="text-[11px] text-[#5c616e]">
+                {FEWEST_BALLS}–{MOST_BALLS}
+              </span>
+            </div>
 
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
-                  {SIZE_CHOICES.map((choice) => (
-                    <button
-                      key={choice}
-                      type="button"
-                      onClick={() => setSize(choice)}
-                      disabled={busy}
-                      className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                        size === choice
-                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                          : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                      }`}
-                    >
-                      ×{choice}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Ball size</span>
+              {SIZE_CHOICES.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setSize(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    size === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  ×{choice}
+                </button>
+              ))}
+            </div>
 
             <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
               <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
@@ -747,7 +743,10 @@ export default function HomePage() {
           </>
         )}
 
-        <label className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40">
+        <label
+          hidden={steady}
+          className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40"
+        >
           <input
             type="checkbox"
             checked={invert}
@@ -767,12 +766,14 @@ export default function HomePage() {
                 : {
                     mode,
                     seed,
-                    invert,
+                    // Both of these belong to the mode that has the controls
+                    // for them. Switching modes must not carry them across.
+                    invert: steady ? false : invert,
                     threads: useThreads,
                     balls: useBalls,
                     size: useSize,
                     steady,
-                    faces,
+                    faces: steady ? [] : faces,
                   },
             )
           }

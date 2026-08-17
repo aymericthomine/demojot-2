@@ -36,8 +36,9 @@ Battle, where it is turned by a whole number of anchors and recoloured precisely
 so that two videos do not share a first frame — here sharing it is the point.
 Twelve seeds: one opening between them, lengths from sixty-three to seventy-nine
 seconds, every one with a winner. The seed still decides which way the balls are
-fired and how long the video runs. Dressing the balls stays, since that is how a
-logo gets onto one.
+fired and how long the video runs. Nothing else is settable: no thread count, no ball
+count, no size, no dressing and no white ground — the panel is the seed, Roll and
+Generate.
 
 ## Run it
 
