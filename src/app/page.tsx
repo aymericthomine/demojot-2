@@ -33,6 +33,7 @@ import { DEFAULT_KIT, KITS } from "../audio/kit";
 import { SHAPE_LABEL, SHAPE_SETS, type ShapeSet } from "../render/shapes";
 import {
   BALL_COUNT,
+  DEFAULT_TUNING,
   FEWEST_BALLS,
   MOST_BALLS,
   NORMAL_SIZE,
@@ -66,7 +67,13 @@ type Mode = "battle" | "drop" | "beast";
  * and how long the video runs, which is all the variety this mode wants: every
  * one of them opens on the same picture, which is the point of it.
  */
-const BEAST = { threads: 5, balls: 7, size: NORMAL_SIZE } as const;
+const BEAST = {
+  threads: 5,
+  balls: 7,
+  size: NORMAL_SIZE,
+  /** Half of what the other fight holds its opening for. */
+  hold: 0.5,
+} as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
 type Job =
@@ -311,6 +318,11 @@ export default function HomePage() {
               job.balls,
               job.size,
               job.steady,
+              // Half the opening hold in the mode whose opening never changes:
+              // there is nothing new to read in a picture already seen.
+              job.steady
+                ? { ...DEFAULT_TUNING, hold: BEAST.hold }
+                : DEFAULT_TUNING,
             );
             total = round.durationInFrames;
             onStage("sound");

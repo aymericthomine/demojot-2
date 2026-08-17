@@ -38,7 +38,8 @@ Twelve seeds: one opening between them, lengths from sixty-three to seventy-nine
 seconds, every one with a winner. The seed still decides which way the balls are
 fired and how long the video runs. Nothing else is settable: no thread count, no ball
 count, no size, no dressing and no white ground — the panel is the seed, Roll and
-Generate.
+Generate. The opening is held for half a second rather than a whole one, because
+there is nothing new to read in a picture the viewer has already seen.
 
 ## Run it
 

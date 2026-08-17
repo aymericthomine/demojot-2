@@ -258,6 +258,14 @@ export interface Tuning {
    * chose the multiplier in the first place.
    */
   holdLimit?: number;
+  /**
+   * Seconds the opening picture is held. Left out, it is `HOLD`.
+   *
+   * A knob because a mode where every video opens on the same figure does not
+   * need to hold it as long: there is nothing new to read in a picture the
+   * viewer has already seen.
+   */
+  hold?: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -464,6 +472,7 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
   // array indices, and a turn that runs off the end has to come back round.
   const { anchors } = setup;
   const holdLimit = tuning.holdLimit ?? holdLimitFor(setup.threads);
+  const hold = tuning.hold ?? HOLD;
 
   // Where every anchor sits, worked out once. These never move, and the contact
   // test below runs for every anchor against every ball on every substep — at
@@ -537,7 +546,7 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
     for (let step = 0; step < SUBSTEPS; step += 1) {
       time += dt;
       // Held on the opening picture. Nothing moves and nothing changes hands.
-      if (time < HOLD) continue;
+      if (time < hold) continue;
 
       for (const ball of balls) {
         if (!ball.alive) {
