@@ -23,6 +23,8 @@ export interface Dress {
 
 export interface BattleDress extends Dress {
   faces?: readonly (BallFace | null | undefined)[];
+  /** Paint the whole picture in a theme rather than plain. */
+  theme?: 'beast';
 }
 
 export interface DropDress extends Dress {
@@ -42,15 +44,16 @@ export function battleReel(round: Round, dress: BattleDress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `balls-${setup.seed}-${setup.ballCount}b-${setup.threads}t-${Math.round(
-      round.duration,
-    )}s${size}${dress.invert ? '-white' : ''}`,
+    name: `${dress.theme ?? 'balls'}-${setup.seed}-${setup.ballCount}b-${
+      setup.threads
+    }t-${Math.round(round.duration)}s${size}${dress.invert && !dress.theme ? '-white' : ''}`,
     paint(ctx, index) {
       drawFrame(ctx, round.frames[index], {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
         faces: dress.faces,
+        theme: dress.theme,
         // From the round, never from the page: the fight was played with balls
         // this wide, so drawing them any other size would show rope being taken
         // at a distance.

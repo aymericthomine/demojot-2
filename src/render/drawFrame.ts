@@ -12,6 +12,7 @@
  */
 
 import type { Frame } from '../sim/simulate';
+import { BEAST_BALLS, beastRing, paintBeastGround } from './beast';
 import { ink, legible } from './ink';
 import { ANCHOR_TICK, ARENA, BALL_RADIUS, BALL_RING, RIM_WIDTH, THREAD_WIDTH } from '../sim/style';
 
@@ -40,6 +41,15 @@ export interface Viewport {
   /** One entry per ball, by index. Missing or empty means colour only. */
   faces?: readonly (BallFace | null | undefined)[];
   /**
+   * Dress the whole picture rather than the balls in it.
+   *
+   * `beast` paints the ground and the ring off the logo the fixed mode is named
+   * after and deals the balls out of the same two hues. It takes the place of
+   * `invert`, which is a rule about a plain picture and has nothing to say about
+   * a themed one.
+   */
+  theme?: 'beast';
+  /**
    * Ball radius as a multiple of the measured one. Has to be the same number the
    * fight was played at, or the balls would take rope they are not touching.
    */
@@ -49,7 +59,7 @@ export interface Viewport {
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
-  { width, height, invert = false, faces, size = 1 }: Viewport,
+  { width, height, invert = false, faces, size = 1, theme }: Viewport,
 ): void {
   const radius = width * ARENA;
   const cx = width / 2;
@@ -58,11 +68,15 @@ export function drawFrame(
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.globalAlpha = 1;
   ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = ink('#000000', invert);
-  ctx.fillRect(0, 0, width, height);
+  if (theme === 'beast') {
+    paintBeastGround(ctx, width, height);
+  } else {
+    ctx.fillStyle = ink('#000000', invert);
+    ctx.fillRect(0, 0, width, height);
+  }
 
   // The arena.
-  ctx.strokeStyle = ink('#ffffff', invert);
+  ctx.strokeStyle = theme === 'beast' ? beastRing(ctx, cx, cy, radius) : ink('#ffffff', invert);
   ctx.lineWidth = radius * RIM_WIDTH;
   ctx.beginPath();
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -86,7 +100,9 @@ export function drawFrame(
    */
   const hue = (ball: Frame['balls'][number]) => {
     const chosen = faces?.[ball.index]?.color;
-    return chosen ? legible(chosen, invert) : ink(ball.color, invert);
+    if (chosen) return legible(chosen, invert && !theme);
+    if (theme === 'beast') return BEAST_BALLS[ball.index % BEAST_BALLS.length];
+    return ink(ball.color, invert);
   };
 
   const toScreenX = (x: number) => cx + x * radius;
@@ -187,7 +203,9 @@ export function drawFrame(
       ctx.restore();
     }
 
-    ctx.strokeStyle = ink('#ffffff', invert);
+    // The ring round a ball is the ground's opposite, so it reads as an edge
+    // rather than as part of the ball.
+    ctx.strokeStyle = theme === 'beast' ? '#ffffff' : ink('#ffffff', invert);
     ctx.lineWidth = radius * BALL_RING;
     ctx.beginPath();
     ctx.arc(bx, by, r, 0, Math.PI * 2);

@@ -39,6 +39,18 @@ seconds, every one with a winner. The seed still decides which way the balls are
 fired and how long the video runs. Dressing the balls stays, since that is how a
 logo gets onto one.
 
+It is also dressed off that logo, whose palette was counted rather than guessed:
+the cat is `#00b0d0` and covers a sixth of both images of it, the bolt through
+its head is `#e04080`, and the wide version is black for nearly three quarters of
+its area. So the ground is black with the logo's lightning across it at a tenth
+strength — the icon puts white bolts on pale sky, which is right for a badge an
+inch across and wrong here, where every thread is a two-pixel coloured line and a
+busy light ground eats them — the ring sweeps from ice through the cat's cyan to
+the bolt's pink, and the seven balls are three blues, three pinks and a white,
+because a brand with two colours in it does not hand you seven that can be told
+apart. The logo itself is not in the repository: it belongs to somebody else, and
+putting it on a ball is a job for the image picker.
+
 ## Run it
 
 ```bash
