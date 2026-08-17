@@ -61,6 +61,22 @@ everywhere it shows — the disc, its threads and its pins on the rim all change
 together, so a captured thread still reads as a capture. The `↺` next to a
 swatch hands the ball back the colour the seed gave it.
 
+**A colour somebody picked is used as picked, in both grounds.** Only the ones
+this repository chose are turned inside out on the white ground: handing back the
+complement of a colour that was picked off a swatch is not a negative, it is the
+wrong colour — pick orange and the negative gives you blue. It broke things as
+well as looking wrong. White, inverted, is the same black as the ring, and black,
+inverted, is the same white as the ground, so a ball dressed in either lost its
+entire fan of threads to the background and read as a ball that had been dealt
+none.
+
+The one thing a picked colour is not allowed to do is disappear. Somebody who
+picks white for a team that plays in white is right, and on the black ground they
+are previewing it looks right; on the white ground it is invisible. So a colour
+is kept exactly as picked unless it is too close to the ground to survive, and
+then it is walked towards the far end until it clears a contrast floor and no
+further. White on white becomes a light grey. Orange stays orange.
+
 **Ball size** is ×1, ×1.4 or ×1.9. Not only a look: a wider ball sweeps a wider
 corridor, so it runs through more rope per pass and the fight moves faster. It
 does not make the video shorter — the holding limit is searched against the

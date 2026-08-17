@@ -12,14 +12,8 @@
  */
 
 import type { Frame } from '../sim/simulate';
-import {
-  ANCHOR_TICK,
-  ARENA,
-  BALL_RADIUS,
-  BALL_RING,
-  RIM_WIDTH,
-  THREAD_WIDTH,
-} from '../sim/style';
+import { ink, legible } from './ink';
+import { ANCHOR_TICK, ARENA, BALL_RADIUS, BALL_RING, RIM_WIDTH, THREAD_WIDTH } from '../sim/style';
 
 /**
  * What a ball wears, if anything.
@@ -52,21 +46,6 @@ export interface Viewport {
   size?: number;
 }
 
-/**
- * A colour, possibly turned inside out.
- *
- * A true negative rather than a swap of the black and the white: the ground
- * becomes white, the ring becomes black, and each ball takes its complement, so
- * the picture holds together as one image instead of a light background with a
- * dark palette sitting awkwardly on it.
- */
-function ink(hex: string, invert: boolean): string {
-  if (!invert) return hex;
-  const n = Number.parseInt(hex.slice(1), 16);
-  const flipped = 0xffffff - n;
-  return `#${flipped.toString(16).padStart(6, '0')}`;
-}
-
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
@@ -92,8 +71,23 @@ export function drawFrame(
   // A ball's colour is its identity: it paints the disc, the threads and the
   // pins on the rim, so an override has to reach all three or the picture would
   // disagree with itself.
-  const hue = (ball: Frame['balls'][number]) =>
-    ink(faces?.[ball.index]?.color ?? ball.color, invert);
+  /**
+   * What colour this ball is drawn in, threads and rim pins included.
+   *
+   * A colour the seed dealt is turned inside out along with everything else when
+   * the picture is printed as a negative. A colour somebody picked is not: they
+   * picked it off a swatch, and handing them its complement is not a negative,
+   * it is the wrong colour. It broke things as well as looking wrong — white,
+   * inverted, is the same black as the ring, and black, inverted, is the same
+   * white as the ground, so a ball dressed in either lost its entire fan of
+   * threads to the background.
+   *
+   * Images and glyphs were already left alone; this makes the colour match them.
+   */
+  const hue = (ball: Frame['balls'][number]) => {
+    const chosen = faces?.[ball.index]?.color;
+    return chosen ? legible(chosen, invert) : ink(ball.color, invert);
+  };
 
   const toScreenX = (x: number) => cx + x * radius;
   const toScreenY = (y: number) => cy + y * radius;
@@ -164,7 +158,17 @@ export function drawFrame(
         ctx.beginPath();
         ctx.arc(bx, by, r, 0, Math.PI * 2);
         ctx.clip();
-        ctx.drawImage(source, (sw - side) / 2, (sh - side) / 2, side, side, bx - r, by - r, r * 2, r * 2);
+        ctx.drawImage(
+          source,
+          (sw - side) / 2,
+          (sh - side) / 2,
+          side,
+          side,
+          bx - r,
+          by - r,
+          r * 2,
+          r * 2,
+        );
         ctx.restore();
       }
     } else if (face?.glyph) {

@@ -17,6 +17,7 @@
 
 import { BOWL, BOWL_X, BOWL_Y, CHUTE_TOP, NECK, type DropFrame } from '../sim/drop';
 import { FRUITS, radiusOf } from '../sim/fruit';
+import { ink, legible } from './ink';
 import { drawShape, shapeColor, type ShapeSet } from './shapes';
 
 /**
@@ -90,12 +91,6 @@ function hsl(turn: number, light: number): string {
               : [chroma, 0, x];
   const byte = (v: number) => Math.round((v + m) * 255);
   return `#${((byte(r) << 16) | (byte(g) << 8) | byte(b)).toString(16).padStart(6, '0')}`;
-}
-
-function ink(hex: string, invert: boolean): string {
-  if (!invert) return hex;
-  const n = Number.parseInt(hex.slice(1), 16);
-  return `#${(0xffffff - n).toString(16).padStart(6, '0')}`;
 }
 
 /** `#rrggbb` at an opacity, which is what a halo's gradient stops need. */
@@ -178,7 +173,12 @@ export function drawDropFrame(
     const face = faces?.[rank];
     const own = shape ? shapeColor(shape, rank) : fruit.color;
     return {
-      color: ink(face?.color ?? own, invert),
+      // A colour somebody picked is used as picked, in both grounds. Only the
+      // ones this repository chose are turned inside out with the picture —
+      // handing a chosen colour back as its complement is not a negative, it is
+      // the wrong colour, and a chosen white or black would vanish into the
+      // ground it was inverted onto.
+      color: face?.color ? legible(face.color, invert) : ink(own, invert),
       glyph: face?.glyph || fruit.glyph,
       image: face?.image ?? null,
     };
