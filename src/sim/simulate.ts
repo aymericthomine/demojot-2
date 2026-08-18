@@ -272,6 +272,32 @@ export const DEFAULT_TUNING: Tuning = {
   speed: SPEED,
 };
 
+/**
+ * How fast a ball travels, as a multiple of the speed measured off the
+ * reference.
+ *
+ * One is the reference: 0.85 arena radii a second, tracked frame by frame, and
+ * the first version of this ran at three times that and read as wrong
+ * immediately. The faster settings are not a correction of that — they are a
+ * choice, for a video that wants to be busier than the thing it came from.
+ *
+ * It scales the whole fight rather than the launch alone: the wall reflects
+ * perfectly and two balls trade the part of their speed that lies along the line
+ * between them, so nothing here puts energy in or takes it out, and the speed a
+ * round is dealt is the speed it keeps.
+ */
+export const SPEED_CHOICES = [1, 1.5, 2] as const;
+export type BallSpeed = (typeof SPEED_CHOICES)[number];
+
+/** The reference, and what every earlier video used. */
+export const NORMAL_SPEED: BallSpeed = 1;
+
+/** The tuning for a chosen speed, ready to hand to `generateRound`. */
+export const tuningFor = (speed: number): Tuning => ({
+  ...DEFAULT_TUNING,
+  speed: SPEED * speed,
+});
+
 export interface BallState {
   index: number;
   color: string;
@@ -384,12 +410,7 @@ export function setupFor(
 /** The opening: the same figure in every video, turned and recoloured. */
 function start(setup: RoundSetup, tuning: Tuning): Live[] {
   const rng = createRng(setup.seed ^ 0x2545f491 ^ Math.imul(setup.attempt + 1, 0x85ebca6b));
-  const { turn, palette } = openingFor(
-    setup.seed,
-    setup.anchors,
-    setup.ballCount,
-    setup.steady,
-  );
+  const { turn, palette } = openingFor(setup.seed, setup.anchors, setup.ballCount, setup.steady);
   const balls: Live[] = [];
   const slice = (Math.PI * 2) / setup.ballCount;
   const ring = startRadiusFor(setup);

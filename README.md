@@ -89,6 +89,17 @@ is kept exactly as picked unless it is too close to the ground to survive, and
 then it is walked towards the far end until it clears a contrast floor and no
 further. White on white becomes a light grey. Orange stays orange.
 
+**Speed** is ×1, ×1.5 or ×2. One is the reference — 0.85 arena radii a second,
+tracked frame by frame, and the first version of this ran at three times that and
+read as wrong immediately. The faster settings are not a correction of that; they
+are a choice, for a video that wants to be busier than the thing it came from. It
+scales the whole fight rather than the launch alone, because nothing in the arena
+puts energy in or takes it out: the wall reflects perfectly and two balls trade
+the part of their speed that lies along the line between them, so the speed a
+round is dealt is the speed it keeps. Measured across seven, twelve and two balls:
+bounces go from one and a half a second to three, and the length is still exact
+and the winner still there at every setting.
+
 **Ball size** is ×1, ×1.4 or ×1.9. Not only a look: a wider ball sweeps a wider
 corridor, so it runs through more rope per pass and the fight moves faster. It
 does not make the video shorter — the holding limit is searched against the

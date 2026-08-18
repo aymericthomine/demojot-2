@@ -33,17 +33,20 @@ import { DEFAULT_KIT, KITS } from "../audio/kit";
 import { SHAPE_LABEL, SHAPE_SETS, type ShapeSet } from "../render/shapes";
 import {
   BALL_COUNT,
-  DEFAULT_TUNING,
   FEWEST_BALLS,
   MOST_BALLS,
   NORMAL_SIZE,
+  NORMAL_SPEED,
   SIZE_CHOICES,
+  SPEED_CHOICES,
+  tuningFor,
   THREAD_CHOICES,
   anchorsFor,
   clampBalls,
   generateRound,
   openingFor,
   type BallSize,
+  type BallSpeed,
   type ThreadCount,
 } from "../sim/simulate";
 import { COLORS, FPS, HEIGHT, WIDTH } from "../sim/style";
@@ -71,6 +74,7 @@ const BEAST = {
   threads: 5,
   balls: 7,
   size: NORMAL_SIZE,
+  speed: NORMAL_SPEED,
   /** Half of what the other fight holds its opening for. */
   hold: 0.5,
 } as const;
@@ -86,6 +90,8 @@ type Job =
       size: BallSize;
       /** Open on the fixed figure. True for the mode that has nothing to set. */
       steady: boolean;
+      /** How fast the balls travel, as a multiple of the measured speed. */
+      speed: BallSpeed;
       faces: readonly BallFace[];
     }
   | {
@@ -151,12 +157,14 @@ export default function HomePage() {
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
   const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
+  const [speed, setSpeed] = useState<BallSpeed>(NORMAL_SPEED);
   // MrBeast is Ball Battle with the dials taken away, so everything downstream
   // reads these rather than the state the missing dials would have set.
   const steady = mode === "beast";
   const useThreads = steady ? BEAST.threads : threads;
   const useBalls = steady ? BEAST.balls : balls;
   const useSize = steady ? BEAST.size : size;
+  const useSpeed = steady ? BEAST.speed : speed;
 
   const [kit, setKit] = useState(DEFAULT_KIT);
   const [shape, setShape] = useState<ShapeSet | null>(null);
@@ -318,11 +326,12 @@ export default function HomePage() {
               job.balls,
               job.size,
               job.steady,
-              // Half the opening hold in the mode whose opening never changes:
-              // there is nothing new to read in a picture already seen.
-              job.steady
-                ? { ...DEFAULT_TUNING, hold: BEAST.hold }
-                : DEFAULT_TUNING,
+              {
+                ...tuningFor(job.speed),
+                // Half the opening hold in the mode whose opening never changes:
+                // there is nothing new to read in a picture already seen.
+                ...(job.steady ? { hold: BEAST.hold } : {}),
+              },
             );
             total = round.durationInFrames;
             onStage("sound");
@@ -330,6 +339,7 @@ export default function HomePage() {
             reel = battleReel(round, {
               invert: job.invert,
               faces: job.faces,
+              speed: job.speed,
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
           } else {
@@ -502,6 +512,25 @@ export default function HomePage() {
               <span className="text-[11px] text-[#5c616e]">
                 {FEWEST_BALLS}–{MOST_BALLS}
               </span>
+            </div>
+
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Speed</span>
+              {SPEED_CHOICES.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setSpeed(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
+                    speed === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  ×{choice}
+                </button>
+              ))}
             </div>
 
             <div className="mt-2 flex items-center gap-2">
@@ -785,6 +814,7 @@ export default function HomePage() {
                     balls: useBalls,
                     size: useSize,
                     steady,
+                    speed: useSpeed,
                     faces: steady ? [] : faces,
                   },
             )

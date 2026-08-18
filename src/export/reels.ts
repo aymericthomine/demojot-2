@@ -23,6 +23,14 @@ export interface Dress {
 
 export interface BattleDress extends Dress {
   faces?: readonly (BallFace | null | undefined)[];
+  /**
+   * How fast the balls were sent, for the file name only.
+   *
+   * The picture does not need it — the round was played at that speed and the
+   * frames already show it — but two files of the same seed at two speeds are
+   * two different videos and should not be named the same thing.
+   */
+  speed?: number;
 }
 
 export interface DropDress extends Dress {
@@ -39,12 +47,13 @@ const release = <T>(frames: T[], index: number): void => {
 export function battleReel(round: Round, dress: BattleDress = {}): Reel {
   const { setup } = round;
   const size = setup.size === 1 ? '' : `-x${setup.size}`;
+  const speed = !dress.speed || dress.speed === 1 ? '' : `-s${dress.speed}`;
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
     name: `balls-${setup.seed}-${setup.ballCount}b-${setup.threads}t-${Math.round(
       round.duration,
-    )}s${size}${dress.invert ? '-white' : ''}`,
+    )}s${size}${speed}${dress.invert ? '-white' : ''}`,
     paint(ctx, index) {
       drawFrame(ctx, round.frames[index], {
         width: WIDTH,
