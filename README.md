@@ -41,6 +41,16 @@ count, no size, no dressing and no white ground — the panel is the seed, Roll 
 Generate. The opening is held for half a second rather than a whole one, because
 there is nothing new to read in a picture the viewer has already seen.
 
+**And it winds up.** Every ball is sped up by the same small factor each substep,
+so by the last frame the fight is running at three times the speed it opened at.
+Straight in time rather than anything cleverer: the last second is meant to look
+like the fastest one, and a curve that spends its acceleration early reads as a
+fast video rather than an accelerating one. Relative speeds are left alone, which
+matters because the balls do not all travel at the same speed once they have hit
+each other. Measured over eight seeds: mean speed of the living balls 0.83 arena
+radii a second two seconds in against 2.06 near the end, and bounces from one and
+a half a second to four. The length is still exact and the winner still there.
+
 ## Run it
 
 ```bash

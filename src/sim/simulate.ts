@@ -266,6 +266,16 @@ export interface Tuning {
    * viewer has already seen.
    */
   hold?: number;
+  /**
+   * What the speed is multiplied by over the length of the video.
+   *
+   * Left out, nothing changes and a round runs at one speed from the first frame
+   * to the last. Set, every ball is sped up by the same small factor each
+   * substep, so the fight winds up rather than starting fast: relative speeds are
+   * left alone, which matters because the balls do not all travel at the same
+   * speed once they have hit each other.
+   */
+  rampTo?: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -495,6 +505,17 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
   const holdLimit = tuning.holdLimit ?? holdLimitFor(setup.threads);
   const hold = tuning.hold ?? HOLD;
 
+  /**
+   * The wind-up, as a multiple of the speed the round was dealt.
+   *
+   * Straight in time rather than in anything cleverer: the last second is meant
+   * to look like the fastest one, and a curve that spends its acceleration early
+   * reads as a fast video rather than an accelerating one.
+   */
+  const rampTo = tuning.rampTo ?? 1;
+  const rampAt = (t: number) =>
+    1 + (rampTo - 1) * Math.min(1, Math.max(0, (t - hold) / (runFor - hold)));
+
   // Where every anchor sits, worked out once. These never move, and the contact
   // test below runs for every anchor against every ball on every substep — at
   // twenty threads that is a million sines a second of simulated time, all of
@@ -565,9 +586,18 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
     }
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
+      const before = rampAt(time);
       time += dt;
       // Held on the opening picture. Nothing moves and nothing changes hands.
       if (time < hold) continue;
+
+      if (rampTo !== 1) {
+        const grow = rampAt(time) / before;
+        for (const ball of balls) {
+          ball.vx *= grow;
+          ball.vy *= grow;
+        }
+      }
 
       for (const ball of balls) {
         if (!ball.alive) {

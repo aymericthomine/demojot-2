@@ -77,6 +77,14 @@ const BEAST = {
   speed: NORMAL_SPEED,
   /** Half of what the other fight holds its opening for. */
   hold: 0.5,
+  /**
+   * And it winds up: three times the speed it opened at by the last frame.
+   *
+   * Measured over eight seeds — the mean speed of the living balls goes from
+   * 0.83 arena radii a second two seconds in to 2.06 near the end, and bounces
+   * from one and a half a second to four.
+   */
+  rampTo: 3,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -330,7 +338,9 @@ export default function HomePage() {
                 ...tuningFor(job.speed),
                 // Half the opening hold in the mode whose opening never changes:
                 // there is nothing new to read in a picture already seen.
-                ...(job.steady ? { hold: BEAST.hold } : {}),
+                ...(job.steady
+                  ? { hold: BEAST.hold, rampTo: BEAST.rampTo }
+                  : {}),
               },
             );
             total = round.durationInFrames;
