@@ -29,7 +29,7 @@ duplicates looks there first — so the figure stays and the arrangement moves.
 *1080×1920 · 60 fps · H.264/MP4 where the machine can, AV1 or VP9 where it
 cannot · soundtrack built from the collisions*
 
-**MrBeast** is the same fight with the dials taken away: seven balls, five
+**MrBeast** is the same fight with the dials taken away: seven balls, fifteen
 threads each, and the one opening that never turns or recolours, so every video
 starts on the same picture. That is the opposite of what the opening does in Ball
 Battle, where it is turned by a whole number of anchors and recoloured precisely
@@ -50,6 +50,18 @@ matters because the balls do not all travel at the same speed once they have hit
 each other. Measured over eight seeds: mean speed of the living balls 0.83 arena
 radii a second two seconds in against 2.06 near the end, and bounces from one and
 a half a second to four. The length is still exact and the winner still there.
+
+**And it keeps its cast.** Fifteen threads apiece, not the five the mode was
+first given, and a ball may only take one thread every 0.07 seconds. The two go
+together. A ball crossing another's fan used to take every thread it touched in
+the one instant it was inside them, so a single pass stripped its owner bare:
+five balls were down to two inside fifteen seconds and the rest of the video was
+a duel. The cooldown makes that same crossing cost one thread, and the wider fan
+gives it something to lose. Twelve seeds, balls still alive at five, fifteen,
+thirty and forty-five seconds: five threads and no cooldown gave 3.9 / 2.5 / 2.1
+/ 2.0; fifteen with the cooldown gives 6.2 / 4.1 / 2.6 / 2.3, against the
+reference video's own four at fifteen seconds and three at thirty. Eleven of the
+twelve still end on a knockout, and none of them missed the length.
 
 ## Run it
 

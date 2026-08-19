@@ -71,7 +71,18 @@ type Mode = "battle" | "drop" | "beast";
  * one of them opens on the same picture, which is the point of it.
  */
 const BEAST = {
-  threads: 5,
+  /**
+   * Fifteen, not the five the ask named — measured against the reference.
+   *
+   * Five threads apiece is what the reference *looks* like it has, but a fan
+   * that small is stripped in a single pass and the fight is down to two balls
+   * inside fifteen seconds. Over twelve seeds, alive at 5/15/30/45s:
+   * 5 threads 3.9/2.5/2.1/2.0, 10 threads 5.0/3.1/2.4/2.2, 15 threads
+   * 6.2/4.1/2.6/2.3. The reference itself, counted off its frames, is
+   * 4/3/…/2 — so fifteen is the curve that matches, and it still ends on a
+   * knockout in eleven of twelve.
+   */
+  threads: 15,
   balls: 7,
   size: NORMAL_SIZE,
   speed: NORMAL_SPEED,
@@ -85,6 +96,15 @@ const BEAST = {
    * from one and a half a second to four.
    */
   rampTo: 3,
+  /**
+   * And a ball may only take one thread every 0.07s.
+   *
+   * Without it a ball crossing a fan takes every thread it touches in the one
+   * instant it is inside them, so a single run strips its owner bare and the
+   * cast collapses. A cooldown makes the same crossing cost one thread, which
+   * is what keeps four balls on screen at fifteen seconds instead of two.
+   */
+  takeEvery: 0.07,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -93,7 +113,8 @@ type Job =
       mode: "battle" | "beast";
       seed: number;
       invert: boolean;
-      threads: ThreadCount;
+      /** Not `ThreadCount`: MrBeast deals a count the picker does not offer. */
+      threads: number;
       balls: number;
       size: BallSize;
       /** Open on the fixed figure. True for the mode that has nothing to set. */
@@ -339,7 +360,11 @@ export default function HomePage() {
                 // Half the opening hold in the mode whose opening never changes:
                 // there is nothing new to read in a picture already seen.
                 ...(job.steady
-                  ? { hold: BEAST.hold, rampTo: BEAST.rampTo }
+                  ? {
+                      hold: BEAST.hold,
+                      rampTo: BEAST.rampTo,
+                      takeEvery: BEAST.takeEvery,
+                    }
                   : {}),
               },
             );

@@ -276,6 +276,15 @@ export interface Tuning {
    * speed once they have hit each other.
    */
   rampTo?: number;
+  /**
+   * Seconds a ball must wait between one thread and the next.
+   *
+   * Left out, it takes every thread it touches in the same instant, which is
+   * what a crossing does: a ball driven through somebody's fan strips the whole
+   * thing and can kill its owner in a single pass. Set, that same run costs one
+   * thread, so the counts swing rather than collapse and a round keeps its cast.
+   */
+  takeEvery?: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -373,6 +382,8 @@ interface Live {
   fade: number;
   /** When this ball last bounced off another, so one contact is not counted twice. */
   clashedAt: number;
+  /** When it last took a thread, for the rate limit on capture. */
+  tookAt: number;
   /** Where it was at the start of this step. A thread is crossed, not sat on. */
   px: number;
   py: number;
@@ -458,6 +469,7 @@ function start(setup: RoundSetup, tuning: Tuning): Live[] {
       alive: true,
       fade: 0,
       clashedAt: -99,
+      tookAt: -99,
       px: x,
       py: y,
     });
@@ -513,6 +525,7 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
    * reads as a fast video rather than an accelerating one.
    */
   const rampTo = tuning.rampTo ?? 1;
+  const takeEvery = tuning.takeEvery ?? 0;
   const rampAt = (t: number) =>
     1 + (rampTo - 1) * Math.min(1, Math.max(0, (t - hold) / (runFor - hold)));
 
@@ -670,11 +683,16 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
 
       // Touch a thread and it comes away with you — new hub, new colour, same
       // anchor. The ball is not turned by it: rope does not push back, and the
-      // only rebounds in the arena are off the wall and off other balls. So a
-      // ball crossing a fan takes every thread it passes through, which is what
-      // makes a good run pay and why somebody always ends up holding all of it.
+      // only rebounds in the arena are off the wall and off other balls.
+      //
+      // How much a crossing pays is `takeEvery`. Left at nought a ball takes
+      // every thread it passes through in the one instant it is inside the fan,
+      // which is what makes a good run pay — and, in a mode that opens with big
+      // fans, what kills its owner in a single pass. A cooldown makes the same
+      // crossing cost one thread instead of all of them.
       for (const ball of balls) {
         if (!ball.alive) continue;
+        if (takeEvery > 0 && time - ball.tookAt < takeEvery) continue;
 
         let changed = false;
         let gained = 0;
@@ -697,6 +715,10 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
             ball: ball.index,
             alive: countAlive(),
           });
+          if (takeEvery > 0) {
+            ball.tookAt = time;
+            break;
+          }
         }
 
         if (changed) {
