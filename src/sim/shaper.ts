@@ -24,6 +24,7 @@
  * rather than nearly true.
  */
 
+import { buildFormula, dealFormula, describeFormula, nameFormula, type Formula } from './formula';
 import { createRng, type Rng } from './random';
 
 /** Seconds a loop runs for. One revolution, so it joins up exactly. */
@@ -460,12 +461,36 @@ export const DENSITIES = [5_000, 11_000, 22_000] as const;
 export type Density = (typeof DENSITIES)[number];
 export const NORMAL_DENSITY: Density = 11_000;
 
+/**
+ * What the seed decided to build.
+ *
+ * Either one of the named shapes, or a formula — a shape that exists only as the
+ * numbers in it, which is what keeps the mode from being a menu of ten things.
+ */
+export type Recipe =
+  | { kind: 'named'; shape: ShapeName }
+  | { kind: 'formula'; formula: Formula };
+
 export interface ShaperSetup {
   seed: number;
-  shape: ShapeName;
+  recipe: Recipe;
   palette: Palette;
   count: Density;
 }
+
+/** For the file name. */
+export const recipeSlug = (recipe: Recipe): string =>
+  recipe.kind === 'named' ? recipe.shape : describeFormula(recipe.formula);
+
+/** For the line under the button. */
+export const recipeName = (recipe: Recipe): string =>
+  recipe.kind === 'named' ? SHAPE_LABEL[recipe.shape] : nameFormula(recipe.formula);
+
+/**
+ * What the page asked for: a named shape, a formula, or nothing and let the seed
+ * decide.
+ */
+export type Wanted = ShapeName | 'formula' | null;
 
 /**
  * What this seed asks for when the shape and the palette are left to it.
@@ -475,14 +500,25 @@ export interface ShaperSetup {
  */
 export function dealShaper(
   seed: number,
-  shape: ShapeName | null,
+  shape: Wanted,
   palette: Palette | null,
   count: Density,
 ): ShaperSetup {
   const rng = createRng(seed ^ 0x5bf03635);
+  const recipe: Recipe =
+    shape === 'formula'
+      ? { kind: 'formula', formula: dealFormula(rng) }
+      : shape !== null
+        ? { kind: 'named', shape }
+        : // Left to the seed, it deals a formula two times in three: the ten
+          // named shapes are the ones worth having by name, and everything else
+          // there could be is in the formulae.
+          rng.next() < 0.34
+          ? { kind: 'named', shape: rng.pick(SHAPE_NAMES) }
+          : { kind: 'formula', formula: dealFormula(rng) };
   return {
     seed,
-    shape: shape ?? rng.pick(SHAPE_NAMES),
+    recipe,
     palette: palette ?? rng.pick(PALETTES),
     count,
   };
@@ -491,7 +527,14 @@ export function dealShaper(
 /** Builds the cloud. Same seed, same shape, same points, for ever. */
 export function buildCloud(setup: ShaperSetup): Cloud {
   const rng = createRng(setup.seed ^ 0x1f83d9ab);
-  const cloud = BUILDERS[setup.shape](rng, setup.count);
+  let cloud: Cloud;
+  if (setup.recipe.kind === 'named') {
+    cloud = BUILDERS[setup.recipe.shape](rng, setup.count);
+  } else {
+    const into = new Scatter();
+    buildFormula(setup.recipe.formula, rng, into, setup.count);
+    cloud = into.done();
+  }
 
   // Scaled to the frame here rather than in the painter: how wide the shape is
   // depends on the shape, and the painter should not have to know that a horn

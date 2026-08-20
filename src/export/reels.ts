@@ -11,7 +11,7 @@
 import type { Reel } from './encodeVideo';
 import { drawDropFrame, type FruitFace } from '../render/drawDrop';
 import { drawShapeFrame } from '../render/drawShape';
-import { buildCloud, rampFor, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
+import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { DropRound } from '../sim/drop';
@@ -109,7 +109,9 @@ export function shaperReel(setup: ShaperSetup, dress: Dress = {}): Reel {
   return {
     durationInFrames,
     duration: LOOP_SECONDS,
-    name: `shaper-${setup.seed}-${setup.shape}-${setup.palette.name}${dress.invert ? '-white' : ''}`,
+    name: `shaper-${setup.seed}-${recipeSlug(setup.recipe)}-${setup.palette.name}${
+      dress.invert ? '-white' : ''
+    }`,
     // Thousands of hard-edged dots on flat black is the worst thing a codec is
     // ever handed: at the bitrate the frame size asks for they smear into grey
     // porridge and the shape stops reading as points at all.

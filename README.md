@@ -431,7 +431,33 @@ What is left fits two three-dimensional readings equally well: the shape turning
 one way, or its mirror image turning the other. There is no fact of the matter in
 the picture, and the eye picks a side, holds it, and drops it.
 
-**Ten shapes, from formulae rather than models.** Hex prism, pyramid, cube,
+**And a shape generator, because ten shapes is a menu and a menu runs out.**
+Pick **∿ formula** and the seed does not choose from a list, it writes one: five
+families with their numbers left free, so a seed is a point in a space of shapes
+rather than one of ten answers. Left on *seed picks*, two draws in three are a
+formula.
+
+| Family | What it is | What moves |
+| --- | --- | --- |
+| supershape | Gielis's superformula, spun with itself — the one equation that covers stars, gems, drops, boxes and pinched spheres | lobes round the equator and up the profile, three exponents each |
+| column | a fluted, waisted, tapered, twisted column | sides, flute depth, waist, taper, twist, ripples |
+| torus knot | rope wound (p,q) times round a torus | p, q coprime, rope thickness, how deep it winds |
+| lattice | rings and meridians and nothing between: the wireframe globe | how many of each, bulge, twist |
+| ribbon | a band following a helix, turning about its own axis as it climbs | turns, twists, width, height |
+
+The ranges are the design. A supershape's first exponent is its whole character
+and it is not linear in taste — under about a half the lobes come to points and
+it is a star, around one they are facets, over two everything inflates back into
+a ball — so it is dealt in bands rather than over a range, weighted towards the
+points, and never inflated in both directions at once. Knots are held to two or
+three turns round the axis: a (5,7) is a better piece of mathematics and paints
+as a tangle. Columns get flutes or ripples, rarely both, because two sets of
+ridges crossing each other is a cabbage.
+
+The formula goes in the file name — `shaper-42-super-5x6-0.18-0.96-acid.mp4` —
+so a shape that came out well can be found again.
+
+**Ten named shapes, from formulae rather than models.** Hex prism, pyramid, cube,
 Möbius strip, torus, horn torus, sphere, trefoil knot, helix and cone. The solids
 spend two fifths of their points on their edges, because a polyhedron scattered
 evenly is a fog in the shape of a box and the edges are where the shape is.

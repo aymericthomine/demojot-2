@@ -38,9 +38,10 @@ import {
   SHAPE_LABEL as CLOUD_LABEL,
   SHAPE_NAMES,
   dealShaper,
+  recipeName,
   type Density,
   type Palette,
-  type ShapeName,
+  type Wanted,
 } from "../sim/shaper";
 import { ShaperPreview } from "./ShaperPreview";
 import {
@@ -133,7 +134,7 @@ type Job =
       mode: "shaper";
       seed: number;
       invert: boolean;
-      shape: ShapeName | null;
+      shape: Wanted;
       palette: Palette | null;
       count: Density;
     };
@@ -203,7 +204,7 @@ export default function HomePage() {
 
   // Shaper. Null means "let the seed choose", which is what the mode is for:
   // roll a number and see what comes out.
-  const [cloudShape, setCloudShape] = useState<ShapeName | null>(null);
+  const [cloudShape, setCloudShape] = useState<Wanted>(null);
   const [palette, setPalette] = useState<Palette | null>(null);
   const [density, setDensity] = useState<Density>(NORMAL_DENSITY);
 
@@ -402,7 +403,7 @@ export default function HomePage() {
             reel = shaperReel(setup, { invert: job.invert });
             total = reel.durationInFrames;
             audio = null;
-            summary = `${CLOUD_LABEL[setup.shape]} · ${setup.palette.name} · ${reel.duration}s loop`;
+            summary = `${recipeName(setup.recipe)} · ${setup.palette.name} · ${reel.duration}s loop`;
           } else {
             // No length is asked for: the drop ends when the eighth element is
             // made, which is never inside a minute.
@@ -562,6 +563,20 @@ export default function HomePage() {
                 }`}
               >
                 seed picks
+              </button>
+              {/* The one that is not a shape but a shape generator: roll the
+                  seed and it writes a new formula every time. */}
+              <button
+                type="button"
+                onClick={() => setCloudShape("formula")}
+                disabled={busy}
+                className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                  cloudShape === "formula"
+                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                }`}
+              >
+                ∿ formula
               </button>
               {SHAPE_NAMES.map((name) => (
                 <button

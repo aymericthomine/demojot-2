@@ -20,12 +20,12 @@ import {
   rampFor,
   type Density,
   type Palette,
-  type ShapeName,
+  type Wanted,
 } from "../sim/shaper";
 
 export interface PreviewProps {
   seed: number;
-  shape: ShapeName | null;
+  shape: Wanted;
   palette: Palette | null;
   count: Density;
   invert: boolean;
