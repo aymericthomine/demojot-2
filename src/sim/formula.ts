@@ -79,7 +79,47 @@ export type Base =
       tall: number;
     }
   | { kind: 'tube'; curve: Curve; thickness: number }
-  | { kind: 'ribbon'; curve: Curve; width: number; twists: number };
+  | { kind: 'ribbon'; curve: Curve; width: number; twists: number }
+  | {
+      /** A face: an ovoid with sockets, a brow, a nose and a mouth cut into it. */
+      kind: 'mask';
+      wide: number;
+      deep: number;
+      socket: number;
+      socketSpread: number;
+      brow: number;
+      nose: number;
+      noseWidth: number;
+      mouth: number;
+      mouthWidth: number;
+      jaw: number;
+      horns: number;
+    }
+  | {
+      /** A tube or a band winding outwards and upwards. */
+      kind: 'spiral';
+      turns: number;
+      inner: number;
+      rise: number;
+      thickness: number;
+      band: number;
+      taper: number;
+    }
+  | {
+      /** Rings stacked up struts: scaffolding, a tower, a stack of frames. */
+      kind: 'tower';
+      levels: number;
+      sides: number;
+      twistPer: number;
+      taper: number;
+      tall: number;
+      waist: number;
+    }
+  | {
+      /** A body with limbs, as a union of balls: the closest this gets to a beast. */
+      kind: 'creature';
+      body: readonly (readonly [number, number, number, number])[];
+    };
 
 /** Applied to whatever the base produced, and to every base alike. */
 export interface Deform {
@@ -114,6 +154,10 @@ const BASE_WORD: Record<Base['kind'], string> = {
   revolve: 'body',
   tube: 'loop',
   ribbon: 'ribbon',
+  mask: 'mask',
+  spiral: 'spiral',
+  tower: 'tower',
+  creature: 'creature',
 };
 
 /** Short enough for a file name, particular enough to tell two shapes apart. */
@@ -129,6 +173,18 @@ export function describeFormula(f: Formula): string {
     case 'tube':
     case 'ribbon':
       parts.push(f.base.curve.x.map((h) => h.k).join(''), f.base.curve.y.map((h) => h.k).join(''));
+      break;
+    case 'mask':
+      parts.push(`n${round(f.base.nose)}`, `h${round(f.base.horns)}`);
+      break;
+    case 'spiral':
+      parts.push(`${round(f.base.turns, 1)}turns`);
+      break;
+    case 'tower':
+      parts.push(`${f.base.levels}x${f.base.sides}`);
+      break;
+    case 'creature':
+      parts.push(`${f.base.body.length}balls`);
       break;
   }
   if (f.deform.twist) parts.push(`t${round(f.deform.twist, 1)}`);
@@ -148,6 +204,10 @@ export function nameFormula(f: Formula): string {
   if (f.base.kind === 'tube' || f.base.kind === 'ribbon') {
     bits.push(`${f.base.curve.x.length + f.base.curve.y.length} harmonics`);
   }
+  if (f.base.kind === 'mask' && f.base.horns > 0.05) bits.push('horned');
+  if (f.base.kind === 'spiral') bits.push(`${round(f.base.turns, 1)} turns`);
+  if (f.base.kind === 'tower') bits.push(`${f.base.levels} levels`);
+  if (f.base.kind === 'creature') bits.push(`${f.base.body.length} lobes`);
   return bits.length ? `${word}, ${bits.join(', ')}` : word;
 }
 
@@ -208,9 +268,14 @@ const bend = (p: Point, d: Deform, reach: number): Point => {
 const reachOf = (base: Base): number => {
   switch (base.kind) {
     case 'super':
-      return base.tall;
     case 'revolve':
       return base.tall;
+    case 'tower':
+      return base.tall;
+    case 'spiral':
+      return Math.max(0.3, base.rise);
+    case 'mask':
+    case 'creature':
     case 'tube':
     case 'ribbon':
       return 1;
@@ -264,8 +329,29 @@ function surfaceOf(f: Formula): ((u: number, v: number) => Point) | null {
           reach,
         );
       };
+    case 'mask':
+      return (u, v) => faceAt(base, f.deform, u, v);
+    case 'spiral':
+      return (u, v) => {
+        // The band case. The tube case goes through `sampleTube` below.
+        const t = u;
+        const angle = t * Math.PI * 2 * base.turns;
+        const radius = base.inner + (1 - base.inner) * t;
+        const w = (v - 0.5) * 2 * base.band * (1 - base.taper * t);
+        return bend(
+          [
+            Math.cos(angle) * (radius + w * 0.4),
+            (t - 0.5) * 2 * base.rise + w,
+            Math.sin(angle) * (radius + w * 0.4),
+          ],
+          f.deform,
+          Math.max(0.3, base.rise),
+        );
+      };
     case 'tube':
-      // Sampled as a solid tube rather than a surface — see `sampleTube`.
+    case 'tower':
+    case 'creature':
+      // Not surfaces: a solid tube, a scaffold of lines, and a union of balls.
       return null;
   }
 }
@@ -387,11 +473,16 @@ function sampleTube(
   count: number,
   thickness: number,
   at: (t: number) => Point,
+  closed = true,
 ): void {
   for (let i = 0; i < count; i += 1) {
     const t = rng.next();
     const p = at(t);
-    const q = at((t + 1e-3) % 1);
+    // A spiral has two ends: stepping past the last one to find the tangent
+    // would wrap round to the first and hand back a direction across the whole
+    // shape, which paints as a spray of points through the middle of it.
+    const step = closed ? (t + 1e-3) % 1 : Math.min(1, t + 1e-3);
+    const q = at(step);
     const tangent = norm([q[0] - p[0], q[1] - p[1], q[2] - p[2]]);
     const a = across(tangent);
     const b = cross(tangent, a);
@@ -402,6 +493,262 @@ function sampleTube(
     const c = Math.cos(angle) * r;
     const s = Math.sin(angle) * r;
     into.add(p[0] + a[0] * c + b[0] * s, p[1] + a[1] * c + b[1] * s, p[2] + a[2] * c + b[2] * s, t);
+  }
+}
+
+type Mask = Extract<Base, { kind: 'mask' }>;
+
+/**
+ * A point on the head, from the two parameters that go round it and up it.
+ *
+ * The head is a star-shaped surface: every feature is a bump or a dent along the
+ * direction the point looks out in, so however deep a socket is cut the surface
+ * cannot fold through itself.
+ */
+function faceAt(base: Mask, d: Deform, u: number, v: number): Point {
+  const theta = (u - 0.5) * Math.PI * 2;
+  const phi = (v - 0.5) * Math.PI;
+  const dx = Math.cos(phi) * Math.sin(theta);
+  const dy = Math.sin(phi);
+  const dz = Math.cos(phi) * Math.cos(theta);
+  return faceFrom(base, d, dx, dy, dz);
+}
+
+/** The same, from a direction rather than from parameters. */
+function faceFrom(base: Mask, d: Deform, dx: number, dy: number, dz: number): Point {
+  // Features fade out round the sides rather than wrapping round to the back of
+  // the skull.
+  const front = Math.max(0, dz);
+  const facing = front * front;
+  const blob = (ax: number, ay: number, sx: number, sy: number): number =>
+    facing * Math.exp(-(((dx - ax) / sx) ** 2) - (((dy - ay) / sy) ** 2));
+
+  let r = 1;
+  r += base.brow * (blob(base.socketSpread, 0.34, 0.26, 0.1) + blob(-base.socketSpread, 0.34, 0.26, 0.1));
+  r += base.nose * blob(0, -0.05, base.noseWidth, 0.3);
+  // The jaw: the lower half narrows, which is most of what makes an ovoid read
+  // as a head rather than an egg.
+  if (dy < 0) r *= 1 - base.jaw * dy * dy;
+  if (base.horns > 0.05) {
+    r += base.horns * 2.4 * (blob(0.52, 0.66, 0.11, 0.13) + blob(-0.52, 0.66, 0.11, 0.13));
+  }
+  return bend([dx * r * base.wide, dy * r * 1.15, dz * r * base.deep], d, 1);
+}
+
+/** The eyes, in direction units. Wide almonds: a small eye reads as a blemish. */
+const EYE_W = 0.26;
+const EYE_H = 0.135;
+const EYE_Y = 0.2;
+const MOUTH_Y = -0.34;
+const MOUTH_H = 0.075;
+
+/** How far inside an eye a direction is. Over 1 is outside it. */
+const eyeAt = (base: Mask, dx: number, dy: number): number =>
+  Math.min(
+    ((dx - base.socketSpread) / EYE_W) ** 2 + ((dy - EYE_Y) / EYE_H) ** 2,
+    ((dx + base.socketSpread) / EYE_W) ** 2 + ((dy - EYE_Y) / EYE_H) ** 2,
+  );
+
+const mouthAt = (base: Mask, dx: number, dy: number): number =>
+  (dx / base.mouthWidth) ** 2 + ((dy - MOUTH_Y + dx * dx * 0.3) / MOUTH_H) ** 2;
+
+/** The nostrils: two small holes, which are most of what says nose. */
+const noseAt = (base: Mask, dx: number, dy: number): number =>
+  Math.min(
+    ((dx - base.noseWidth * 0.75) / (base.noseWidth * 0.42)) ** 2 + ((dy + 0.22) / 0.045) ** 2,
+    ((dx + base.noseWidth * 0.75) / (base.noseWidth * 0.42)) ** 2 + ((dy + 0.22) / 0.045) ** 2,
+  );
+
+/**
+ * A face, and the reason it is not simply a head with dents in it.
+ *
+ * Nothing in this mode is shaded and nothing is hidden, so a dent is invisible:
+ * a socket cut into a cloud of points changes where the points are and not one
+ * thing about how the picture reads. What reads is **absence and density** — a
+ * hole where the eye is, and a line of points where the lid and the lip are.
+ * That is what the faces in the reference videos are doing too, whatever their
+ * geometry says: the eyes are dark, the mouth is a line.
+ */
+function sampleMask(into: Sink, rng: Rng, count: number, base: Mask, d: Deform): void {
+  const skin = Math.round(count * 0.82);
+  let made = 0;
+  let tries = skin * 20;
+  while (made < skin && tries > 0) {
+    tries -= 1;
+    const u = rng.next();
+    const v = rng.next();
+    const theta = (u - 0.5) * Math.PI * 2;
+    const phi = (v - 0.5) * Math.PI;
+    const dx = Math.cos(phi) * Math.sin(theta);
+    const dy = Math.sin(phi);
+    const dz = Math.cos(phi) * Math.cos(theta);
+    // Sampled by area on the sphere the head is built from: cos(phi) is the
+    // width of the band this point was drawn from, and without it the poles get
+    // the same points as the equator and the crown of the head turns white.
+    if (rng.next() > Math.cos(phi)) continue;
+    // The holes. Only on the front — the back of the head has no eyes in it.
+    // Cut through, not into. Nothing is hidden in this mode, so the back of the
+    // head paints straight through a socket cut only in the front and the eye
+    // comes out as full of points as the cheek beside it. A mask has holes in
+    // it, so the hole is taken out of both sides and the eye goes dark.
+    if (
+      Math.abs(dz) > 0.25 &&
+      (eyeAt(base, dx, dy) < 1 || mouthAt(base, dx, dy) < 1 || noseAt(base, dx, dy) < 1)
+    ) {
+      continue;
+    }
+    const p = faceFrom(base, d, dx, dy, dz);
+    into.add(p[0], p[1], p[2], u);
+    made += 1;
+  }
+
+  // And the lines: the rim of each eye, the lip, and the ridge of the nose.
+  const rest = count - made;
+  const onCurve = (t: number, which: number): Point => {
+    const a = t * Math.PI * 2;
+    let dx: number;
+    let dy: number;
+    if (which < 2) {
+      // The lids, round each eye.
+      const side = which === 0 ? 1 : -1;
+      dx = side * base.socketSpread + Math.cos(a) * EYE_W;
+      dy = EYE_Y + Math.sin(a) * EYE_H;
+    } else if (which === 2) {
+      // The lips, round the mouth.
+      dx = (t * 2 - 1) * base.mouthWidth;
+      dy = MOUTH_Y - dx * dx * 0.3 + (t < 0.5 ? MOUTH_H : -MOUTH_H);
+    } else if (which === 3) {
+      // The bridge of the nose, straight down the middle, and its tip.
+      dx = (t - 0.5) * base.noseWidth * (t > 0.7 ? 2.6 : 0.5);
+      dy = 0.22 - t * 0.44;
+    } else {
+      // A brow over each eye, arched.
+      const side = t < 0.5 ? 1 : -1;
+      const s2 = (t % 0.5) * 4 - 1;
+      dx = side * base.socketSpread + s2 * EYE_W * 1.15;
+      dy = EYE_Y + EYE_H * 2.1 - s2 * s2 * 0.05;
+    }
+    const flat = Math.hypot(dx, dy);
+    const dz = Math.sqrt(Math.max(0.02, 1 - flat * flat));
+    return faceFrom(base, d, dx, dy, dz);
+  };
+  for (let i = 0; i < rest; i += 1) {
+    const which = i % 5;
+    const p = onCurve(rng.next(), which);
+    // The features are tinted at two ends of the ramp rather than by where they
+    // sit, so they read as drawn lines and not as more of the surface.
+    into.add(p[0], p[1], p[2], which === 3 ? 0.5 : 0.02);
+  }
+}
+
+/**
+ * Scaffolding: rings stacked up struts, drawn as lines.
+ *
+ * The thing the other bases cannot do is a straight edge, and an object made of
+ * struts reads as built rather than grown — which is the whole difference
+ * between a shape and a thing.
+ */
+function sampleTower(
+  into: Sink,
+  rng: Rng,
+  count: number,
+  base: Extract<Base, { kind: 'tower' }>,
+  d: Deform,
+): void {
+  const corner = (level: number, index: number): Point => {
+    const l = level / (base.levels - 1) - 0.5;
+    const spin = base.twistPer * level;
+    const taper = 1 + base.taper * l;
+    const waist = 1 + base.waist * (l * l * 4 - 1) * 0.25;
+    const r = taper * waist;
+    const a = (index / base.sides) * Math.PI * 2 + spin;
+    return [Math.cos(a) * r, l * 2 * base.tall, Math.sin(a) * r];
+  };
+  // Straight between the corners, not along the arc between them. Sampling the
+  // arc gives a stack of circles however many sides were asked for, and a circle
+  // is a shape where a hexagon is a thing somebody built.
+  const at = (level: number, index: number, along: number): Point => {
+    const a = corner(level, index);
+    const b = corner(level, (index + 1) % base.sides);
+    return bend(
+      [
+        a[0] + (b[0] - a[0]) * along,
+        a[1] + (b[1] - a[1]) * along,
+        a[2] + (b[2] - a[2]) * along,
+      ],
+      d,
+      base.tall,
+    );
+  };
+  // Two thirds on the rings, one third on the uprights: the rings are what the
+  // eye follows round, and they are the longer lines.
+  const ringShare = Math.round(count * 0.66);
+  for (let i = 0; i < ringShare; i += 1) {
+    const level = rng.int(0, base.levels - 1);
+    const corner = rng.int(0, base.sides - 1);
+    const p = at(level, corner, rng.next());
+    into.addSpun(p[0], p[1], p[2]);
+  }
+  for (let i = ringShare; i < count; i += 1) {
+    const level = rng.int(0, base.levels - 2);
+    const corner = rng.int(0, base.sides - 1);
+    const t = rng.next();
+    const a = at(level, corner, 0);
+    const b = at(level + 1, corner, 0);
+    into.addSpun(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+  }
+}
+
+/**
+ * A union of balls, sampled on its outside only.
+ *
+ * A body and a few limbs, which is as close to an animal as anything gets
+ * without a model file to load. The trick that makes it read as one solid
+ * creature rather than a bag of marbles is the rejection: a point on one ball's
+ * surface is thrown away if it is inside another, so what is left is the outline
+ * of the union and the joins disappear.
+ */
+function sampleCreature(
+  into: Sink,
+  rng: Rng,
+  count: number,
+  balls: readonly (readonly [number, number, number, number])[],
+  d: Deform,
+): void {
+  const total = balls.reduce((sum, b) => sum + b[3] * b[3], 0);
+  let made = 0;
+  let tries = count * 40;
+  while (made < count && tries > 0) {
+    tries -= 1;
+    // Picked in proportion to surface area, so a big body does not end up with
+    // the same number of points on it as a small foot.
+    let pick = rng.next() * total;
+    let ball = balls[0];
+    for (const b of balls) {
+      pick -= b[3] * b[3];
+      if (pick <= 0) {
+        ball = b;
+        break;
+      }
+    }
+    const y = rng.range(-1, 1);
+    const a = rng.next() * Math.PI * 2;
+    const rad = Math.sqrt(1 - y * y);
+    const x = ball[0] + rad * Math.cos(a) * ball[3];
+    const py = ball[1] + y * ball[3];
+    const z = ball[2] + rad * Math.sin(a) * ball[3];
+    let inside = false;
+    for (const other of balls) {
+      if (other === ball) continue;
+      if ((x - other[0]) ** 2 + (py - other[1]) ** 2 + (z - other[2]) ** 2 < other[3] ** 2) {
+        inside = true;
+        break;
+      }
+    }
+    if (inside) continue;
+    const p = bend([x, py, z], d, 1);
+    into.addSpun(p[0], p[1], p[2]);
+    made += 1;
   }
 }
 
@@ -496,15 +843,87 @@ function dealBase(rng: Rng): Base {
     }
     return { kind: 'revolve', profile, girth: rng.range(0.55, 0.95), tall: rng.range(0.9, 1.9) };
   }
-  if (roll < 0.82) {
+  if (roll < 0.5) {
     return { kind: 'tube', curve: fitCurve(dealCurve(rng)), thickness: rng.range(0.07, 0.16) };
   }
-  return {
-    kind: 'ribbon',
-    curve: fitCurve(dealCurve(rng)),
-    width: rng.range(0.14, 0.34),
-    twists: rng.int(1, 5),
-  };
+  if (roll < 0.6) {
+    return {
+      kind: 'ribbon',
+      curve: fitCurve(dealCurve(rng)),
+      width: rng.range(0.14, 0.34),
+      twists: rng.int(1, 5),
+    };
+  }
+  if (roll < 0.72) {
+    // A face. The ranges are narrow on purpose: a socket twice as deep is not a
+    // stranger face, it is a hole, and a nose at twice the length is a beak.
+    return {
+      kind: 'mask',
+      wide: rng.range(0.66, 0.84),
+      deep: rng.range(0.72, 0.95),
+      socket: rng.range(0.16, 0.3),
+      socketSpread: rng.range(0.3, 0.42),
+      brow: rng.range(0.05, 0.16),
+      nose: rng.range(0.12, 0.3),
+      noseWidth: rng.range(0.09, 0.16),
+      mouth: rng.range(0.1, 0.22),
+      mouthWidth: rng.range(0.24, 0.42),
+      jaw: rng.range(0.15, 0.4),
+      horns: rng.pick([0, 0, rng.range(0.1, 0.3)]),
+    };
+  }
+  if (roll < 0.84) {
+    return {
+      kind: 'spiral',
+      turns: rng.range(1.8, 5),
+      inner: rng.range(0.05, 0.35),
+      rise: rng.range(0.3, 1.6),
+      thickness: rng.range(0.05, 0.13),
+      // Nought means a tube rather than a band, which is a different picture
+      // from the same curve.
+      band: rng.pick([0, rng.range(0.12, 0.3)]),
+      taper: rng.range(0, 0.8),
+    };
+  }
+  if (roll < 0.93) {
+    return {
+      kind: 'tower',
+      levels: rng.int(3, 9),
+      sides: rng.int(3, 8),
+      twistPer: rng.pick([0, rng.range(-0.5, 0.5)]),
+      taper: rng.range(-0.6, 0.6),
+      tall: rng.range(1.1, 2),
+      waist: rng.range(-0.6, 0.8),
+    };
+  }
+  // A creature: a body, a head, and a few limbs hung off it. Placed by hand
+  // rather than at random — balls scattered anywhere are a cloud of balls, and
+  // what makes this read as a thing is that it has one big part and several
+  // small ones arranged around it.
+  const balls: [number, number, number, number][] = [];
+  const bodyR = rng.range(0.42, 0.6);
+  balls.push([0, 0, 0, bodyR]);
+  const headR = bodyR * rng.range(0.5, 0.75);
+  const headUp = bodyR * rng.range(0.9, 1.25);
+  balls.push([0, headUp, rng.range(-0.1, 0.1), headR]);
+  const limbs = rng.int(3, 6);
+  for (let i = 0; i < limbs; i += 1) {
+    const a = (i / limbs) * Math.PI * 2 + rng.range(-0.3, 0.3);
+    const r = bodyR * rng.range(0.22, 0.42);
+    // Close enough to overlap the body. A limb that does not touch is not a limb,
+    // it is a ball floating next to an animal, and the union has a gap in it.
+    const out = bodyR + r * rng.range(0.1, 0.65);
+    const drop = rng.range(-0.7, 0.2) * bodyR;
+    balls.push([Math.cos(a) * out, drop, Math.sin(a) * out, r]);
+    // Half of them get a second joint further out, which is what turns a bump
+    // into a limb. Overlapping the first, for the same reason.
+    if (rng.next() < 0.55) {
+      const r2 = r * rng.range(0.6, 0.85);
+      const out2 = out + (r + r2) * rng.range(0.4, 0.8);
+      balls.push([Math.cos(a) * out2, drop - bodyR * rng.range(0, 0.45), Math.sin(a) * out2, r2]);
+    }
+  }
+  return { kind: 'creature', body: balls };
 }
 
 /**
@@ -516,21 +935,36 @@ function dealBase(rng: Rng): Base {
  */
 export function dealFormula(rng: Rng): Formula {
   const base = dealBase(rng);
-  const style = rng.next() < 0.62 ? 'scatter' : rng.next() < 0.6 ? 'wire' : 'veil';
+  // A face wears no deformation but the gentle ones. A twist rotates the eyes
+  // off the front of the head, and flutes run ridges through the mouth: both
+  // are fine on a shape and neither is a face any more.
+  const plain = base.kind === 'mask';
+  // A mask is nearly always scattered: the wireframe styles draw rings and
+  // meridians over it, which is a globe wearing a face rather than a face.
+  const style: Style =
+    base.kind === 'mask'
+      ? rng.next() < 0.85
+        ? 'scatter'
+        : 'veil'
+      : rng.next() < 0.62
+        ? 'scatter'
+        : rng.next() < 0.6
+          ? 'wire'
+          : 'veil';
   return {
     base,
     style,
     rings: rng.int(5, 14),
     meridians: rng.int(6, 18),
     deform: {
-      twist: maybe(rng, 0.45, () => rng.range(-1.2, 1.2)),
-      taper: maybe(rng, 0.4, () => rng.range(-0.45, 0.45)),
-      waist: maybe(rng, 0.4, () => rng.range(-0.7, 0.7)),
-      flutes: maybe(rng, 0.4, () => rng.int(3, 10)),
+      twist: plain ? 0 : maybe(rng, 0.45, () => rng.range(-1.2, 1.2)),
+      taper: maybe(rng, 0.4, () => rng.range(-0.45, 0.45)) * (plain ? 0.35 : 1),
+      waist: maybe(rng, 0.4, () => rng.range(-0.7, 0.7)) * (plain ? 0.35 : 1),
+      flutes: plain ? 0 : maybe(rng, 0.4, () => rng.int(3, 10)),
       fluteDepth: rng.range(0.08, 0.26),
-      ripples: maybe(rng, 0.3, () => rng.int(2, 6)),
+      ripples: plain ? 0 : maybe(rng, 0.3, () => rng.int(2, 6)),
       rippleDepth: rng.range(0.05, 0.16),
-      lean: maybe(rng, 0.25, () => rng.range(-0.3, 0.3)),
+      lean: plain ? 0 : maybe(rng, 0.25, () => rng.range(-0.3, 0.3)),
     },
   };
 }
@@ -542,6 +976,39 @@ export function buildFormula(f: Formula, rng: Rng, into: Sink, count: number): v
     const reach = reachOf(base);
     sampleTube(into, rng, count, base.thickness, (t) =>
       bend(curveAt(base.curve, t), f.deform, reach),
+    );
+    return;
+  }
+  if (f.base.kind === 'tower') {
+    sampleTower(into, rng, count, f.base, f.deform);
+    return;
+  }
+  if (f.base.kind === 'mask' && f.style === 'scatter') {
+    sampleMask(into, rng, count, f.base, f.deform);
+    return;
+  }
+  if (f.base.kind === 'creature') {
+    sampleCreature(into, rng, count, f.base.body, f.deform);
+    return;
+  }
+  if (f.base.kind === 'spiral' && f.base.band === 0) {
+    const base = f.base;
+    const reach = reachOf(base);
+    sampleTube(
+      into,
+      rng,
+      count,
+      base.thickness,
+      (t) => {
+        const angle = t * Math.PI * 2 * base.turns;
+        const radius = base.inner + (1 - base.inner) * t;
+        return bend(
+          [Math.cos(angle) * radius, (t - 0.5) * 2 * base.rise, Math.sin(angle) * radius],
+          f.deform,
+          reach,
+        );
+      },
+      false,
     );
     return;
   }

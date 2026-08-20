@@ -443,9 +443,33 @@ vary independently.
 
 | Part | What it is | What moves |
 | --- | --- | --- |
-| base | supershape (Gielis's superformula spun with itself), body of revolution, loop, or ribbon | for the first two, lobes and exponents or a Fourier silhouette; for the last two, a closed curve dealt as Fourier harmonics |
+| base | one of eight: supershape, body of revolution, loop, ribbon, mask, spiral, tower, creature | lobes and exponents, a Fourier silhouette, a closed Fourier curve, a face, a winding, a stack of frames, or a union of balls |
 | deformation | applied to whatever the base produced, and to every base alike | twist, taper, waist, flutes, ripples, lean — all continuous, mostly absent, one or two at a time |
 | style | scattered over the surface, drawn as a wireframe of rings and meridians, or both at once | how many rings, how many meridians |
+
+The four that are things rather than shapes:
+
+- **tower** — rings stacked up struts. Straight between the corners, not along
+  the arc between them: sampling the arc gives a stack of circles however many
+  sides were asked for, and a circle is a shape where a hexagon is something
+  somebody built.
+- **spiral** — a tube or a band winding outwards and upwards. A tube that is not
+  closed, which needed the tangent to stop wrapping: stepping past the last point
+  of an open curve to find its direction hands back a line across the whole
+  shape, and it paints as a spray of points through the middle.
+- **creature** — a body, a head and a few limbs, as a union of balls sampled on
+  the outside only. A point on one ball is thrown away if it is inside another,
+  so the joins disappear and what is left is the outline of the whole animal
+  rather than a bag of marbles. Limbs are placed to overlap what they hang off;
+  a limb that does not touch is a ball floating next to a creature.
+- **mask** — a face, and the one that needed the renderer thought about. Nothing
+  here is shaded and nothing is hidden, so a socket cut into a cloud of points is
+  *invisible*: it moves the points and changes nothing about how the picture
+  reads. What reads is absence and density — so the eyes and the mouth are cut
+  through both sides of the head, which is what a mask is anyway, and the lids,
+  lips, brows and the ridge of the nose are drawn as lines of points. It is a
+  procedural face and it looks like one; the faces in the reference videos are
+  scanned models, and this is not that.
 
 The **Fourier curve** is what replaces a list of named knots with a continuum of
 them: three or four harmonics an axis, amplitudes and phases dealt fresh, falling
@@ -459,12 +483,21 @@ what lets it apply to everything: it sits inside the parametric function, so the
 area sampler measures the surface that is actually drawn, and a twist that
 stretches one side is accounted for.
 
+**Everything fills the frame it is given.** A shape used to be measured by its
+radius and fitted to the width, which on a frame half as wide as it is tall left
+two thirds of the picture empty whenever the shape was tall. What is measured now
+is the widest and the tallest it ever gets *on screen*, over a whole turn, and
+whichever runs out of room first sets the size. Clouds are centred on their own
+bounding box first, so a creature with its limbs to one side turns on the spot
+rather than orbiting the middle of the frame.
+
 **Measured, not assumed.** Three hundred rolls, each turned to four angles and
-reduced to a 24×24 occupancy grid — the silhouette, not the numbers — and every
-one of the 44,850 pairs compared. The closest two differ in 2.3% of the cells,
-the median pair in 32%, and nothing at all falls under 2%. The one pair that used
-to was two supershapes that had both come out spherical, so the deal no longer
-allows an inflated equator on a circular profile.
+reduced to two 32×32 grids — where the shape is, and how many points are in each
+cell — and every one of the 44,850 pairs compared. By silhouette the closest two
+differ in 1.2% of cells, the median pair in 23%. By density, which is the one
+that sees inside a lattice or a face, the closest differ in 1.16% and nothing at
+all falls under 1%. Silhouette alone is not enough on its own: every mask is an
+ovoid, so two of them agree on their outline and differ entirely in the face.
 
 The formula goes in the file name — `shaper-77-tube-scatter-1445-123-t-1-ice.mp4`
 — so a shape that came out well can be found again.

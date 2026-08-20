@@ -26,6 +26,7 @@
 
 import { buildFormula, dealFormula, describeFormula, nameFormula, type Formula } from './formula';
 import { createRng, type Rng } from './random';
+import { HEIGHT, WIDTH } from './style';
 
 /** Seconds a loop runs for. One revolution, so it joins up exactly. */
 export const LOOP_SECONDS = 6;
@@ -41,7 +42,19 @@ export const LOOP_SECONDS = 6;
 export const TILT = 0.42;
 
 /** How much of the frame's width the shape spans at its widest. */
-export const FIT = 0.82;
+export const FIT = 0.92;
+
+/**
+ * How tall a shape may be, in the same units the width is measured in.
+ *
+ * The painter scales both axes by the width, so this is the frame's own
+ * proportion with a little more margin taken out of the top and bottom than off
+ * the sides: 1920 × 0.8 over 1080 × 0.92.
+ */
+const HEADROOM = (HEIGHT * 0.8) / (WIDTH * FIT);
+
+/** Turns sampled when working out how big a shape gets on screen. */
+const TURNS = 16;
 
 export type ShapeName =
   | 'prism'
@@ -536,14 +549,61 @@ export function buildCloud(setup: ShaperSetup): Cloud {
     cloud = into.done();
   }
 
-  // Scaled to the frame here rather than in the painter: how wide the shape is
+  // Centred first, on its own bounding box. A shape built off the axis — a
+  // creature with its limbs to one side, a spiral that climbs — would otherwise
+  // orbit the middle of the frame rather than turn on the spot, and would be
+  // fitted by whichever end of it swung out furthest.
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (let i = 0; i < cloud.count; i += 1) {
+    minX = Math.min(minX, cloud.x[i]);
+    maxX = Math.max(maxX, cloud.x[i]);
+    minY = Math.min(minY, cloud.y[i]);
+    maxY = Math.max(maxY, cloud.y[i]);
+    minZ = Math.min(minZ, cloud.z[i]);
+    maxZ = Math.max(maxZ, cloud.z[i]);
+  }
+  if (cloud.count > 0) {
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    const cz = (minZ + maxZ) / 2;
+    for (let i = 0; i < cloud.count; i += 1) {
+      cloud.x[i] -= cx;
+      cloud.y[i] -= cy;
+      cloud.z[i] -= cz;
+    }
+  }
+
+  // Scaled to the frame here rather than in the painter: how wide a shape is
   // depends on the shape, and the painter should not have to know that a horn
   // torus is twice as wide as it is tall.
+  //
+  // Fitted to the picture it actually paints, over a whole turn, rather than to
+  // the radius of the object: the frame is half as wide as it is tall, so a
+  // shape measured by its radius and fitted to the width leaves two thirds of
+  // the frame empty whenever it is tall. What is measured here is the widest and
+  // the tallest the shape ever gets on screen, and whichever of the two runs out
+  // of room first is the one that sets the size.
   let widest = 0;
-  for (let i = 0; i < cloud.count; i += 1) {
-    widest = Math.max(widest, Math.hypot(cloud.x[i], cloud.z[i]), Math.abs(cloud.y[i]));
+  let tallest = 0;
+  const tiltCos = Math.cos(TILT);
+  const tiltSin = Math.sin(TILT);
+  for (let turn = 0; turn < TURNS; turn += 1) {
+    const angle = (turn / TURNS) * Math.PI * 2;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    for (let i = 0; i < cloud.count; i += 1) {
+      const rx = cloud.x[i] * cos + cloud.z[i] * sin;
+      const rz = -cloud.x[i] * sin + cloud.z[i] * cos;
+      widest = Math.max(widest, Math.abs(rx));
+      tallest = Math.max(tallest, Math.abs(cloud.y[i] * tiltCos - rz * tiltSin));
+    }
   }
-  const scale = widest > 0 ? 1 / widest : 1;
+  const scale = Math.min(widest > 0 ? 1 / widest : 1, tallest > 0 ? HEADROOM / tallest : 1);
   for (let i = 0; i < cloud.count; i += 1) {
     cloud.x[i] *= scale;
     cloud.y[i] *= scale;
