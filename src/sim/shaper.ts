@@ -510,10 +510,10 @@ export function dealShaper(
       ? { kind: 'formula', formula: dealFormula(rng) }
       : shape !== null
         ? { kind: 'named', shape }
-        : // Left to the seed, it deals a formula two times in three: the ten
+        : // Left to the seed, it deals a formula three times in four: the ten
           // named shapes are the ones worth having by name, and everything else
           // there could be is in the formulae.
-          rng.next() < 0.34
+          rng.next() < 0.25
           ? { kind: 'named', shape: rng.pick(SHAPE_NAMES) }
           : { kind: 'formula', formula: dealFormula(rng) };
   return {
