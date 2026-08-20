@@ -276,6 +276,11 @@ export interface Tuning {
    * speed once they have hit each other.
    */
   rampTo?: number;
+  /**
+   * How the wind-up is spread over the round. One is a straight line; above one
+   * the speed climbs slowly at first and ever faster towards the end.
+   */
+  rampCurve?: number;
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -508,13 +513,16 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
   /**
    * The wind-up, as a multiple of the speed the round was dealt.
    *
-   * Straight in time rather than in anything cleverer: the last second is meant
-   * to look like the fastest one, and a curve that spends its acceleration early
-   * reads as a fast video rather than an accelerating one.
+   * Bent rather than straight: the curve spends almost nothing early and most of
+   * itself at the end, so the fight is not merely faster later, it is gaining
+   * speed faster later. A straight line reads as a video that was set running
+   * quickly; this reads as one that is winding up.
    */
   const rampTo = tuning.rampTo ?? 1;
+  const bend = tuning.rampCurve ?? 1;
   const rampAt = (t: number) =>
-    1 + (rampTo - 1) * Math.min(1, Math.max(0, (t - hold) / (runFor - hold)));
+    1 +
+    (rampTo - 1) * Math.min(1, Math.max(0, (t - hold) / (runFor - hold))) ** bend;
 
   // Where every anchor sits, worked out once. These never move, and the contact
   // test below runs for every anchor against every ball on every substep — at

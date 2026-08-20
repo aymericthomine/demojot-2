@@ -41,15 +41,22 @@ count, no size, no dressing and no white ground — the panel is the seed, Roll 
 Generate. The opening is held for half a second rather than a whole one, because
 there is nothing new to read in a picture the viewer has already seen.
 
-**And it winds up.** Every ball is sped up by the same small factor each substep,
-so by the last frame the fight is running at three times the speed it opened at.
-Straight in time rather than anything cleverer: the last second is meant to look
-like the fastest one, and a curve that spends its acceleration early reads as a
-fast video rather than an accelerating one. Relative speeds are left alone, which
-matters because the balls do not all travel at the same speed once they have hit
-each other. Measured over eight seeds: mean speed of the living balls 0.83 arena
-radii a second two seconds in against 2.06 near the end, and bounces from one and
-a half a second to four. The length is still exact and the winner still there.
+**And it winds up, harder and harder.** Every ball is sped up by the same small
+factor each substep, and the factor itself grows: the wind-up is squared in
+time, so the video is not merely faster later, it is gaining speed faster later.
+By the last frame the fight runs at six times the speed it opened at. Relative
+speeds are left alone, which matters because the balls do not all travel at the
+same speed once they have hit each other.
+
+Measured over eight seeds, the mean speed of the living balls at a sixth, four
+tenths, seven tenths and the end of the video: 0.86, 1.47, 2.93 and 5.08 arena
+radii a second, with bounces going from 2.6 a second over the first quarter to
+4.1 over the last. The straight line to three times that this used to be gave
+0.98 / 1.30 / 1.77 / 2.90 and bounced *less* at the end than at the start —
+because a fight thins out as balls go, and a straight line does not gain enough
+to cover that. All eight seeds still end on a knockout, on their exact length,
+no ball ever leaves the ring, and the furthest one moves between two frames is
+two ball widths, so nothing is skipped over.
 
 ## Run it
 

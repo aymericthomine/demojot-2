@@ -78,13 +78,20 @@ const BEAST = {
   /** Half of what the other fight holds its opening for. */
   hold: 0.5,
   /**
-   * And it winds up: three times the speed it opened at by the last frame.
+   * And it winds up: six times the speed it opened at by the last frame, on a
+   * curve that is itself climbing — squared in time, so the video is not merely
+   * faster later, it is gaining speed faster later.
    *
-   * Measured over eight seeds — the mean speed of the living balls goes from
-   * 0.83 arena radii a second two seconds in to 2.06 near the end, and bounces
-   * from one and a half a second to four.
+   * Measured over eight seeds, mean speed of the living balls at a sixth, four
+   * tenths, seven tenths and the end of the video: 0.86, 1.47, 2.93 and 5.08
+   * arena radii a second, with bounces going from 2.6 a second over the first
+   * quarter to 4.1 over the last. A straight line to three times, which is what
+   * this was, gave 0.98 / 1.30 / 1.77 / 2.90 and bounced *less* at the end than
+   * at the start, because a fight thins out as balls go. All eight seeds still
+   * end on a knockout, on their exact length.
    */
-  rampTo: 3,
+  rampTo: 6,
+  rampCurve: 2,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -339,7 +346,11 @@ export default function HomePage() {
                 // Half the opening hold in the mode whose opening never changes:
                 // there is nothing new to read in a picture already seen.
                 ...(job.steady
-                  ? { hold: BEAST.hold, rampTo: BEAST.rampTo }
+                  ? {
+                      hold: BEAST.hold,
+                      rampTo: BEAST.rampTo,
+                      rampCurve: BEAST.rampCurve,
+                    }
                   : {}),
               },
             );
