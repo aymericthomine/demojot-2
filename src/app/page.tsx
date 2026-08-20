@@ -25,12 +25,24 @@ import {
   type EncodeStage,
   type Reel,
 } from "../export/encodeVideo";
-import { battleReel, dropReel } from "../export/reels";
+import { battleReel, dropReel, shaperReel } from "../export/reels";
 import { ELEMENTS, generateDrop } from "../sim/drop";
 import { FRUITS } from "../sim/fruit";
 import { dealPack } from "../sim/packs";
 import { DEFAULT_KIT, KITS } from "../audio/kit";
 import { SHAPE_LABEL, SHAPE_SETS, type ShapeSet } from "../render/shapes";
+import {
+  DENSITIES,
+  NORMAL_DENSITY,
+  PALETTES,
+  SHAPE_LABEL as CLOUD_LABEL,
+  SHAPE_NAMES,
+  dealShaper,
+  type Density,
+  type Palette,
+  type ShapeName,
+} from "../sim/shaper";
+import { ShaperPreview } from "./ShaperPreview";
 import {
   BALL_COUNT,
   FEWEST_BALLS,
@@ -60,7 +72,7 @@ import type { FruitFace } from "../render/drawDrop";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "drop" | "beast";
+type Mode = "battle" | "drop" | "beast" | "shaper";
 
 /**
  * What the fixed mode is fixed to.
@@ -116,6 +128,14 @@ type Job =
       kit: number;
       shape: ShapeSet | null;
       faces: readonly FruitFace[];
+    }
+  | {
+      mode: "shaper";
+      seed: number;
+      invert: boolean;
+      shape: ShapeName | null;
+      palette: Palette | null;
+      count: Density;
     };
 
 type Stage =
@@ -180,6 +200,12 @@ export default function HomePage() {
   const useBalls = steady ? BEAST.balls : balls;
   const useSize = steady ? BEAST.size : size;
   const useSpeed = steady ? BEAST.speed : speed;
+
+  // Shaper. Null means "let the seed choose", which is what the mode is for:
+  // roll a number and see what comes out.
+  const [cloudShape, setCloudShape] = useState<ShapeName | null>(null);
+  const [palette, setPalette] = useState<Palette | null>(null);
+  const [density, setDensity] = useState<Density>(NORMAL_DENSITY);
 
   const [kit, setKit] = useState(DEFAULT_KIT);
   const [shape, setShape] = useState<ShapeSet | null>(null);
@@ -334,7 +360,7 @@ export default function HomePage() {
           let reel: Reel;
           let audio: AudioBuffer | null;
           let summary: string;
-          if (job.mode !== "drop") {
+          if (job.mode !== "drop" && job.mode !== "shaper") {
             const round = generateRound(
               job.seed,
               job.threads,
@@ -363,6 +389,20 @@ export default function HomePage() {
               speed: job.speed,
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
+          } else if (job.mode === "shaper") {
+            // Nothing to play out: the cloud is built once and every frame is
+            // the same points at a different angle. No soundtrack either — the
+            // loop is meant to be watched, and scored by whoever posts it.
+            const setup = dealShaper(
+              job.seed,
+              job.shape,
+              job.palette,
+              job.count,
+            );
+            reel = shaperReel(setup, { invert: job.invert });
+            total = reel.durationInFrames;
+            audio = null;
+            summary = `${CLOUD_LABEL[setup.shape]} · ${setup.palette.name} · ${reel.duration}s loop`;
           } else {
             // No length is asked for: the drop ends when the eighth element is
             // made, which is never inside a minute.
@@ -435,26 +475,30 @@ export default function HomePage() {
             ? "Ball Battle"
             : mode === "drop"
               ? "Fruit Drop"
-              : "MrBeast"}
+              : mode === "shaper"
+                ? "Shaper"
+                : "MrBeast"}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
             ? "Balls in a ring fighting over threads pinned to the wall. The anchors never move; run through somebody else's thread and it comes away with you, turning your colour. Full hands break rope instead of taking it, and a ball holding none is out."
             : mode === "drop"
               ? "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."
-              : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
+              : mode === "shaper"
+                ? "A shape made of points, turning once every six seconds, and you cannot tell which way. The projection is flat and nothing is hidden, so the picture fits the shape going left and its mirror image going right equally well — your eye picks one, then swaps. The loop joins end to end."
+                : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
-        <div className="mb-3 flex gap-2">
-          {(["battle", "drop", "beast"] as const).map((choice) => (
+        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {(["battle", "drop", "beast", "shaper"] as const).map((choice) => (
             <button
               key={choice}
               type="button"
               onClick={() => setMode(choice)}
               disabled={busy}
-              className={`flex-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40 ${
+              className={`rounded-xl border px-2 py-2 text-sm disabled:opacity-40 ${
                 mode === choice
                   ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
                   : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
@@ -464,7 +508,9 @@ export default function HomePage() {
                 ? "Ball battle"
                 : choice === "drop"
                   ? "Fruit drop"
-                  : "MrBeast"}
+                  : choice === "beast"
+                    ? "MrBeast"
+                    : "Shaper"}
             </button>
           ))}
         </div>
@@ -492,6 +538,109 @@ export default function HomePage() {
             Roll
           </button>
         </div>
+
+        {mode === "shaper" && (
+          <div className="mt-3 flex flex-col gap-3">
+            <ShaperPreview
+              seed={seed}
+              shape={cloudShape}
+              palette={palette}
+              count={density}
+              invert={invert}
+              paused={busy}
+            />
+
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setCloudShape(null)}
+                disabled={busy}
+                className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                  cloudShape === null
+                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                }`}
+              >
+                seed picks
+              </button>
+              {SHAPE_NAMES.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  onClick={() => setCloudShape(name)}
+                  disabled={busy}
+                  className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                    cloudShape === name
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {CLOUD_LABEL[name]}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="px-1 text-sm text-[#8b90a0]">Palette</span>
+              <button
+                type="button"
+                onClick={() => setPalette(null)}
+                disabled={busy}
+                className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                  palette === null
+                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                }`}
+              >
+                seed picks
+              </button>
+              {PALETTES.map((choice) => (
+                <button
+                  key={choice.name}
+                  type="button"
+                  onClick={() => setPalette(choice)}
+                  disabled={busy}
+                  title={choice.name}
+                  className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                    palette?.name === choice.name
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  <span className="flex overflow-hidden rounded-full">
+                    {choice.stops.map((colour) => (
+                      <span
+                        key={colour}
+                        className="block size-2.5"
+                        style={{ background: colour }}
+                      />
+                    ))}
+                  </span>
+                  {choice.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-1 text-sm text-[#8b90a0]">Points</span>
+              {DENSITIES.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setDensity(choice)}
+                  disabled={busy}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm disabled:opacity-40 ${
+                    density === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {(choice / 1000).toFixed(0)}k
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* MrBeast has nothing to set — not the dials, not the dressing. */}
         {mode === "battle" && (
@@ -825,19 +974,28 @@ export default function HomePage() {
             run(
               mode === "drop"
                 ? { mode, seed, invert, kit, shape, faces: fruits }
-                : {
-                    mode,
-                    seed,
-                    // Both of these belong to the mode that has the controls
-                    // for them. Switching modes must not carry them across.
-                    invert: steady ? false : invert,
-                    threads: useThreads,
-                    balls: useBalls,
-                    size: useSize,
-                    steady,
-                    speed: useSpeed,
-                    faces: steady ? [] : faces,
-                  },
+                : mode === "shaper"
+                  ? {
+                      mode,
+                      seed,
+                      invert,
+                      shape: cloudShape,
+                      palette,
+                      count: density,
+                    }
+                  : {
+                      mode,
+                      seed,
+                      // Both of these belong to the mode that has the controls
+                      // for them. Switching modes must not carry them across.
+                      invert: steady ? false : invert,
+                      threads: useThreads,
+                      balls: useBalls,
+                      size: useSize,
+                      steady,
+                      speed: useSpeed,
+                      faces: steady ? [] : faces,
+                    },
             )
           }
           disabled={busy}
@@ -846,7 +1004,9 @@ export default function HomePage() {
           {stage.kind === "fighting"
             ? mode === "drop"
               ? "Dropping…"
-              : "Fighting…"
+              : mode === "shaper"
+                ? "Building the cloud…"
+                : "Fighting…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}
@@ -920,10 +1080,15 @@ export default function HomePage() {
         )}
 
         <p className="mt-3 text-[11px] leading-relaxed text-[#8b90a0]">
-          {WIDTH}×{HEIGHT} · {FPS} fps · sound included. Encoded here in the
-          page — nothing is uploaded anywhere — and saved as soon as it is
-          ready. Keep this tab in front while it runs; a phone will take several
-          minutes and may run out of memory before it finishes.
+          {WIDTH}×{HEIGHT} · {FPS} fps ·{" "}
+          {mode === "shaper"
+            ? "no sound, six seconds, made to loop"
+            : "sound included"}
+          . Encoded here in the page — nothing is uploaded anywhere — and saved
+          as soon as it is ready. Keep this tab in front while it runs;{" "}
+          {mode === "shaper"
+            ? "six seconds is quick even on a phone."
+            : "a phone will take several minutes and may run out of memory before it finishes."}
         </p>
       </div>
     </main>

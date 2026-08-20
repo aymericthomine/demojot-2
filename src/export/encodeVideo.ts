@@ -30,6 +30,21 @@ export interface Reel {
   /** The file name, without the dot or the extension. */
   name: string;
   paint(ctx: CanvasRenderingContext2D, index: number): void;
+  /**
+   * What this mode wants spent on the picture, before the codec's discount.
+   *
+   * Left out, the frame size decides. A mode whose every frame is thousands of
+   * hard little dots is the worst case a codec has, and it is worth saying so.
+   */
+  bitrate?: number;
+  /**
+   * This mode has no soundtrack and is not missing one.
+   *
+   * Without it a silent mode reports itself as having failed to build a
+   * soundtrack, which is a warning about something that was never going to
+   * happen.
+   */
+  mute?: boolean;
 }
 
 export interface EncodeResult {
@@ -76,9 +91,10 @@ export class EncodeCancelled extends Error {
  * quality curve softens the threads into mush — so the bitrate is set from the
  * pixel count instead, with the newer codecs credited for being more efficient.
  */
-const bitrateFor = (codec: string): number => {
+const bitrateFor = (codec: string, want?: number): number => {
   const efficiency = codec === 'av1' ? 0.6 : codec === 'vp9' ? 0.7 : 1;
-  return Math.round(Math.min(20_000_000, WIDTH * HEIGHT * FPS * 0.075 * efficiency));
+  const asked = want ?? WIDTH * HEIGHT * FPS * 0.075;
+  return Math.round(Math.min(20_000_000, asked * efficiency));
 };
 
 const breathe = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
@@ -238,7 +254,7 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
 
   const video = new CanvasSource(canvas, {
     codec,
-    quality: new Quality({ bitrate: bitrateFor(codec) }),
+    quality: new Quality({ bitrate: bitrateFor(codec, reel.bitrate) }),
     keyFrameInterval: 2,
   });
   output.addVideoTrack(video, { frameRate: FPS });
@@ -247,8 +263,9 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   // allowed to have failed. A video with no sound is a poor result; a page that
   // hangs for ever is not a result at all, so a soundtrack that did not arrive
   // is reported rather than fatal.
-  const track = audio;
-  let silent: string | undefined = track ? undefined : 'the soundtrack could not be built';
+  const track = reel.mute ? null : audio;
+  let silent: string | undefined =
+    track || reel.mute ? undefined : 'the soundtrack could not be built';
 
   let audioSource: InstanceType<typeof AudioBufferSource> | null = null;
   if (track) {

@@ -10,6 +10,8 @@
 
 import type { Reel } from './encodeVideo';
 import { drawDropFrame, type FruitFace } from '../render/drawDrop';
+import { drawShapeFrame } from '../render/drawShape';
+import { buildCloud, rampFor, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { DropRound } from '../sim/drop';
@@ -89,6 +91,40 @@ export function dropReel(round: DropRound, dress: DropDress = {}): Reel {
         shape: dress.shape,
       });
       release(round.frames, index);
+    },
+  };
+}
+
+/**
+ * A loop of a turning cloud.
+ *
+ * Nothing is played out in advance and nothing is held: the shape is built once
+ * and every frame is the same points at a different angle, so a six-second loop
+ * costs one cloud rather than three hundred and sixty snapshots.
+ */
+export function shaperReel(setup: ShaperSetup, dress: Dress = {}): Reel {
+  const cloud = buildCloud(setup);
+  const ramp = rampFor(setup.palette);
+  const durationInFrames = Math.round(LOOP_SECONDS * FPS);
+  return {
+    durationInFrames,
+    duration: LOOP_SECONDS,
+    name: `shaper-${setup.seed}-${setup.shape}-${setup.palette.name}${dress.invert ? '-white' : ''}`,
+    // Thousands of hard-edged dots on flat black is the worst thing a codec is
+    // ever handed: at the bitrate the frame size asks for they smear into grey
+    // porridge and the shape stops reading as points at all.
+    bitrate: 20_000_000,
+    mute: true,
+    paint(ctx, index) {
+      drawShapeFrame(ctx, cloud, {
+        width: WIDTH,
+        height: HEIGHT,
+        ramp,
+        // The last frame is the one before the first comes round again, which is
+        // what makes the loop join without a stutter.
+        turn: index / durationInFrames,
+        invert: dress.invert,
+      });
     },
   };
 }

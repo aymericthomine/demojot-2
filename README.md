@@ -1,7 +1,7 @@
 # Ball Battle
 
-Two generators for vertical 9:16 videos, in one page. They share the seed, the
-clock, the sound and the encoder, and nothing else.
+Three generators for vertical 9:16 videos, in one page. They share the seed, the
+clock and the encoder, and nothing else.
 
 **Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
 wall, taking them off each other until one ball is left holding rope.
@@ -10,7 +10,10 @@ wall, taking them off each other until one ball is left holding rope.
 two of the same kind that touch become one of the next kind up. Eight kinds, and
 the video ends when the eighth is made.
 
-Both are computed frame by frame in the browser: no footage, no rendering
+**Shaper** — a shape made of points turns once every six seconds, and you cannot
+tell which way. Silent, and made to loop.
+
+All of them are computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
 
 Every video **opens on the same figure** — seven wedges dividing the rim edge to
@@ -405,6 +408,58 @@ rate the chute feeds, which is what the choice actually sounds like — one tick
 isolation tells you very little — and picking one plays it, since a row of five
 words is not something anybody can choose between by reading.
 
+## Shaper
+
+A shape made of points, turning once every six seconds. The whole mode exists for
+one effect: **you cannot tell which way it is going round**, and after a few
+seconds of watching it appears to change direction, because your eye gave up on
+one reading and took the other.
+
+That is not painted in. It is what is left when every cue that would settle the
+question is taken out, and each of the three has to go:
+
+- **The projection is orthographic.** Depth is dropped rather than divided by, so
+  the near half of the shape is drawn exactly the same size as the far half.
+  Perspective alone would give the answer away in one frame.
+- **A point is the same size and the same colour at any depth.** No fog, no
+  fading, no shading. A dot that dimmed as it went round the back would be an
+  arrow pointing at the direction of travel.
+- **Nothing is hidden.** There are no faces to occlude anything — which is the
+  reason a cloud of points is the right material for this and a solid is not.
+
+What is left fits two three-dimensional readings equally well: the shape turning
+one way, or its mirror image turning the other. There is no fact of the matter in
+the picture, and the eye picks a side, holds it, and drops it.
+
+**Ten shapes, from formulae rather than models.** Hex prism, pyramid, cube,
+Möbius strip, torus, horn torus, sphere, trefoil knot, helix and cone. The solids
+spend two fifths of their points on their edges, because a polyhedron scattered
+evenly is a fog in the shape of a box and the edges are where the shape is.
+Points are spread by area rather than by parameter — a triangle sampled the naive
+way piles half its points along one edge, and a sphere sampled by its polar angle
+grows a bright spot at each pole.
+
+**Colour comes from the shape, never from depth.** Each point carries where it
+sits on the shape's own turning parameter — the angle round the axis, or the
+distance along the strip — and that indexes a palette that comes back to where it
+started. A ramp with two different ends would paint a seam down one side of the
+object, and a seam is a mark that says which way it is turning. Five palettes;
+the seed picks one unless you do.
+
+**The loop joins exactly.** Six seconds at sixty frames is three hundred and
+sixty of them, and the turn is the frame number over that, so the frame after the
+last is the first. Nothing else in the picture changes with time, which is what
+makes that exactly true rather than nearly true.
+
+**Twenty megabits, asked for by the mode.** Thousands of hard-edged dots on flat
+black is the worst thing a codec is ever handed; at the bitrate the frame size
+asks for they smear into grey porridge and the shape stops reading as points.
+This is the one mode with a preview, too, and for the same kind of reason: what
+is being chosen is an illusion, and nobody can judge one from a still.
+
+Dense prism, the heaviest setting there is — twenty-eight thousand points, three
+hundred and sixty frames — takes twenty-eight seconds from button to file.
+
 ## Measured against the reference, not guessed
 
 Every number that decides how it *feels* was taken off the reference videos frame
@@ -473,6 +528,8 @@ Nothing is borrowed, so nothing can get a video muted or demonetised.
 | `src/render/drawFrame.ts` | One frame from one state, on any canvas. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |
+| `src/sim/shaper.ts` | The point clouds, the palettes, and the rules of the illusion. |
+| `src/render/drawShape.ts` | One turn of a cloud, orthographic and unshaded. |
 | `src/app/page.tsx` | One button: fight, encode, save. |
 
 The simulation runs once, up front, and keeps a snapshot per frame; the encoder
