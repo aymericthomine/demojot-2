@@ -21,6 +21,15 @@ export interface ShapeLook {
   dot?: number;
   /** White ground, for a page that wants one. Points keep their colours. */
   invert?: boolean;
+  /**
+   * How far the camera is tilted down. The mode's own tilt unless it is given.
+   *
+   * Nought is looking at the shape dead level, which is what a flat thing wants
+   * if it is meant to be seen in its own proportions: a tilt foreshortens height
+   * and nothing else, so a wide flat mark comes out three per cent wider than it
+   * is drawn.
+   */
+  tilt?: number;
 }
 
 /**
@@ -45,8 +54,9 @@ export function drawShapeFrame(
   const angle = look.turn * Math.PI * 2;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
-  const tiltCos = Math.cos(TILT);
-  const tiltSin = Math.sin(TILT);
+  const tilt = look.tilt ?? TILT;
+  const tiltCos = Math.cos(tilt);
+  const tiltSin = Math.sin(tilt);
 
   const scale = (width * FIT) / 2;
   const cx = width / 2;
