@@ -285,6 +285,8 @@ export interface Tuning {
    * thread, so the counts swing rather than collapse and a round keeps its cast.
    */
   takeEvery?: number;
+  /** The length window for this mode, in seconds. Defaults to the video's own. */
+  span?: readonly [number, number];
 }
 
 export const DEFAULT_TUNING: Tuning = {
@@ -763,9 +765,16 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
 export const SHORTEST = 60;
 export const LONGEST = 80;
 
-/** The length this seed asks for. From the seed alone, never from the deal. */
-export const lengthFor = (seed: number): number => {
-  const seconds = createRng(seed ^ 0x7feb352d).range(SHORTEST, LONGEST);
+/**
+ * The length this seed asks for. From the seed alone, never from the deal.
+ *
+ * `span` is for a mode that wants a different window — MrBeast runs near two
+ * minutes because most of what there is to watch is the duel at the end of it,
+ * and a duel needs room.
+ */
+export const lengthFor = (seed: number, span?: readonly [number, number]): number => {
+  const [shortest, longest] = span ?? [SHORTEST, LONGEST];
+  const seconds = createRng(seed ^ 0x7feb352d).range(shortest, longest);
   // Whole frames, so the video is an exact number of them.
   return Math.round(seconds * FPS) / FPS;
 };
@@ -825,7 +834,7 @@ export function generateRound(
   tuning: Tuning = DEFAULT_TUNING,
 ): Round {
   const deal = (attempt: number) => setupFor(seed, attempt, threads, balls, size, steady);
-  const length = lengthFor(seed);
+  const length = lengthFor(seed, tuning.span);
   const settleBy = length;
   const settleFrom = Math.max(3, length - lapFor(length));
 

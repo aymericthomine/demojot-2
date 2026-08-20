@@ -34,8 +34,8 @@ threads each, and the one opening that never turns or recolours, so every video
 starts on the same picture. That is the opposite of what the opening does in Ball
 Battle, where it is turned by a whole number of anchors and recoloured precisely
 so that two videos do not share a first frame — here sharing it is the point.
-Twelve seeds: one opening between them, lengths from sixty-three to seventy-nine
-seconds, every one with a winner. The seed still decides which way the balls are
+Twelve seeds: one opening between them, lengths from a hundred and five to a
+hundred and fifteen seconds, every one with a winner. The seed still decides which way the balls are
 fired and how long the video runs. Nothing else is settable: no thread count, no ball
 count, no size, no dressing and no white ground — the panel is the seed, Roll and
 Generate. The opening is held for half a second rather than a whole one, because
@@ -51,17 +51,34 @@ each other. Measured over eight seeds: mean speed of the living balls 0.83 arena
 radii a second two seconds in against 2.06 near the end, and bounces from one and
 a half a second to four. The length is still exact and the winner still there.
 
-**And it keeps its cast.** Fifteen threads apiece, not the five the mode was
-first given, and a ball may only take one thread every 0.07 seconds. The two go
-together. A ball crossing another's fan used to take every thread it touched in
-the one instant it was inside them, so a single pass stripped its owner bare:
-five balls were down to two inside fifteen seconds and the rest of the video was
-a duel. The cooldown makes that same crossing cost one thread, and the wider fan
-gives it something to lose. Twelve seeds, balls still alive at five, fifteen,
-thirty and forty-five seconds: five threads and no cooldown gave 3.9 / 2.5 / 2.1
-/ 2.0; fifteen with the cooldown gives 6.2 / 4.1 / 2.6 / 2.3, against the
-reference video's own four at fifteen seconds and three at thirty. Eleven of the
-twelve still end on a knockout, and none of them missed the length.
+**And the duel is the video.** The reference this mode is cut against runs one
+minute fifty-one: five balls, down to three inside ten seconds and to two inside
+twenty, and then eighty seconds of those two trading rope, the lead changing
+hands over and over — the ball that is down to one thread at thirty seconds is
+the one in front at a hundred. Decoded frame by frame, that is the shape of it,
+and the shape is nearly all endgame.
+
+So this mode is dealt a hundred and five to a hundred and fifteen seconds rather
+than the sixty to eighty the other fight gets. It is the length that buys the
+duel: six seeds at the long window are down to two balls after twenty-nine
+seconds and spend the remaining eighty in the duel, with the lead changing
+thirty-three times and the ball behind falling to six per cent of the rope in
+play and still coming back. The same fight in a sixty-to-eighty second video gets
+thirty-one seconds of duel and eleven changes of lead. Every seed still ends on a
+knockout, on its exact length, and the search still finds it in under two and a
+half seconds.
+
+The other half of that is the take cooldown: fifteen threads a ball, and a ball
+may only take one thread every 0.07 seconds. Without it a ball crossing a fan
+takes every thread it touches in the one instant it is inside them, so a single
+pass strips its owner bare — five balls were two inside fifteen seconds, and a
+collapse that fast leaves nothing to trade for the rest of the video.
+
+Sparing the rope was tried and dropped: letting a full ball leave a thread where
+it is rather than break it makes the fight conserving, and a conserving fight has
+no winner. At half the video spared, six seeds gave one duel and no knockout at
+all. Rope has to disappear for anybody to run out of it; the length is what gives
+the disappearing time to be watched.
 
 ## Run it
 

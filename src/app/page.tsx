@@ -105,6 +105,18 @@ const BEAST = {
    * is what keeps four balls on screen at fifteen seconds instead of two.
    */
   takeEvery: 0.07,
+  /**
+   * And it runs near two minutes, where the other fight runs about one.
+   *
+   * What there is to watch in this mode is the duel at the end, and a duel needs
+   * room. Measured over six seeds at this length: the cast is down to two after
+   * twenty-nine seconds and they trade rope for the eighty that are left, the
+   * lead changing hands thirty-three times, with the ball behind down to six per
+   * cent of the rope in play at its worst and still coming back. At sixty to
+   * eighty seconds the same fight gets thirty-one seconds of duel and eleven
+   * changes of lead. Every seed still ends on a knockout, on its exact length.
+   */
+  span: [105, 115],
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -364,6 +376,7 @@ export default function HomePage() {
                       hold: BEAST.hold,
                       rampTo: BEAST.rampTo,
                       takeEvery: BEAST.takeEvery,
+                      span: BEAST.span,
                     }
                   : {}),
               },
