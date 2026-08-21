@@ -39,6 +39,34 @@ import { BALL_RADIUS, COLORS, FPS, SPEED, THREAD_WIDTH } from './style';
 /** Physics substeps per rendered frame. Enough that a bounce lands cleanly. */
 const SUBSTEPS = 4;
 
+/**
+ * How far a ball may travel between two substeps, in arena units.
+ *
+ * A thread is caught by testing where the ball *is*, not where it has been, so a
+ * ball that moves further than its own reach in one substep can step clean over
+ * a thread without taking it — and the same for the wall. Four substeps is
+ * plenty at the speed the fight is dealt at; it is not plenty at sixteen times
+ * that, so the count is worked out from the top speed instead of fixed.
+ *
+ * Set below the reach a ball has for a thread, which is its radius plus half the
+ * thread's width.
+ */
+const STRIDE = 0.045;
+
+/**
+ * Balls do not all travel at the mean: two of them trading the part of their
+ * speed that lies along the line between them leaves one faster than it was.
+ * Measured over six seeds, the quickest ball runs about 1.45 times the nominal
+ * top speed, so the substep count is worked out against that rather than
+ * against the number the round was dealt.
+ */
+const FASTEST = 1.5;
+
+const substepsFor = (tuning: Tuning): number => {
+  const peak = tuning.speed * (tuning.rampTo ?? 1) * FASTEST;
+  return Math.max(SUBSTEPS, Math.min(16, Math.ceil(peak / (FPS * STRIDE))));
+};
+
 /** The fixed cast. Seven balls, these colours, in this order. */
 export const BALL_COUNT = 7;
 
@@ -497,7 +525,8 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
   const frames: Frame[] = [];
   const events: SimEvent[] = [];
 
-  const dt = 1 / (FPS * SUBSTEPS);
+  const substeps = substepsFor(tuning);
+  const dt = 1 / (FPS * substeps);
   const radius = radiusFor(setup.size);
   const wall = 1 - radius;
   const touching = (radius * 2) ** 2;
@@ -593,7 +622,7 @@ export function play(setup: RoundSetup, tuning: Tuning, record = true, runFor = 
       break;
     }
 
-    for (let step = 0; step < SUBSTEPS; step += 1) {
+    for (let step = 0; step < substeps; step += 1) {
       const before = rampAt(time);
       time += dt;
       // Held on the opening picture. Nothing moves and nothing changes hands.

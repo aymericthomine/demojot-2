@@ -91,20 +91,26 @@ const BEAST = {
   /** Half of what the other fight holds its opening for. */
   hold: 0.5,
   /**
-   * And it winds up: six times the speed it opened at by the last frame, on a
-   * curve that is itself climbing — squared in time, so the video is not merely
-   * faster later, it is gaining speed faster later.
+   * And it winds up hard: sixteen times the speed it opened at by the last
+   * frame, on a curve that is itself climbing — cubed in time, so the video is
+   * not merely faster later, it is gaining speed faster later, and gaining it
+   * fastest at the very end.
    *
    * Measured over eight seeds, mean speed of the living balls at a sixth, four
-   * tenths, seven tenths and the end of the video: 0.86, 1.47, 2.93 and 5.08
-   * arena radii a second, with bounces going from 2.6 a second over the first
-   * quarter to 4.1 over the last. A straight line to three times, which is what
-   * this was, gave 0.98 / 1.30 / 1.77 / 2.90 and bounced *less* at the end than
-   * at the start, because a fight thins out as balls go. All eight seeds still
-   * end on a knockout, on their exact length.
+   * tenths, seven tenths, nine tenths and the end of the video: 0.86, 1.72,
+   * 5.59, 12.75 and 16.48 arena radii a second, with bounces going from 2.4 a
+   * second over the first quarter to 12.8 over the last, and rope changing
+   * hands 1341 times a round against 640 at the six-times wind-up this
+   * replaces. The opening still travels at the speed it always did.
+   *
+   * This is as hard as it can wind up honestly: the simulation now adds
+   * substeps to keep pace (see `substepsFor`), no ball ever leaves the ring,
+   * and the furthest one moves between two substeps is 0.047 against a reach of
+   * 0.072, so no thread and no wall is stepped over. All eight seeds still end
+   * on a knockout, on their exact length, searched in half a second.
    */
-  rampTo: 6,
-  rampCurve: 2,
+  rampTo: 16,
+  rampCurve: 3,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */

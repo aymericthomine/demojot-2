@@ -45,21 +45,34 @@ Generate. The opening is held for half a second rather than a whole one, because
 there is nothing new to read in a picture the viewer has already seen.
 
 **And it winds up, harder and harder.** Every ball is sped up by the same small
-factor each substep, and the factor itself grows: the wind-up is squared in
-time, so the video is not merely faster later, it is gaining speed faster later.
-By the last frame the fight runs at six times the speed it opened at. Relative
-speeds are left alone, which matters because the balls do not all travel at the
-same speed once they have hit each other.
+factor each substep, and the factor itself grows: the wind-up is cubed in time,
+so the video is not merely faster later, it is gaining speed faster later, and
+gaining it fastest at the very end. By the last frame the fight runs at sixteen
+times the speed it opened at. Relative speeds are left alone, which matters
+because the balls do not all travel at the same speed once they have hit each
+other.
 
 Measured over eight seeds, the mean speed of the living balls at a sixth, four
-tenths, seven tenths and the end of the video: 0.86, 1.47, 2.93 and 5.08 arena
-radii a second, with bounces going from 2.6 a second over the first quarter to
-4.1 over the last. The straight line to three times that this used to be gave
-0.98 / 1.30 / 1.77 / 2.90 and bounced *less* at the end than at the start —
+tenths, seven tenths, nine tenths and the end of the video: 0.86, 1.72, 5.59,
+12.75 and 16.48 arena radii a second, with bounces going from 2.4 a second over
+the first quarter to 12.8 over the last, and rope changing hands 1341 times a
+round against 640 before. The straight line to three times that this started as
+gave 0.98 / 1.30 / 1.77 / 2.90 and bounced *less* at the end than at the start —
 because a fight thins out as balls go, and a straight line does not gain enough
-to cover that. All eight seeds still end on a knockout, on their exact length,
-no ball ever leaves the ring, and the furthest one moves between two frames is
-two ball widths, so nothing is skipped over.
+to cover that.
+
+**The simulation adds substeps to keep up.** A thread is caught by testing where
+the ball *is*, not where it has been, so a ball that moves further than its own
+reach in one substep steps clean over a thread without taking it — and over the
+wall, too. Four substeps a frame is plenty at the speed a fight is dealt at and
+is not plenty at sixteen times that: at a fixed four, the quickest ball was
+moving 0.084 arena units a substep against a reach of 0.072, and balls were
+poking through the wall. The count is now worked out from the top speed the
+round will reach, against the fastest ball rather than the mean, which comes to
+eight substeps here. Re-measured: no ball ever leaves the ring, and the furthest
+one moves between two substeps is 0.047. All eight seeds still end on a
+knockout, on their exact length, and a video is still searched in half a
+second.
 
 ## Run it
 
