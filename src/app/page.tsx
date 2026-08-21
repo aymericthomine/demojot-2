@@ -91,26 +91,31 @@ const BEAST = {
   /** Half of what the other fight holds its opening for. */
   hold: 0.5,
   /**
-   * And it winds up hard: sixteen times the speed it opened at by the last
-   * frame, on a curve that is itself climbing — cubed in time, so the video is
-   * not merely faster later, it is gaining speed faster later, and gaining it
-   * fastest at the very end.
+   * And it winds up as hard as the picture will take: twenty-eight times the
+   * speed it opened at by the last frame, on a curve raised to three and a
+   * half, so it is not merely faster later, it is gaining speed faster later,
+   * and gaining it fastest at the very end.
    *
    * Measured over eight seeds, mean speed of the living balls at a sixth, four
-   * tenths, seven tenths, nine tenths and the end of the video: 0.86, 1.72,
-   * 5.59, 12.75 and 16.48 arena radii a second, with bounces going from 2.4 a
-   * second over the first quarter to 12.8 over the last, and rope changing
-   * hands 1341 times a round against 640 at the six-times wind-up this
-   * replaces. The opening still travels at the speed it always did.
+   * tenths, seven tenths, nine tenths and the end of the video: 0.87, 1.89,
+   * 8.02, 18.33 and 29.74 arena radii a second, with bounces going from 2.7 a
+   * second over the first quarter to 18.8 over the last, and rope changing
+   * hands 1720 times a round against 640 at the six-times wind-up this started
+   * as. The opening still travels at the speed it always did.
    *
-   * This is as hard as it can wind up honestly: the simulation now adds
-   * substeps to keep pace (see `substepsFor`), no ball ever leaves the ring,
-   * and the furthest one moves between two substeps is 0.047 against a reach of
-   * 0.072, so no thread and no wall is stepped over. All eight seeds still end
-   * on a knockout, on their exact length, searched in half a second.
+   * The simulation keeps pace by adding substeps (see `substepsFor`): fourteen
+   * of them here. No ball leaves the ring, and the furthest one moves between
+   * two substeps is 0.0495 against a reach of 0.072, so no thread and no wall
+   * is stepped over. All eight seeds end on a knockout, on their exact length,
+   * searched in a second and a half.
+   *
+   * What sets the ceiling is not the physics but the frame rate: at the end a
+   * ball crosses three and a half of its own widths between two frames, which
+   * is at the edge of reading as a ball rather than as a flicker. Winding up
+   * harder than this makes the last seconds less legible, not faster-looking.
    */
-  rampTo: 16,
-  rampCurve: 3,
+  rampTo: 28,
+  rampCurve: 3.5,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
