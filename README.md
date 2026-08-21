@@ -39,10 +39,16 @@ Battle, where it is turned by a whole number of anchors and recoloured precisely
 so that two videos do not share a first frame — here sharing it is the point.
 Twelve seeds: one opening between them, lengths from sixty-three to seventy-nine
 seconds, every one with a winner. The seed still decides which way the balls are
-fired and how long the video runs. Nothing else is settable: no thread count, no ball
-count, no size, no dressing and no white ground — the panel is the seed, Roll and
+fired and how long the video runs. Nothing else is settable: no thread count, no
+ball count, no size, no dressing and no ground — the panel is the seed, Roll and
 Generate. The opening is held for half a second rather than a whole one, because
 there is nothing new to read in a picture the viewer has already seen.
+
+**And it plays on white.** Ground white, ring black, every colour its
+complement — the same true negative the other fight offers as a checkbox, except
+that here it is not a choice. A mode with no dials has to carry the answer
+itself, so the ground belongs to the mode rather than to the page, and switching
+into MrBeast does not inherit whatever Ball Battle was set to.
 
 **And it winds up, harder and harder.** Every ball is sped up by the same small
 factor each substep, and the factor itself grows: the wind-up is raised to three

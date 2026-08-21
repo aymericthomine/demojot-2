@@ -116,6 +116,15 @@ const BEAST = {
    */
   rampTo: 28,
   rampCurve: 3.5,
+  /**
+   * And it plays on white: the ground white, every colour its complement.
+   *
+   * A true negative rather than a swap of the black and the white, so the ring
+   * turns black and the picture holds together as one image instead of a light
+   * background with a dark palette sitting on it. There is no checkbox for it
+   * here — this mode has no dials — so the mode carries the answer itself.
+   */
+  white: true,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -1012,9 +1021,12 @@ export default function HomePage() {
                   : {
                       mode,
                       seed,
-                      // Both of these belong to the mode that has the controls
-                      // for them. Switching modes must not carry them across.
-                      invert: steady ? false : invert,
+                      // The ground is the mode's own, not the page's: MrBeast
+                      // plays on white, and the checkbox that would say
+                      // otherwise is not shown in it. The rest belongs to the
+                      // mode that has the controls, and switching modes must
+                      // not carry it across.
+                      invert: steady ? BEAST.white : invert,
                       threads: useThreads,
                       balls: useBalls,
                       size: useSize,
