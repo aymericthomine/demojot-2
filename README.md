@@ -470,11 +470,20 @@ vary independently.
 
 | Part | What it is | What moves |
 | --- | --- | --- |
-| base | one of eight: supershape, body of revolution, loop, ribbon, mask, spiral, tower, creature | lobes and exponents, a Fourier silhouette, a closed Fourier curve, a face, a winding, a stack of frames, or a union of balls |
+| base | one of nine: supershape, body of revolution, loop, ribbon, mask, spiral, tower, creature, arrow | lobes and exponents, a Fourier silhouette, a closed Fourier curve, a face, a winding, a stack of frames, or a union of balls |
 | deformation | applied to whatever the base produced, and to every base alike | twist, taper, waist, flutes, ripples, lean — all continuous, mostly absent, one or two at a time |
 | style | scattered over the surface, drawn as a wireframe of rings and meridians, or both at once | how many rings, how many meridians |
 
-The four that are things rather than shapes:
+The five that are things rather than shapes:
+
+- **arrow** — a band round the axis that stops short of a whole turn and ends in
+  a head. The gap between the tail and the head is what says which way it points,
+  and the head is a step rather than a taper: a band that merely swells into a
+  horn is not an arrow. It is the one base tinted *across* the band rather than
+  along it, so one colour runs the top edge and another the bottom the whole way
+  round — a tint that ran along the ring would put a seam through the head.
+  Height is safe for the illusion: unlike depth, it does not change as the shape
+  turns.
 
 - **tower** — rings stacked up struts. Straight between the corners, not along
   the arc between them: sampling the arc gives a stack of circles however many

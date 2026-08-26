@@ -119,6 +119,21 @@ export type Base =
       /** A body with limbs, as a union of balls: the closest this gets to a beast. */
       kind: 'creature';
       body: readonly (readonly [number, number, number, number])[];
+    }
+  | {
+      /** A curved arrow: a band round the axis that ends in a head. */
+      kind: 'arrow';
+      /** How much of the circle the shaft covers, in turns. Under one, so the
+       *  tail and the head do not meet and the gap says which way it points. */
+      sweep: number;
+      /** Half the height of the band. */
+      band: number;
+      /** How much of the sweep the head takes. */
+      head: number;
+      /** How much taller the head is than the shaft where it begins. */
+      flare: number;
+      /** Nought stands the band up as a wall; one lays it flat as an annulus. */
+      lie: number;
     };
 
 /** Applied to whatever the base produced, and to every base alike. */
@@ -158,6 +173,7 @@ const BASE_WORD: Record<Base['kind'], string> = {
   spiral: 'spiral',
   tower: 'tower',
   creature: 'creature',
+  arrow: 'arrow',
 };
 
 /** Short enough for a file name, particular enough to tell two shapes apart. */
@@ -186,6 +202,9 @@ export function describeFormula(f: Formula): string {
     case 'creature':
       parts.push(`${f.base.body.length}balls`);
       break;
+    case 'arrow':
+      parts.push(`s${round(f.base.sweep, 2)}`, `h${round(f.base.head, 2)}`);
+      break;
   }
   if (f.deform.twist) parts.push(`t${round(f.deform.twist, 1)}`);
   if (f.deform.flutes) parts.push(`f${f.deform.flutes}`);
@@ -208,6 +227,7 @@ export function nameFormula(f: Formula): string {
   if (f.base.kind === 'spiral') bits.push(`${round(f.base.turns, 1)} turns`);
   if (f.base.kind === 'tower') bits.push(`${f.base.levels} levels`);
   if (f.base.kind === 'creature') bits.push(`${f.base.body.length} lobes`);
+  if (f.base.kind === 'arrow') bits.push(f.base.lie > 0.5 ? 'flat' : 'upright');
   return bits.length ? `${word}, ${bits.join(', ')}` : word;
 }
 
@@ -278,6 +298,7 @@ const reachOf = (base: Base): number => {
     case 'creature':
     case 'tube':
     case 'ribbon':
+    case 'arrow':
       return 1;
   }
 };
@@ -346,6 +367,27 @@ function surfaceOf(f: Formula): ((u: number, v: number) => Point) | null {
           ],
           f.deform,
           Math.max(0.3, base.rise),
+        );
+      };
+    case 'arrow':
+      return (u, v) => {
+        const theta = u * base.sweep * Math.PI * 2 - Math.PI * 0.9;
+        // The shaft runs at one height, then the head begins: it steps out to
+        // its full flare and tapers from there to a point. The step is what
+        // makes it an arrow rather than a horn.
+        const intoHead = (u - (1 - base.head)) / base.head;
+        const height =
+          intoHead <= 0 ? base.band : base.band * base.flare * Math.max(0, 1 - intoHead);
+        const across = (v - 0.5) * 2 * height;
+        // Stood up as a wall, or laid over into an annulus, or anywhere between.
+        return bend(
+          [
+            Math.cos(theta) * (1 + across * base.lie),
+            across * (1 - base.lie),
+            Math.sin(theta) * (1 + across * base.lie),
+          ],
+          f.deform,
+          1,
         );
       };
     case 'tube':
@@ -885,7 +927,19 @@ function dealBase(rng: Rng): Base {
       taper: rng.range(0, 0.8),
     };
   }
-  if (roll < 0.93) {
+  if (roll < 0.9) {
+    return {
+      kind: 'arrow',
+      // Never a whole turn: the gap between the tail and the head is what says
+      // which way round the thing points.
+      sweep: rng.range(0.76, 0.9),
+      band: rng.range(0.1, 0.2),
+      head: rng.range(0.12, 0.2),
+      flare: rng.range(2.2, 3.2),
+      lie: rng.pick([0, 0, 1]),
+    };
+  }
+  if (roll < 0.95) {
     return {
       kind: 'tower',
       levels: rng.int(3, 9),
@@ -1015,7 +1069,11 @@ export function buildFormula(f: Formula, rng: Rng, into: Sink, count: number): v
 
   const at = surfaceOf(f);
   if (!at) return;
-  const tintAt = (u: number) => u;
+  // An arrow is tinted across the band rather than along it: the reference runs
+  // one colour along the top edge and another along the bottom, the whole way
+  // round, and a tint that ran along the ring would put a seam across the head.
+  // Height is safe for the illusion — it does not change as the shape turns.
+  const tintAt = f.base.kind === 'arrow' ? (_u: number, v: number) => v * 0.5 : (u: number) => u;
   if (f.style === 'wire' || f.style === 'veil') {
     // The veil is the wireframe with a haze of surface behind it — enough to
     // show where the surface goes between the lines without filling it in.
