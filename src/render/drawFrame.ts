@@ -44,12 +44,24 @@ export interface Viewport {
    * fight was played at, or the balls would take rope they are not touching.
    */
   size?: number;
+  /**
+   * Lay a chequerboard behind everything instead of a flat ground.
+   *
+   * The two greys are a hair apart on purpose: the picture is thread-thin lines
+   * over the top of it, and a chequer with any real contrast in it competes with
+   * them and wins.
+   */
+  checker?: boolean;
 }
+
+/** Squares across the frame, and the two tones they alternate between. */
+const CHECKER_ACROSS = 11;
+const CHECKER_TONES = ['#ffffff', '#ececec'] as const;
 
 export function drawFrame(
   ctx: CanvasRenderingContext2D,
   frame: Frame,
-  { width, height, invert = false, faces, size = 1 }: Viewport,
+  { width, height, invert = false, faces, size = 1, checker = false }: Viewport,
 ): void {
   const radius = width * ARENA;
   const cx = width / 2;
@@ -60,6 +72,22 @@ export function drawFrame(
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = ink('#000000', invert);
   ctx.fillRect(0, 0, width, height);
+
+  if (checker) {
+    // Drawn straight rather than through a pattern: a canvas pattern would have
+    // to be built per frame or held across them, and this is one fill and a loop
+    // of rectangles that the encoder never sees change.
+    const cell = width / CHECKER_ACROSS;
+    ctx.fillStyle = CHECKER_TONES[0];
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = CHECKER_TONES[1];
+    const down = Math.ceil(height / cell);
+    for (let row = 0; row < down; row += 1) {
+      for (let col = row % 2; col < CHECKER_ACROSS; col += 2) {
+        ctx.fillRect(col * cell, row * cell, cell, cell);
+      }
+    }
+  }
 
   // The arena.
   ctx.strokeStyle = ink('#ffffff', invert);

@@ -23,6 +23,7 @@
  */
 
 import type { DropRound } from '../sim/drop';
+import type { MonthsRound } from '../sim/months';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
 import { DEFAULT_KIT, KITS } from './kit';
@@ -140,6 +141,40 @@ export function renderRoundAudio(round: Round): Promise<AudioBuffer> {
             t: event.t + offset,
             slot: i === 2 ? OCTAVE : TICK,
             gain: 0.85,
+          }),
+        );
+        break;
+    }
+  }
+  return renderHits(round.duration, list, sprite);
+}
+
+/**
+ * Hold the Centre's sound.
+ *
+ * The same tick as the fight for every bounce, off the wall or off each other,
+ * and the octave kept for the two things worth marking: somebody taking the
+ * middle, and the ring closing at the end. Taking the middle is the only event
+ * in that mode a viewer needs pointed out — the picture already shows a bounce,
+ * and it does not already show that the clock has started.
+ */
+export function renderMonthsAudio(round: MonthsRound): Promise<AudioBuffer> {
+  const list: Hit[] = [];
+  for (const event of round.events) {
+    switch (event.kind) {
+      case 'wall':
+      case 'clash':
+        list.push({ t: event.t, slot: TICK, gain: 0.7 });
+        break;
+      case 'take':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.8 });
+        break;
+      case 'win':
+        [0, 0.12, 0.24].forEach((offset, i) =>
+          list.push({
+            t: event.t - 0.3 + offset,
+            slot: i === 2 ? OCTAVE : TICK,
+            gain: 0.9,
           }),
         );
         break;

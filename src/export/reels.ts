@@ -10,11 +10,13 @@
 
 import type { Reel } from './encodeVideo';
 import { drawDropFrame, type FruitFace } from '../render/drawDrop';
+import { drawMonthsFrame } from '../render/drawMonths';
 import { drawShapeFrame } from '../render/drawShape';
 import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { DropRound } from '../sim/drop';
+import { MONTHS, type MonthsRound } from '../sim/months';
 import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
 
@@ -24,6 +26,8 @@ export interface Dress {
 }
 
 export interface BattleDress extends Dress {
+  /** A chequerboard behind the fight instead of a flat ground. */
+  checker?: boolean;
   faces?: readonly (BallFace | null | undefined)[];
   /**
    * How fast the balls were sent, for the file name only.
@@ -61,6 +65,7 @@ export function battleReel(round: Round, dress: BattleDress = {}): Reel {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
+        checker: dress.checker,
         faces: dress.faces,
         // From the round, never from the page: the fight was played with balls
         // this wide, so drawing them any other size would show rope being taken
@@ -127,6 +132,29 @@ export function shaperReel(setup: ShaperSetup, dress: Dress = {}): Reel {
         turn: index / durationInFrames,
         invert: dress.invert,
       });
+    },
+  };
+}
+
+/** Hold the Centre, painted from its own frames. */
+export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
+  return {
+    durationInFrames: round.durationInFrames,
+    duration: round.duration,
+    name: `mounth-${round.seed}-${MONTHS[round.winner].label.toLowerCase()}-${Math.round(
+      round.duration,
+    )}s${dress.invert ? '-white' : ''}`,
+    paint(ctx, index) {
+      drawMonthsFrame(ctx, round.frames[index], {
+        width: WIDTH,
+        height: HEIGHT,
+        invert: dress.invert,
+        // The title fades on a clock, so the painter has to know where in the
+        // video this frame is.
+        time: index / FPS,
+        target: round.target,
+      });
+      release(round.frames, index);
     },
   };
 }

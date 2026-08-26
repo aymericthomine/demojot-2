@@ -15,7 +15,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { previewKit, renderDropAudio, renderRoundAudio } from "../audio/render";
+import {
+  previewKit,
+  renderDropAudio,
+  renderMonthsAudio,
+  renderRoundAudio,
+} from "../audio/render";
 import {
   describeSupport,
   encodeVideo,
@@ -25,8 +30,9 @@ import {
   type EncodeStage,
   type Reel,
 } from "../export/encodeVideo";
-import { battleReel, dropReel, shaperReel } from "../export/reels";
+import { battleReel, dropReel, monthsReel, shaperReel } from "../export/reels";
 import { ELEMENTS, generateDrop } from "../sim/drop";
+import { MONTHS, generateMonths } from "../sim/months";
 import { FRUITS } from "../sim/fruit";
 import { dealPack } from "../sim/packs";
 import { DEFAULT_KIT, KITS } from "../audio/kit";
@@ -73,7 +79,7 @@ import type { FruitFace } from "../render/drawDrop";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "drop" | "beast" | "shaper";
+type Mode = "battle" | "drop" | "beast" | "shaper" | "mounth";
 
 /**
  * What the fixed mode is fixed to.
@@ -125,6 +131,13 @@ const BEAST = {
    * here — this mode has no dials — so the mode carries the answer itself.
    */
   white: true,
+  /**
+   * On a chequerboard, not a plain white.
+   *
+   * Two greys a hair apart: what is drawn over it is thread-thin, and a chequer
+   * with any contrast in it would win the picture off them.
+   */
+  checker: true,
 } as const;
 
 /** Everything a press of the button needs, so the two modes share one runner. */
@@ -140,6 +153,8 @@ type Job =
       steady: boolean;
       /** How fast the balls travel, as a multiple of the measured speed. */
       speed: BallSpeed;
+      /** A chequerboard ground. The fixed mode's own, like its white. */
+      checker: boolean;
       faces: readonly BallFace[];
     }
   | {
@@ -157,7 +172,8 @@ type Job =
       shape: Wanted;
       palette: Palette | null;
       count: Density;
-    };
+    }
+  | { mode: "mounth"; seed: number; invert: boolean };
 
 type Stage =
   | { kind: "idle" }
@@ -381,7 +397,11 @@ export default function HomePage() {
           let reel: Reel;
           let audio: AudioBuffer | null;
           let summary: string;
-          if (job.mode !== "drop" && job.mode !== "shaper") {
+          if (
+            job.mode !== "drop" &&
+            job.mode !== "shaper" &&
+            job.mode !== "mounth"
+          ) {
             const round = generateRound(
               job.seed,
               job.threads,
@@ -406,10 +426,20 @@ export default function HomePage() {
             audio = await renderRoundAudio(round).catch(() => null);
             reel = battleReel(round, {
               invert: job.invert,
+              checker: job.checker,
               faces: job.faces,
               speed: job.speed,
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
+          } else if (job.mode === "mounth") {
+            // Nothing is searched: the round is played once and the target is
+            // read off it, so the length is exact by construction.
+            const round = generateMonths(job.seed);
+            total = round.durationInFrames;
+            onStage("sound");
+            audio = await renderMonthsAudio(round).catch(() => null);
+            reel = monthsReel(round, { invert: job.invert });
+            summary = `${round.duration.toFixed(1)}s · ${MONTHS[round.winner].label} held ${round.target.toFixed(1)}s`;
           } else if (job.mode === "shaper") {
             // Nothing to play out: the cloud is built once and every frame is
             // the same points at a different angle. No soundtrack either — the
@@ -498,7 +528,9 @@ export default function HomePage() {
               ? "Fruit Drop"
               : mode === "shaper"
                 ? "Shaper"
-                : "MrBeast"}
+                : mode === "mounth"
+                  ? "Mounth"
+                  : "MrBeast"}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
@@ -507,33 +539,39 @@ export default function HomePage() {
               ? "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."
               : mode === "shaper"
                 ? "A shape made of points, turning once every six seconds, and you cannot tell which way. The projection is flat and nothing is hidden, so the picture fits the shape going left and its mirror image going right equally well — your eye picks one, then swaps. The loop joins end to end."
-                : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
+                : mode === "mounth"
+                  ? "Hold the centre. Twelve balls, one a month, loose in the ring; while exactly one of them is in the zone in the middle, that month banks the seconds. Two at once and nobody scores. Every ball wears a ring of what it has banked, and the video ends the moment one of those rings closes."
+                  : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(["battle", "drop", "beast", "shaper"] as const).map((choice) => (
-            <button
-              key={choice}
-              type="button"
-              onClick={() => setMode(choice)}
-              disabled={busy}
-              className={`rounded-xl border px-2 py-2 text-sm disabled:opacity-40 ${
-                mode === choice
-                  ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                  : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-              }`}
-            >
-              {choice === "battle"
-                ? "Ball battle"
-                : choice === "drop"
-                  ? "Fruit drop"
-                  : choice === "beast"
-                    ? "MrBeast"
-                    : "Shaper"}
-            </button>
-          ))}
+          {(["battle", "drop", "beast", "shaper", "mounth"] as const).map(
+            (choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => setMode(choice)}
+                disabled={busy}
+                className={`rounded-xl border px-2 py-2 text-sm disabled:opacity-40 ${
+                  mode === choice
+                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                }`}
+              >
+                {choice === "battle"
+                  ? "Ball battle"
+                  : choice === "drop"
+                    ? "Fruit drop"
+                    : choice === "beast"
+                      ? "MrBeast"
+                      : choice === "shaper"
+                        ? "Shaper"
+                        : "Mounth"}
+              </button>
+            ),
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -1018,22 +1056,25 @@ export default function HomePage() {
                       palette,
                       count: density,
                     }
-                  : {
-                      mode,
-                      seed,
-                      // The ground is the mode's own, not the page's: MrBeast
-                      // plays on white, and the checkbox that would say
-                      // otherwise is not shown in it. The rest belongs to the
-                      // mode that has the controls, and switching modes must
-                      // not carry it across.
-                      invert: steady ? BEAST.white : invert,
-                      threads: useThreads,
-                      balls: useBalls,
-                      size: useSize,
-                      steady,
-                      speed: useSpeed,
-                      faces: steady ? [] : faces,
-                    },
+                  : mode === "mounth"
+                    ? { mode, seed, invert }
+                    : {
+                        mode,
+                        seed,
+                        // The ground is the mode's own, not the page's: MrBeast
+                        // plays on white, and the checkbox that would say
+                        // otherwise is not shown in it. The rest belongs to the
+                        // mode that has the controls, and switching modes must
+                        // not carry it across.
+                        invert: steady ? BEAST.white : invert,
+                        checker: steady && BEAST.checker,
+                        threads: useThreads,
+                        balls: useBalls,
+                        size: useSize,
+                        steady,
+                        speed: useSpeed,
+                        faces: steady ? [] : faces,
+                      },
             )
           }
           disabled={busy}
@@ -1044,7 +1085,9 @@ export default function HomePage() {
               ? "Dropping…"
               : mode === "shaper"
                 ? "Building the cloud…"
-                : "Fighting…"
+                : mode === "mounth"
+                  ? "Playing the round…"
+                  : "Fighting…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}

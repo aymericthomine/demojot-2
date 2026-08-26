@@ -1,6 +1,6 @@
 # Ball Battle
 
-Three generators for vertical 9:16 videos, in one page. They share the seed, the
+Four generators for vertical 9:16 videos, in one page. They share the seed, the
 clock and the encoder, and nothing else.
 
 **Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
@@ -12,6 +12,10 @@ the video ends when the eighth is made.
 
 **Shaper** — a shape made of points turns once every six seconds, and you cannot
 tell which way. Silent, and made to loop.
+
+**Mounth** — twelve balls, one a month, loose in the ring. While exactly one of
+them is in the zone in the middle, that month banks the seconds; the video ends
+the moment one of the rings closes.
 
 All of them are computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
@@ -44,11 +48,14 @@ ball count, no size, no dressing and no ground — the panel is the seed, Roll a
 Generate. The opening is held for half a second rather than a whole one, because
 there is nothing new to read in a picture the viewer has already seen.
 
-**And it plays on white.** Ground white, ring black, every colour its
+**And it plays on a chequerboard.** Ground white, ring black, every colour its
 complement — the same true negative the other fight offers as a checkbox, except
-that here it is not a choice. A mode with no dials has to carry the answer
-itself, so the ground belongs to the mode rather than to the page, and switching
-into MrBeast does not inherit whatever Ball Battle was set to.
+that here it is not a choice — and behind it all, squares. Two greys a hair
+apart, eleven across the frame: what is drawn over them is thread-thin, and a
+chequer with any real contrast in it competes with the threads and wins. A mode
+with no dials has to carry the answer itself, so the ground belongs to the mode
+rather than to the page, and switching into MrBeast does not inherit whatever
+Ball Battle was set to.
 
 **And it winds up, harder and harder.** Every ball is sped up by the same small
 factor each substep, and the factor itself grows: the wind-up is raised to three
@@ -567,6 +574,39 @@ is being chosen is an illusion, and nobody can judge one from a still.
 Dense prism, the heaviest setting there is — twenty-eight thousand points, three
 hundred and sixty frames — takes twenty-eight seconds from button to file.
 
+## Mounth
+
+Hold the centre. Twelve balls, one a month, loose in the same ring the fight
+uses, with a zone in the middle. While **exactly one** ball is inside that zone,
+its month banks the seconds; every ball wears a ring showing how much of the
+target it has banked, and the video ends at the moment one of those rings closes.
+
+Two rules carry the whole thing:
+
+- **Only alone counts.** Two balls in the zone and nobody scores, which is what
+  stops a scrum in the middle from being the entire game and makes a clean run
+  through it worth something.
+- **Nothing is ever lost.** Banked seconds are not defended. A month that led
+  early and never came back still finishes with its arc where it was, so the
+  picture is a scoreboard rather than a fight.
+
+**The length is exact and nothing is searched for.** This is the one mode that
+needs no dial hunted: the trajectories do not depend on the target at all — the
+target only decides when to stop — so the round is played once to a cap, the
+hold curves are recorded, and the target is then *read off* them. It is whatever
+the leader has banked at the second the video is meant to end. The winner is
+that leader, its ring closes on the final frame by construction, and because
+banked time only ever grows, nobody reached that target earlier.
+
+Geometry off the reference frame by frame: the arena is the fight's own, the
+balls are 0.085 of its radius against the fight's 0.069, the zone is 0.26 of it,
+and the ring round the arena is four pixels in a 576-wide frame. The balls travel
+at 0.62 arena radii a second rather than the fight's 0.85 — this is a game of
+drifting through a place rather than of running somebody down, and at the
+fight's speed the middle is crossed too fast for a hold to mean anything. The
+title holds for four seconds and fades over one and a half, which is what the
+reference does to the frame.
+
 ## Measured against the reference, not guessed
 
 Every number that decides how it *feels* was taken off the reference videos frame
@@ -635,6 +675,8 @@ Nothing is borrowed, so nothing can get a video muted or demonetised.
 | `src/render/drawFrame.ts` | One frame from one state, on any canvas. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |
+| `src/sim/months.ts` | Hold the centre: twelve balls, one zone, and the banked seconds. |
+| `src/render/drawMonths.ts` | One frame of it: arena, zone, balls, progress rings. |
 | `src/sim/shaper.ts` | The point clouds, the palettes, and the rules of the illusion. |
 | `src/render/drawShape.ts` | One turn of a cloud, orthographic and unshaded. |
 | `src/app/page.tsx` | One button: fight, encode, save. |
