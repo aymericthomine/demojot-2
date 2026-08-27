@@ -47,6 +47,22 @@ const RING_WIDTH = 0.18;
 const RING_GAP = 1 + OUTLINE / 2 + RING_WIDTH / 2;
 
 /**
+ * Half a round cap, as an angle at the ring's radius.
+ *
+ * The caps are what make the arc look like a gauge rather than a wedge, and
+ * they are also why an arc lies: each one hangs half the stroke's width past
+ * the angle actually drawn, so a ring closes to the eye at 97.6 per cent of its
+ * target. A runner-up that plateaus just above that shows a full ring for the
+ * rest of the video while nothing happens — and the ending, which fires the
+ * instant a ring is genuinely full, then looks late.
+ *
+ * So the sweep is drawn short by exactly what the caps add back. The arc keeps
+ * its rounded ends, covers exactly the share it stands for, and closes at one
+ * and not before.
+ */
+const CAP = RING_WIDTH / 2 / RING_GAP;
+
+/**
  * The empty ring, waiting to be filled.
  *
  * Drawn from the first frame, before anybody has banked anything: a track that
@@ -178,14 +194,27 @@ export function drawMonthsFrame(
     ctx.stroke();
 
     const share = Math.max(0, Math.min(1, frame.hold[i] / target));
-    if (share > 0.002) {
+    const sweep = share * Math.PI * 2;
+    const full = share >= 1;
+    // Below two caps there is no arc left to draw once they are paid for, and
+    // what would be drawn is a dot standing for a share too small to read.
+    if (full || sweep > CAP * 2) {
       ctx.beginPath();
       // The losers' arcs go out with them; the winner's stays white and full,
       // which is what a closed ring was for.
       ctx.strokeStyle = ink(drained('#ffffff', lost), invert);
       ctx.lineWidth = disc * RING_WIDTH;
       ctx.lineCap = 'round';
-      ctx.arc(x, y, disc * RING_GAP, -Math.PI / 2, -Math.PI / 2 + share * Math.PI * 2);
+      if (full) {
+        // A closed ring is drawn closed, not as an arc trimmed until its two
+        // caps happen to meet. A cap is a flat half-disc, not a piece of the
+        // circle, so trimming by the angle it spans leaves the outer edge of
+        // the band short — a notch at twelve o'clock on the one ring the whole
+        // video is about.
+        ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
+      } else {
+        ctx.arc(x, y, disc * RING_GAP, -Math.PI / 2 + CAP, -Math.PI / 2 + sweep - CAP);
+      }
       ctx.stroke();
       ctx.lineCap = 'butt';
     }

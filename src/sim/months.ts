@@ -95,10 +95,10 @@ const HARD_CAP = 150;
  * The ending, in seconds.
  *
  * The game stops here, not the video: the twelve keep drifting, but nothing is
- * banked any more and the eleven who lost drain to grey, leaving the winner the
- * only colour in the ring. Without it the video simply stopped — the leading
- * ring closed and the picture cut, which reads as a file that ran out rather
- * than as somebody winning.
+ * banked any more and the eleven who lost lose their colour on the instant,
+ * leaving the winner the only one lit. Without it the video simply stopped —
+ * the leading ring closed and the picture cut, which reads as a file that ran
+ * out rather than as somebody winning.
  *
  * It is taken *out of* the length rather than added to it. The target is read
  * off the hold curves at the moment the game ends instead of at the last frame,
@@ -106,15 +106,6 @@ const HARD_CAP = 150;
  * still the length the seed asked for, to the frame.
  */
 const OUTRO = 2;
-
-/**
- * How much of the ending the colour takes to drain, as a fraction of it.
- *
- * Quick, then held. A drain spread over the whole two seconds is a picture
- * still changing when the video stops; draining in the first third leaves more
- * than a second of the finished thing, which is the frame somebody screenshots.
- */
-const DRAIN = 0.34;
 
 export interface MonthState {
   x: number;
@@ -128,9 +119,13 @@ export interface MonthFrame {
   /** Who is scoring right now, or -1 when the zone is empty or contested. */
   holder: number;
   /**
-   * How far into the ending this frame is: nought while the game is on, one
-   * once the losers have finished draining. The painter reads it as "how much
-   * colour have the eleven lost", which is the whole of the ending.
+   * Nought while the game is on, one from the whistle.
+   *
+   * The painter reads it as "how much colour have the eleven lost", and it
+   * moves between the two in a single frame rather than over a fade: the ring
+   * closes and the result is *there*. A drain spread over half a second makes
+   * the moment the ring filled and the moment the picture answers two separate
+   * events, and the second one is the one that lands.
    */
   reveal: number;
 }
@@ -318,14 +313,13 @@ export function generateMonths(seed: number): MonthsRound {
 
   const cut = frames.slice(0, durationInFrames).map((frame, i) => {
     if (i < decidedAt) return frame;
-    const into = (i - decidedAt + 1) / ending;
     return {
       balls: frame.balls,
       // Frozen at the whistle: an arc that crept on after the result would say
       // the game was still being played.
       hold: decided.hold,
       holder: winner,
-      reveal: Math.min(1, into / DRAIN),
+      reveal: 1,
     };
   });
 
