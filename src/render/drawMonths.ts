@@ -28,9 +28,23 @@ export interface MonthsLook {
   winner: number;
 }
 
-/** Ball outline, and the progress ring outside it, in ball radii. */
-const RING_GAP = 1.24;
+/** The dark line drawn around a month, in ball radii. */
+const OUTLINE = 0.16;
+
+/** The progress ring outside it, in ball radii. */
 const RING_WIDTH = 0.18;
+
+/**
+ * Where the progress ring sits, in ball radii — derived, not chosen.
+ *
+ * Flush: the ring's inner edge is the outline's outer edge, so it rides on the
+ * month's rim rather than floating off it. Both are strokes centred on their
+ * radius, so the reach of one and the half-width of the other are what the
+ * distance has to clear, and writing it that way keeps it true if either ever
+ * changes thickness. Picked as a bare number it was 1.24, which left the ring
+ * two and a half pixels clear of the ball at this frame size.
+ */
+const RING_GAP = 1 + OUTLINE / 2 + RING_WIDTH / 2;
 
 /**
  * The empty ring, waiting to be filled.
@@ -180,7 +194,7 @@ export function drawMonthsFrame(
     ctx.arc(x, y, disc, 0, Math.PI * 2);
     ctx.fillStyle = drained(month.color, lost);
     ctx.fill();
-    ctx.lineWidth = disc * 0.16;
+    ctx.lineWidth = disc * OUTLINE;
     ctx.strokeStyle = ink('#101216', invert);
     ctx.stroke();
 
