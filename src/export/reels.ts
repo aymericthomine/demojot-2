@@ -150,6 +150,7 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
         height: HEIGHT,
         invert: dress.invert,
         target: round.target,
+        winner: round.winner,
       });
       release(round.frames, index);
     },

@@ -91,6 +91,31 @@ const FIRST_AT_TOP = 9;
 /** Long enough that the target can always be read off the curves. */
 const HARD_CAP = 150;
 
+/**
+ * The ending, in seconds.
+ *
+ * The game stops here, not the video: the twelve keep drifting, but nothing is
+ * banked any more and the eleven who lost drain to grey, leaving the winner the
+ * only colour in the ring. Without it the video simply stopped — the leading
+ * ring closed and the picture cut, which reads as a file that ran out rather
+ * than as somebody winning.
+ *
+ * It is taken *out of* the length rather than added to it. The target is read
+ * off the hold curves at the moment the game ends instead of at the last frame,
+ * so the winner's ring still closes exactly as the game does and the video is
+ * still the length the seed asked for, to the frame.
+ */
+const OUTRO = 2;
+
+/**
+ * How much of the ending the colour takes to drain, as a fraction of it.
+ *
+ * Quick, then held. A drain spread over the whole two seconds is a picture
+ * still changing when the video stops; draining in the first third leaves more
+ * than a second of the finished thing, which is the frame somebody screenshots.
+ */
+const DRAIN = 0.34;
+
 export interface MonthState {
   x: number;
   y: number;
@@ -102,6 +127,12 @@ export interface MonthFrame {
   hold: readonly number[];
   /** Who is scoring right now, or -1 when the zone is empty or contested. */
   holder: number;
+  /**
+   * How far into the ending this frame is: nought while the game is on, one
+   * once the losers have finished draining. The painter reads it as "how much
+   * colour have the eleven lost", which is the whole of the ending.
+   */
+  reveal: number;
 }
 
 export type MonthEventKind = 'wall' | 'clash' | 'take' | 'win';
@@ -178,6 +209,7 @@ function play(seed: number): { frames: MonthFrame[]; events: MonthEvent[] } {
       balls: balls.map((b) => ({ x: b.x, y: b.y })),
       hold: hold.slice(),
       holder,
+      reveal: 0,
     });
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
@@ -259,25 +291,52 @@ function play(seed: number): { frames: MonthFrame[]; events: MonthEvent[] } {
  * A round, cut to the length this seed asks for.
  *
  * The target is read off the play rather than searched for: whatever the leader
- * has banked at the final frame is what a full ring means, so the winner's ring
- * closes exactly as the video ends and nobody else's ever did.
+ * has banked at the moment the game ends is what a full ring means, so the
+ * winner's ring closes exactly as the game does and nobody else's ever did.
+ *
+ * The game ends `OUTRO` seconds before the video. What is left is the ending:
+ * the balls keep moving, because a frozen picture reads as a stall rather than
+ * as a result, but nothing is banked any more, the zone belongs to the winner,
+ * and the other eleven drain to grey.
  */
 export function generateMonths(seed: number): MonthsRound {
   const { frames, events } = play(seed);
   const length = lengthFor(seed);
   const durationInFrames = Math.min(frames.length, Math.round(length * FPS));
-  const last = frames[durationInFrames - 1];
+
+  // Where the game stops. Guarded, because a video shorter than its own ending
+  // would read the target off frame nought and hand everybody a full ring.
+  const ending = Math.min(Math.round(OUTRO * FPS), durationInFrames - 1);
+  const decidedAt = durationInFrames - ending;
+  const decided = frames[decidedAt - 1];
 
   let winner = 0;
   for (let i = 1; i < MONTHS.length; i += 1) {
-    if (last.hold[i] > last.hold[winner]) winner = i;
+    if (decided.hold[i] > decided.hold[winner]) winner = i;
   }
-  const target = last.hold[winner];
+  const target = decided.hold[winner];
 
-  const cut = frames.slice(0, durationInFrames);
+  const cut = frames.slice(0, durationInFrames).map((frame, i) => {
+    if (i < decidedAt) return frame;
+    const into = (i - decidedAt + 1) / ending;
+    return {
+      balls: frame.balls,
+      // Frozen at the whistle: an arc that crept on after the result would say
+      // the game was still being played.
+      hold: decided.hold,
+      holder: winner,
+      reveal: Math.min(1, into / DRAIN),
+    };
+  });
+
   const duration = durationInFrames / FPS;
-  const kept = events.filter((e) => e.t < duration);
-  kept.push({ t: duration, kind: 'win', month: winner });
+  const decidedAtSeconds = decidedAt / FPS;
+  const kept = events.filter(
+    // The balls still meet the wall and each other through the ending, and that
+    // still ticks. Taking the middle does not: there is nothing left to take.
+    (e) => e.t < duration && (e.t < decidedAtSeconds || e.kind !== 'take'),
+  );
+  kept.push({ t: decidedAtSeconds, kind: 'win', month: winner });
 
   return {
     seed,

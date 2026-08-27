@@ -24,11 +24,13 @@ export interface MonthsLook {
   invert?: boolean;
   /** Seconds a full ring stands for. */
   target: number;
+  /** The month the ending belongs to. */
+  winner: number;
 }
 
 /** Ball outline, and the progress ring outside it, in ball radii. */
 const RING_GAP = 1.24;
-const RING_WIDTH = 0.26;
+const RING_WIDTH = 0.18;
 
 /**
  * The empty ring, waiting to be filled.
@@ -48,12 +50,35 @@ const withAlpha = (hex: string, alpha: number): string => {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 };
 
+/** What a month that did not win fades to. */
+const SPENT = '#31343d';
+
+/**
+ * A colour with the life going out of it.
+ *
+ * Towards a grey rather than towards the ground: a ball that faded to black
+ * would leave a hole in the ring where a month used to be, and twelve months
+ * that end as eleven holes and a colour is a different picture from twelve
+ * months of which one is still lit.
+ */
+const drained = (hex: string, amount: number): string => {
+  if (amount <= 0) return hex;
+  const from = Number.parseInt(hex.slice(1), 16);
+  const to = Number.parseInt(SPENT.slice(1), 16);
+  const mix = (shift: number) => {
+    const a = (from >> shift) & 255;
+    const b = (to >> shift) & 255;
+    return Math.round(a + (b - a) * amount);
+  };
+  return `#${((mix(16) << 16) | (mix(8) << 8) | mix(0)).toString(16).padStart(6, '0')}`;
+};
+
 export function drawMonthsFrame(
   ctx: CanvasRenderingContext2D,
   frame: MonthFrame,
   look: MonthsLook,
 ): void {
-  const { width, height, invert = false, target } = look;
+  const { width, height, invert = false, target, winner } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -92,11 +117,17 @@ export function drawMonthsFrame(
   // rather than guessed at a size: three letters at a fixed size fit and four
   // would not, and a name that hangs over the edge of the zone stops looking
   // like the zone's own label.
-  if (glow) {
+  //
+  // It goes out over the ending. It answers "who is holding the middle", and at
+  // the end nobody is: what is left is a winner, said by the one disc that kept
+  // its colour. Kept on, it also lands under the winner's own ball whenever the
+  // ball happens to finish near the centre, and a name half-hidden behind the
+  // thing it names reads as a fault rather than as a flourish.
+  if (glow && frame.reveal < 1) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = withAlpha(glow, 0.85);
+    ctx.fillStyle = withAlpha(glow, 0.85 * (1 - frame.reveal));
     const label = MONTHS[holder].label;
     let size = Math.round(radius * 0.3);
     ctx.font = `700 ${size}px system-ui, sans-serif`;
@@ -110,44 +141,54 @@ export function drawMonthsFrame(
     ctx.restore();
   }
 
+  // The ending: every month but one loses its colour, so the last thing the
+  // video shows is the winner as the only lit thing in the ring.
+  const reveal = frame.reveal;
+
   for (let i = 0; i < frame.balls.length; i += 1) {
     const month = MONTHS[i];
+    const lost = i === winner ? 0 : reveal;
     const x = cx + frame.balls[i].x * radius;
     const y = cy + frame.balls[i].y * radius;
+    // And the winner grows a little, so the eye lands on it rather than
+    // hunting the ring for the one disc that still has a colour.
+    const disc = i === winner ? ball * (1 + 0.14 * reveal) : ball;
 
     // The empty track first, then the banked seconds over it as an arc from the
     // top going clockwise. Both under the disc, so a full ring cannot creep over
     // the label.
     ctx.beginPath();
     ctx.strokeStyle = ink(TRACK, invert);
-    ctx.lineWidth = ball * RING_WIDTH;
-    ctx.arc(x, y, ball * RING_GAP, 0, Math.PI * 2);
+    ctx.lineWidth = disc * RING_WIDTH;
+    ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
     ctx.stroke();
 
     const share = Math.max(0, Math.min(1, frame.hold[i] / target));
     if (share > 0.002) {
       ctx.beginPath();
-      ctx.strokeStyle = ink('#ffffff', invert);
-      ctx.lineWidth = ball * RING_WIDTH;
+      // The losers' arcs go out with them; the winner's stays white and full,
+      // which is what a closed ring was for.
+      ctx.strokeStyle = ink(drained('#ffffff', lost), invert);
+      ctx.lineWidth = disc * RING_WIDTH;
       ctx.lineCap = 'round';
-      ctx.arc(x, y, ball * RING_GAP, -Math.PI / 2, -Math.PI / 2 + share * Math.PI * 2);
+      ctx.arc(x, y, disc * RING_GAP, -Math.PI / 2, -Math.PI / 2 + share * Math.PI * 2);
       ctx.stroke();
       ctx.lineCap = 'butt';
     }
 
     ctx.beginPath();
-    ctx.arc(x, y, ball, 0, Math.PI * 2);
-    ctx.fillStyle = month.color;
+    ctx.arc(x, y, disc, 0, Math.PI * 2);
+    ctx.fillStyle = drained(month.color, lost);
     ctx.fill();
-    ctx.lineWidth = ball * 0.16;
+    ctx.lineWidth = disc * 0.16;
     ctx.strokeStyle = ink('#101216', invert);
     ctx.stroke();
 
     ctx.save();
-    ctx.font = `700 ${Math.round(ball * 0.62)}px system-ui, sans-serif`;
+    ctx.font = `700 ${Math.round(disc * 0.62)}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = drained('#ffffff', lost * 0.62);
     ctx.fillText(month.label, x, y);
     ctx.restore();
   }
