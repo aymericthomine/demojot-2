@@ -29,6 +29,19 @@ export interface MonthsLook {
 const RING_GAP = 1.24;
 const RING_WIDTH = 0.26;
 
+/**
+ * The empty ring, waiting to be filled.
+ *
+ * Drawn from the first frame, before anybody has banked anything: a track that
+ * appears only once there is something in it reads as an ornament that came from
+ * nowhere, and a viewer cannot see that a full ring is what the game is for
+ * until they have seen an empty one.
+ */
+const TRACK = '#2a2d36';
+
+/** How much of the zone's width the holder's name may take. */
+const LABEL_FIT = 0.78;
+
 const withAlpha = (hex: string, alpha: number): string => {
   const n = Number.parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
@@ -74,14 +87,25 @@ export function drawMonthsFrame(
   ctx.strokeStyle = glow ? glow : ink('#3a3d47', invert);
   ctx.stroke();
 
-  // The holder's name, big and behind the balls.
+  // The holder's name, big and behind the balls — and inside the zone. Measured
+  // rather than guessed at a size: three letters at a fixed size fit and four
+  // would not, and a name that hangs over the edge of the zone stops looking
+  // like the zone's own label.
   if (glow) {
     ctx.save();
-    ctx.font = `700 ${Math.round(radius * 0.3)}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = withAlpha(glow, 0.75);
-    ctx.fillText(MONTHS[holder].label, cx, cy);
+    ctx.fillStyle = withAlpha(glow, 0.85);
+    const label = MONTHS[holder].label;
+    let size = Math.round(radius * 0.3);
+    ctx.font = `700 ${size}px system-ui, sans-serif`;
+    const room = radius * ZONE * 2 * LABEL_FIT;
+    const wide = ctx.measureText(label).width;
+    if (wide > room) {
+      size = Math.max(8, Math.floor((size * room) / wide));
+      ctx.font = `700 ${size}px system-ui, sans-serif`;
+    }
+    ctx.fillText(label, cx, cy);
     ctx.restore();
   }
 
@@ -90,8 +114,15 @@ export function drawMonthsFrame(
     const x = cx + frame.balls[i].x * radius;
     const y = cy + frame.balls[i].y * radius;
 
-    // The banked seconds, as an arc from the top going clockwise. Drawn under
-    // the disc so a full ring does not creep over the label.
+    // The empty track first, then the banked seconds over it as an arc from the
+    // top going clockwise. Both under the disc, so a full ring cannot creep over
+    // the label.
+    ctx.beginPath();
+    ctx.strokeStyle = ink(TRACK, invert);
+    ctx.lineWidth = ball * RING_WIDTH;
+    ctx.arc(x, y, ball * RING_GAP, 0, Math.PI * 2);
+    ctx.stroke();
+
     const share = Math.max(0, Math.min(1, frame.hold[i] / target));
     if (share > 0.002) {
       ctx.beginPath();

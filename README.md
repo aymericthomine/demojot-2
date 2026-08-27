@@ -598,14 +598,30 @@ the leader has banked at the second the video is meant to end. The winner is
 that leader, its ring closes on the final frame by construction, and because
 banked time only ever grows, nobody reached that target earlier.
 
+**Every video opens on the same clock face.** October at twelve, then round
+clockwise in calendar order, every ball at 0.725 of the way out — the
+reference's arrangement, and deliberately not shuffled: it is the one frame a
+viewer reads before anything moves. The seed decides which way each ball is
+fired and nothing else, which is enough, because a billiard in a circle never
+forgets its opening angle.
+
+**The empty ring is drawn from the first frame**, in a dark grey, before anybody
+has banked anything. A track that appears only once there is something in it
+reads as an ornament that came from nowhere; and until a viewer has seen an
+empty one, they cannot see that filling it is what the game is for.
+
 Geometry off the reference frame by frame: the arena is the fight's own, the
 balls are 0.085 of its radius against the fight's 0.069, the zone is 0.26 of it,
 and the ring round the arena is four pixels in a 576-wide frame. The balls travel
-at 0.62 arena radii a second rather than the fight's 0.85 — this is a game of
-drifting through a place rather than of running somebody down, and at the
-fight's speed the middle is crossed too fast for a hold to mean anything. The
-title holds for four seconds and fades over one and a half, which is what the
-reference does to the frame.
+at 0.58 arena radii a second, measured by tracking one of them frame by frame —
+0.555 at the median, 0.61 at the ninetieth percentile, the spread being what two
+balls trading speed on a bounce does. That is slower than the fight's 0.85: this
+is a game of drifting through a place rather than of running somebody down, and
+at the fight's speed the middle is crossed too fast for a hold to mean anything.
+The holder's name is measured and shrunk to fit inside the zone rather than set
+at a fixed size — a name that hangs over the edge stops reading as the zone's
+own label. The title holds for four seconds and fades over one and a half, which
+is what the reference does to the frame.
 
 ## Measured against the reference, not guessed
 

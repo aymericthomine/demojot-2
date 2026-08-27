@@ -62,11 +62,31 @@ export const ZONE = 0.26;
 /**
  * How fast a ball travels, in arena radii a second.
  *
- * Slower than the fight, because this is a game of drifting through a place
- * rather than of running somebody down: at the fight's speed the middle is
- * crossed too quickly for a hold to mean anything.
+ * Measured off the reference by tracking one ball frame by frame: 0.555 arena
+ * radii a second at the median and 0.61 at the ninetieth percentile, the spread
+ * being what two balls trading speed on a bounce does. Slower than the fight,
+ * because this is a game of drifting through a place rather than of running
+ * somebody down: at the fight's speed the middle is crossed too fast for a hold
+ * to mean anything.
  */
-const SPEED = 0.62;
+const SPEED = 0.58;
+
+/**
+ * Where the twelve start, as a fraction of the arena.
+ *
+ * Off the reference: a ball's centre sits at 0.725 of the way out.
+ */
+const OPENING_RING = 0.725;
+
+/**
+ * Which month stands at twelve o'clock.
+ *
+ * October, and then round clockwise in calendar order — which is the reference's
+ * arrangement and not an arbitrary one: it puts the turn of the year at the
+ * right of the clock rather than at the top, and that is what the picture looks
+ * like before anything has moved.
+ */
+const FIRST_AT_TOP = 9;
 
 /** Long enough that the target can always be read off the curves. */
 const HARD_CAP = 150;
@@ -116,29 +136,30 @@ interface Live {
 }
 
 /**
- * The opening: twelve balls on two rings, well clear of the middle.
+ * The opening: the twelve on one ring, as a clock face.
  *
- * Off the centre on purpose — a ball starting inside the zone would be banking
- * seconds before the viewer has read what the game is.
+ * The same picture in every video, deliberately — it is the reference's opening
+ * and it is the one frame a viewer reads before anything moves, so there is
+ * nothing to gain by shuffling it. The seed decides which way each ball is
+ * fired and nothing else, which is enough: a billiard in a circle never forgets
+ * its opening angle.
  */
 function start(seed: number): Live[] {
   const rng = createRng(seed ^ 0x51ed270b);
-  const balls: Live[] = [];
-  for (let i = 0; i < MONTHS.length; i += 1) {
-    // Two rings of six, turned against each other, so the opening reads as an
-    // arrangement rather than as a heap.
-    const ring = i % 2;
-    const around = Math.floor(i / 2);
-    const angle = (around / 6) * Math.PI * 2 + ring * (Math.PI / 6) + rng.range(-0.1, 0.1);
-    const radius = ring === 0 ? 0.52 : 0.78;
+  const balls: Live[] = new Array<Live>(MONTHS.length);
+  for (let slot = 0; slot < MONTHS.length; slot += 1) {
+    // Twelve o'clock, then clockwise. The canvas has y downwards, so an angle
+    // starting at minus a quarter turn and increasing runs clockwise on screen.
+    const angle = -Math.PI / 2 + (slot / MONTHS.length) * Math.PI * 2;
+    const month = (FIRST_AT_TOP + slot) % MONTHS.length;
     const heading = rng.next() * Math.PI * 2;
-    balls.push({
-      x: Math.cos(angle) * radius,
-      y: Math.sin(angle) * radius,
+    balls[month] = {
+      x: Math.cos(angle) * OPENING_RING,
+      y: Math.sin(angle) * OPENING_RING,
       vx: Math.cos(heading) * SPEED,
       vy: Math.sin(heading) * SPEED,
       clashedAt: -99,
-    });
+    };
   }
   return balls;
 }
