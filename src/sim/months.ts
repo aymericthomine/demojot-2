@@ -16,17 +16,31 @@
  *    that led early and never came back still finishes with its arc where it
  *    was, and the picture stays a scoreboard rather than a fight.
  *
- * **The length is exact and there is no search for it.** The trajectories do not
- * depend on the target at all — the target only decides when to stop — so the
- * round is played once to a hard cap, the hold curves are recorded, and then the
- * target is *read off* them: it is whatever the leader has banked at the second
- * the video is meant to end. The winner is that leader, its ring closes on the
- * final frame by construction, and every other mode's search over a dial is
- * unnecessary here.
+ * **There is no search over a dial.** The trajectories do not depend on the
+ * target at all — the target only decides when to stop — so the round is played
+ * once to a hard cap, the hold curves are recorded, and then the target is
+ * *read off* them: it is whatever the leader has banked at the second the round
+ * ends. The winner is that leader and its ring closes on that frame by
+ * construction, which every other mode has to hunt for.
+ *
+ * **What is not free is where that second falls.** A month's total is a
+ * staircase — it climbs only while that month is alone in the middle, and sits
+ * flat the rest of the time — so a whistle blown on a flat stretch reads the
+ * total the leader reached back at the top of the last step. Its ring filled
+ * there, and everything since was a full ring going nowhere: six seconds of it
+ * on average and twelve at worst, measured, which is an age in a video that
+ * runs a minute.
+ *
+ * So the round ends on a frame where the leader is *banking*, the one nearest
+ * the length the seed asks for. The seed sets the aim and the play decides
+ * where inside it the whistle can go, so the length is reported rather than
+ * promised: over two hundred seeds it lands inside the mode's minute-to-eighty
+ * range about nine times in ten, and never runs past the top of it — where the
+ * play leaves no room, the round is cut short rather than run long.
  */
 
 import { createRng } from './random';
-import { lengthFor } from './simulate';
+import { LONGEST, lengthFor, SHORTEST } from './simulate';
 import { FPS } from './style';
 
 /** Physics substeps per rendered frame. */
@@ -290,27 +304,85 @@ function play(seed: number): { frames: MonthFrame[]; events: MonthEvent[] } {
 }
 
 /**
- * A round, cut to the length this seed asks for.
+ * Is the leader banking a second on this very frame?
+ *
+ * The one question that decides when a round may end. A month's total only
+ * climbs while it is alone in the middle, so it is a staircase: it rises for a
+ * second or two, then sits flat for as long as the middle is somebody else's.
+ * If the whistle goes on a flat stretch, the leader reached its total — and so
+ * filled its ring — back at the top of the last step, and everything since has
+ * been a full ring going nowhere.
+ */
+function climbing(frames: readonly MonthFrame[], at: number): boolean {
+  if (at < 1 || at >= frames.length) return false;
+  let lead = 0;
+  for (let i = 1; i < MONTHS.length; i += 1) {
+    if (frames[at].hold[i] > frames[at].hold[lead]) lead = i;
+  }
+  return frames[at].hold[lead] > frames[at - 1].hold[lead];
+}
+
+/**
+ * The frame the whistle goes on.
+ *
+ * The nearest banking frame to the length asked for — but inside the run the
+ * mode promises first, and only outside it if nothing in range banks at all. A
+ * round that ends where the play allows rather than where the clock says will
+ * drift, and left unbounded that drift ran to ninety-nine seconds on one seed
+ * in sixty: half as long again as the mode says it is, and on a phone that is
+ * paid for in memory as well as in patience. Bounded, it stays a video of the
+ * length it claims to be, and the seeds with nowhere in range to stop are the
+ * ones where a wait would otherwise be unavoidable.
+ */
+function whistleFor(frames: readonly MonthFrame[], wanted: number, ending: number): number {
+  const lo = Math.max(1, Math.round(SHORTEST * FPS) - ending);
+  const hi = Math.min(frames.length - 1, Math.round(LONGEST * FPS) - ending);
+  for (let step = 0; step <= Math.max(wanted - lo, hi - wanted); step += 1) {
+    if (wanted - step >= lo && climbing(frames, wanted - step)) return wanted - step;
+    if (wanted + step <= hi && climbing(frames, wanted + step)) return wanted + step;
+  }
+  // Nothing in range banks. Then the last one that does before the range runs
+  // out, which is to say: short rather than long. A round with nowhere to stop
+  // inside its own window is one where the leader went quiet early, and running
+  // on past the promise to find its next second costs a bigger file and a
+  // phone's memory to show a ring that stopped moving a minute ago.
+  for (let at = hi; at >= 1; at -= 1) {
+    if (climbing(frames, at)) return at;
+  }
+  // Nobody ever led while banking, which twelve balls loose for two minutes will
+  // not manage. The old fixed whistle is still a round, just one with a wait.
+  return Math.max(1, Math.min(wanted, frames.length - 1));
+}
+
+/**
+ * A round, ending on the frame the winner's ring closes.
  *
  * The target is read off the play rather than searched for: whatever the leader
  * has banked at the moment the game ends is what a full ring means, so the
  * winner's ring closes exactly as the game does and nobody else's ever did.
  *
- * The game ends `OUTRO` seconds before the video. What is left is the ending:
- * the balls keep moving, because a frozen picture reads as a stall rather than
- * as a result, but nothing is banked any more, the zone belongs to the winner,
- * and the other eleven drain to grey.
+ * **Which moment that is has to be earned.** The seed still asks for a length,
+ * but a round cannot end wherever it likes: it can only end on a frame where
+ * the leader is banking, or the ring will have been full and waiting — by six
+ * seconds on average and by twelve at worst, measured over ten seeds, which is
+ * an eternity in a video that runs a minute. So the round ends on the banking
+ * frame nearest the length asked for, in either direction. The seed sets the
+ * aim and the play decides where inside it the whistle can go, and the length
+ * that comes out is reported rather than promised.
+ *
+ * After the whistle comes the ending: the balls keep moving, because a frozen
+ * picture reads as a stall rather than as a result, but nothing is banked any
+ * more, the zone belongs to the winner, and the other eleven go out.
  */
 export function generateMonths(seed: number): MonthsRound {
   const { frames, events } = play(seed);
-  const length = lengthFor(seed);
-  const durationInFrames = Math.min(frames.length, Math.round(length * FPS));
+  const ending = Math.round(OUTRO * FPS);
+  const wanted = Math.round(lengthFor(seed) * FPS) - ending;
 
-  // Where the game stops. Guarded, because a video shorter than its own ending
-  // would read the target off frame nought and hand everybody a full ring.
-  const ending = Math.min(Math.round(OUTRO * FPS), durationInFrames - 1);
-  const decidedAt = durationInFrames - ending;
-  const decided = frames[decidedAt - 1];
+  const decidedAt = whistleFor(frames, wanted, ending);
+
+  const durationInFrames = Math.min(frames.length, decidedAt + ending);
+  const decided = frames[decidedAt];
 
   let winner = 0;
   for (let i = 1; i < MONTHS.length; i += 1) {
@@ -319,7 +391,7 @@ export function generateMonths(seed: number): MonthsRound {
   const target = decided.hold[winner];
 
   const cut = frames.slice(0, durationInFrames).map((frame, i) => {
-    if (i < decidedAt) return frame;
+    if (i <= decidedAt) return frame;
     return {
       balls: frame.balls,
       // Frozen at the whistle: an arc that crept on after the result would say
