@@ -11,6 +11,13 @@
  *
  * Vertical 1080×1920 at 60 fps, H.264 where the machine has it, AV1 or VP9 where
  * it does not.
+ *
+ * Which of those the machine has is asked before anything else, and that
+ * question turns out to be the fragile part: `isConfigSupported` returns a
+ * promise, and on Safari some of those promises never settle. Silence is not a
+ * refusal — the phone asking has a hardware H.264 encoder — so the browser is
+ * given a deadline to answer in, and where it does not, it is asked to encode a
+ * single frame instead. See `boundProbes` and `tryOneFrame`.
  */
 
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
@@ -113,6 +120,18 @@ const WATCHDOG_MS = 60_000;
  */
 const PROBE_MS = 20_000;
 
+/**
+ * One codec's leash, when the browser is being asked whether it can encode it.
+ *
+ * Shorter still, and per codec rather than over the whole search. A browser that
+ * answers at all answers instantly; the only thing a longer wait buys is a
+ * longer wait.
+ */
+const ASK_MS = 5_000;
+
+/** And for actually encoding a frame, which is slower than being asked about it. */
+const TRY_MS = 8_000;
+
 function withWatchdog<T>(work: Promise<T>, what: string, limit = WATCHDOG_MS): Promise<T> {
   let timer: ReturnType<typeof setTimeout>;
   const alarm = new Promise<never>((_, reject) => {
@@ -163,18 +182,21 @@ export async function describeSupport(): Promise<string> {
     const ok: string[] = [];
     for (const [name, codec] of codecs) {
       try {
-        const result = await encoder.isConfigSupported({
-          codec,
-          width,
-          height,
-          bitrate: 8_000_000,
-          framerate,
-        });
-        if (result?.supported) ok.push(name);
+        // The browser's own answer, not the deadlined one, and raced: this is
+        // the very call that hangs on Safari, and a diagnostic that never
+        // appears is worse than no diagnostic at all.
+        const probe = trueVideoProbe ?? encoder.isConfigSupported.bind(encoder);
+        const result = await Promise.race([
+          probe({ codec, width, height, bitrate: 8_000_000, framerate }),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), ASK_MS)),
+        ]);
+        if (result === null) ok.push(`${name}?`);
+        else if (result.supported) ok.push(name);
       } catch {
         // An unsupported codec string throws rather than answering; same thing.
       }
     }
+    // A name with a question mark is one the browser never answered about.
     parts.push(`${label}: ${ok.length ? ok.join('/') : 'none'}`);
   }
 
@@ -190,6 +212,150 @@ type VideoCodec = NonNullable<Awaited<ReturnType<Mediabunny['getFirstEncodableVi
 
 let reserved: Promise<{ lib: Mediabunny; codec: VideoCodec }> | null = null;
 
+type VideoProbe = (config: VideoEncoderConfig) => Promise<VideoEncoderSupport>;
+
+/**
+ * The browser's own answer, kept aside when the deadline goes on.
+ *
+ * The diagnostic below has to report what the browser really said, not what
+ * this file decided to assume on its behalf — a support line that reads back
+ * the optimism it was given is worse than none.
+ */
+let trueVideoProbe: VideoProbe | null = null;
+let audioProbeBound = false;
+
+/** Set when a probe ran out of patience and was answered on the browser's behalf. */
+let assumed = false;
+
+/**
+ * Make the browser answer capability questions, one way or another.
+ *
+ * `isConfigSupported` returns a promise, and on Safari some of those promises
+ * never settle. That is not a refusal — Safari has a perfectly good H.264
+ * encoder sitting behind the question — but every layer asks it: this file
+ * asks, and mediabunny asks again when it starts the encoder and once more per
+ * track. One unanswerable question is therefore enough to hang the whole run,
+ * which is exactly what "Looking for a video encoder gave no answer in 20s"
+ * was, on a phone that could have made the video.
+ *
+ * So the question is given a deadline, once, at the source. A probe that goes
+ * unanswered comes back as a yes — which is not a claim about the browser but a
+ * decision to stop interviewing it and find out by encoding. Encoding is
+ * watched and fails loudly; a capability query that never returns does not.
+ *
+ * A browser that answers normally never reaches the deadline and is left
+ * exactly as it was.
+ */
+function boundProbes(): void {
+  const video = (globalThis as { VideoEncoder?: typeof VideoEncoder }).VideoEncoder;
+  if (video && !trueVideoProbe) {
+    const original: VideoProbe = video.isConfigSupported.bind(video);
+    trueVideoProbe = original;
+    video.isConfigSupported = (config: VideoEncoderConfig) =>
+      Promise.race([
+        original(config),
+        new Promise<VideoEncoderSupport>((resolve) =>
+          setTimeout(() => {
+            assumed = true;
+            resolve({ supported: true, config });
+          }, ASK_MS),
+        ),
+      ]);
+  }
+
+  const audio = (globalThis as { AudioEncoder?: typeof AudioEncoder }).AudioEncoder;
+  if (audio && !audioProbeBound) {
+    audioProbeBound = true;
+    const original = audio.isConfigSupported.bind(audio);
+    audio.isConfigSupported = (config: AudioEncoderConfig) =>
+      Promise.race([
+        original(config),
+        new Promise<AudioEncoderSupport>((resolve) =>
+          setTimeout(() => resolve({ supported: true, config }), ASK_MS),
+        ),
+      ]);
+  }
+}
+
+/**
+ * A plain codec string per family, for the try-it-and-see test.
+ *
+ * Deliberately conservative: High profile at level 4.0 covers 1080×1920, and a
+ * browser with an H.264 encoder at all has this one.
+ */
+const PLAIN: Record<string, string> = {
+  avc: 'avc1.640028',
+  av1: 'av01.0.09M.08',
+  vp9: 'vp09.00.51.08',
+  vp8: 'vp8',
+};
+
+/** The codecs we will take, best first. */
+const WANTED: readonly VideoCodec[] = ['avc', 'av1', 'vp9', 'vp8'];
+
+/**
+ * Can it actually do it?
+ *
+ * The one question a browser cannot dodge: hand it a real 1080×1920 frame and
+ * see whether a packet comes back. It costs an encoder and a frame, which is
+ * why it is not the opening move — but where the browser has been answered on
+ * its own behalf, an assumption is all there is, and an hour of encoding is too
+ * much to stake on one.
+ */
+async function tryOneFrame(codec: VideoCodec): Promise<boolean> {
+  const Encoder = (globalThis as { VideoEncoder?: typeof VideoEncoder }).VideoEncoder;
+  if (!Encoder || typeof OffscreenCanvas === 'undefined') return false;
+
+  let answer: (ok: boolean) => void = () => {};
+  const settled = new Promise<boolean>((resolve) => {
+    const timer = setTimeout(() => resolve(false), TRY_MS);
+    answer = (ok) => {
+      clearTimeout(timer);
+      resolve(ok);
+    };
+  });
+
+  let encoder: VideoEncoder | null = null;
+  let frame: VideoFrame | null = null;
+  try {
+    encoder = new Encoder({ output: () => answer(true), error: () => answer(false) });
+    encoder.configure({
+      codec: PLAIN[codec],
+      width: WIDTH,
+      height: HEIGHT,
+      bitrate: 4_000_000,
+      framerate: FPS,
+    });
+    const canvas = new OffscreenCanvas(WIDTH, HEIGHT);
+    canvas.getContext('2d')?.fillRect(0, 0, WIDTH, HEIGHT);
+    frame = new VideoFrame(canvas, { timestamp: 0 });
+    encoder.encode(frame, { keyFrame: true });
+    void encoder.flush().catch(() => answer(false));
+    return await settled;
+  } catch {
+    return false;
+  } finally {
+    frame?.close();
+    try {
+      if (encoder && encoder.state !== 'closed') encoder.close();
+    } catch {
+      // Closing a half-configured encoder is allowed to throw. Nothing to undo.
+    }
+  }
+}
+
+/** The first codec that will really encode a frame at this size. */
+async function proved(): Promise<VideoCodec> {
+  for (const codec of WANTED) {
+    if (await tryOneFrame(codec)) return codec;
+  }
+  throw new Error(
+    typeof (globalThis as { VideoEncoder?: unknown }).VideoEncoder === 'undefined'
+      ? 'This browser has no video encoder. Try Chrome, Edge or Safari.'
+      : 'This browser has a video encoder but would not encode 1080×1920 with any codec.',
+  );
+}
+
 /**
  * Load the encoder and pick a codec — before anything else is allocated.
  *
@@ -204,6 +370,7 @@ export async function reserveEncoder(
   onStage?: (stage: EncodeStage) => void,
 ): Promise<{ lib: Mediabunny; codec: VideoCodec }> {
   reserved ??= (async () => {
+    boundProbes();
     onStage?.('loading');
     const lib = await withWatchdog(import('mediabunny'), 'Loading the encoder', PROBE_MS);
 
@@ -219,7 +386,10 @@ export async function reserveEncoder(
     if (!codec) {
       throw new Error('This browser has no video encoder. Try Chrome, Edge or Safari.');
     }
-    return { lib, codec };
+    // A browser that would not answer got a yes it never gave. Where that
+    // happened, the interview is worthless and the only thing left is to ask it
+    // to encode one frame and watch.
+    return { lib, codec: assumed ? await proved() : codec };
   })().catch((error: unknown) => {
     // A failed reservation must not be remembered, or the next press inherits it.
     reserved = null;
@@ -270,13 +440,17 @@ export async function encodeVideo(options: EncodeOptions): Promise<EncodeResult>
   let audioSource: InstanceType<typeof AudioBufferSource> | null = null;
   if (track) {
     options.onStage?.('audio-codec');
+    // The same short leash as the video codecs, and for the same reason: the
+    // browser that will not answer about H.264 will not answer about AAC
+    // either, and twenty seconds of waiting to be told nothing is twenty
+    // seconds of a page that looks stuck.
     const audioCodec = await withWatchdog(
       getFirstEncodableAudioCodec(webm ? ['opus'] : ['aac', 'opus'], {
         numberOfChannels: track.numberOfChannels,
         sampleRate: track.sampleRate,
       }),
       'Looking for an audio encoder',
-      PROBE_MS,
+      ASK_MS * 2,
     ).catch((error: Error) => {
       silent = error.message;
       return null;
