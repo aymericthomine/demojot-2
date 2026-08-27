@@ -13,9 +13,13 @@ the video ends when the eighth is made.
 **Shaper** — a shape made of points turns once every six seconds, and you cannot
 tell which way. Silent, and made to loop.
 
-**Mounth** — twelve balls, one a month, loose in the ring. While exactly one of
+**Month** — twelve balls, one a month, loose in the ring. While exactly one of
 them is in the zone in the middle, that month banks the seconds; the video ends
 the moment one of the rings closes.
+
+**Hot potato** — the same twelve, passing a fuse. Whoever is holding it when the
+fuse runs out is out, and stops dead where it fell to become a wall everybody
+else bounces off. Last month still in survives.
 
 All of them are computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
@@ -574,7 +578,7 @@ is being chosen is an illusion, and nobody can judge one from a still.
 Dense prism, the heaviest setting there is — twenty-eight thousand points, three
 hundred and sixty frames — takes twenty-eight seconds from button to file.
 
-## Mounth
+## Month
 
 Hold the centre. Twelve balls, one a month, loose in the same ring the fight
 uses, with a zone in the middle. While **exactly one** ball is inside that zone,
@@ -590,13 +594,28 @@ Two rules carry the whole thing:
   early and never came back still finishes with its arc where it was, so the
   picture is a scoreboard rather than a fight.
 
-**The length is exact and nothing is searched for.** This is the one mode that
-needs no dial hunted: the trajectories do not depend on the target at all — the
-target only decides when to stop — so the round is played once to a cap, the
-hold curves are recorded, and the target is then *read off* them. It is whatever
-the leader has banked at the second the video is meant to end. The winner is
-that leader, its ring closes on the final frame by construction, and because
-banked time only ever grows, nobody reached that target earlier.
+**Nothing is searched for.** This is the one mode that needs no dial hunted: the
+trajectories do not depend on the target at all — the target only decides when to
+stop — so the round is played once to a cap, the hold curves are recorded, and
+the target is then *read off* them. It is whatever the leader has banked at the
+second the round ends. The winner is that leader, its ring closes on that frame
+by construction, and because banked time only ever grows, nobody reached that
+target earlier.
+
+**What is not free is where that second falls.** A month's total is a staircase:
+it climbs only while that month is alone in the middle and sits flat the rest of
+the time. A whistle blown on a flat stretch reads back the total the leader
+reached at the top of the last step — its ring filled *there*, and everything
+since was a full ring going nowhere, by six seconds on average and twelve at
+worst. So the round ends on a frame where the leader is banking, the one nearest
+the length the seed asks for. Checked over two hundred seeds: the winner's total
+is below the target on the frame before and exactly on it at the whistle, all two
+hundred. The colour goes one frame later, 17 ms.
+
+The cost is the length, and it is a real one: the seed sets an aim rather than a
+promise. Nine rounds in ten land inside the mode's sixty-to-eighty seconds, and
+none runs past the top of it — where the play leaves no room to stop, the round
+is cut short rather than run long.
 
 **Every video opens on the same clock face.** October at twelve, then round
 clockwise in calendar order, every ball at 0.725 of the way out — the
@@ -625,6 +644,50 @@ own label.
 **No writing anywhere but the balls.** The reference opens on a title over the
 arena and this did too; asked for without it, what is left is the board on plain
 black, and the board explains itself — a ring that fills is a ring that fills.
+
+## Hot potato
+
+The same twelve months in the same ring, but what is passed around is a fuse. One
+month is holding it; whenever the holder touches another month that is still in,
+it changes hands. When the fuse runs out, whoever is holding it is **out** — and
+the last month still in survives.
+
+Two rules give the mode its shape:
+
+- **Out months become walls.** A month that goes out does not leave the picture:
+  it stops dead where it fell and everybody else bounces off it. The arena silts
+  up as the game runs, so the last minute is played in a pinball table rather
+  than an empty circle. It is also the honest way to lose twelve balls one at a
+  time — removing them would leave the arena emptier and the game calmer exactly
+  when it should be getting worse.
+- **The fuse never stops.** It is not a race to reach anything, it is a race not
+  to be holding. Nothing a month can do adds time, so there is no playing for
+  safety, only passing it on.
+
+Three states, and the picture has to separate them at a glance on a phone: a
+month still in is a **filled disc**, a month that is out is the **hollow ring**
+it left behind, and the holder wears a **red band**. Filled against hollow does
+work that dimming alone would not — a dark disc among bright ones reads as a
+colour choice, while a ring with nothing in it reads as something that used to be
+there. The out ring is drawn so its outer edge is exactly the surface everybody
+bounces off, which is the only way the picture and the physics agree about where
+a wall is. The band is stepped off the rim rather than laid flush like Month's
+gauge: it is red, and two of the twelve are near enough to red that a flush band
+would join up with them.
+
+**The length is neither searched for nor asked of the seed.** Eleven months go
+out, one per fuse, so a round is eleven fuses and an ending — which would make
+every video exactly the same length, the one property a duplicate detector reads
+first. So the seed sets the *fuse* instead and the length follows: 4.4 to 5.6
+seconds puts a round between fifty and sixty-four, with no search and no two
+videos running to the same frame.
+
+The soundtrack needed a guard the other modes do not. A month wedged against a
+wall produces contact on every substep — a real contact, but not a real knock —
+and unguarded the hit list ran to twenty-five thousand on a round where Month has
+eight hundred, which was enough to hang the page before a single frame was drawn.
+A knock now needs 0.08 seconds of quiet behind it, and the list comes back to
+about 270.
 
 ## Measured against the reference, not guessed
 

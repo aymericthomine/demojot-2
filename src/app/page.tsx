@@ -19,6 +19,7 @@ import {
   previewKit,
   renderDropAudio,
   renderMonthsAudio,
+  renderPotatoAudio,
   renderRoundAudio,
 } from "../audio/render";
 import {
@@ -30,9 +31,16 @@ import {
   type EncodeStage,
   type Reel,
 } from "../export/encodeVideo";
-import { battleReel, dropReel, monthsReel, shaperReel } from "../export/reels";
+import {
+  battleReel,
+  dropReel,
+  monthsReel,
+  potatoReel,
+  shaperReel,
+} from "../export/reels";
 import { ELEMENTS, generateDrop } from "../sim/drop";
 import { MONTHS, generateMonths } from "../sim/months";
+import { generatePotato } from "../sim/potato";
 import { FRUITS } from "../sim/fruit";
 import { dealPack } from "../sim/packs";
 import { DEFAULT_KIT, KITS } from "../audio/kit";
@@ -79,7 +87,7 @@ import type { FruitFace } from "../render/drawDrop";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "drop" | "beast" | "shaper" | "mounth";
+type Mode = "battle" | "drop" | "beast" | "shaper" | "month" | "potato";
 
 /**
  * What the fixed mode is fixed to.
@@ -173,7 +181,8 @@ type Job =
       palette: Palette | null;
       count: Density;
     }
-  | { mode: "mounth"; seed: number; invert: boolean };
+  | { mode: "month"; seed: number; invert: boolean }
+  | { mode: "potato"; seed: number; invert: boolean };
 
 type Stage =
   | { kind: "idle" }
@@ -400,7 +409,8 @@ export default function HomePage() {
           if (
             job.mode !== "drop" &&
             job.mode !== "shaper" &&
-            job.mode !== "mounth"
+            job.mode !== "month" &&
+            job.mode !== "potato"
           ) {
             const round = generateRound(
               job.seed,
@@ -431,7 +441,17 @@ export default function HomePage() {
               speed: job.speed,
             });
             summary = `${round.duration.toFixed(1)}s · winner #${round.winner + 1}`;
-          } else if (job.mode === "mounth") {
+          } else if (job.mode === "potato") {
+            // Nothing is searched here either: eleven months go out, one per
+            // fuse, and the seed sets the fuse — so the length falls out of the
+            // play rather than being hunted for.
+            const round = generatePotato(job.seed);
+            total = round.durationInFrames;
+            onStage("sound");
+            audio = await renderPotatoAudio(round).catch(() => null);
+            reel = potatoReel(round, { invert: job.invert });
+            summary = `${round.duration.toFixed(1)}s · ${MONTHS[round.survivor].label} survives · ${round.fuse.toFixed(1)}s fuse`;
+          } else if (job.mode === "month") {
             // Nothing is searched: the round is played once and the target is
             // read off it, so the length is exact by construction.
             const round = generateMonths(job.seed);
@@ -528,9 +548,11 @@ export default function HomePage() {
               ? "Fruit Drop"
               : mode === "shaper"
                 ? "Shaper"
-                : mode === "mounth"
-                  ? "Mounth"
-                  : "MrBeast"}
+                : mode === "month"
+                  ? "Month"
+                  : mode === "potato"
+                    ? "Hot Potato"
+                    : "MrBeast"}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
@@ -539,15 +561,17 @@ export default function HomePage() {
               ? "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."
               : mode === "shaper"
                 ? "A shape made of points, turning once every six seconds, and you cannot tell which way. The projection is flat and nothing is hidden, so the picture fits the shape going left and its mirror image going right equally well — your eye picks one, then swaps. The loop joins end to end."
-                : mode === "mounth"
+                : mode === "month"
                   ? "Hold the centre. Twelve balls, one a month, loose in the ring; while exactly one of them is in the zone in the middle, that month banks the seconds. Two at once and nobody scores. Every ball wears a ring of what it has banked, and the video ends the moment one of those rings closes."
-                  : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
+                  : mode === "potato"
+                    ? "One month is holding a fuse, and touching another month hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last month still in survives."
+                    : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(["battle", "drop", "beast", "shaper", "mounth"] as const).map(
+          {(["battle", "drop", "beast", "shaper", "month", "potato"] as const).map(
             (choice) => (
               <button
                 key={choice}
@@ -568,7 +592,9 @@ export default function HomePage() {
                       ? "MrBeast"
                       : choice === "shaper"
                         ? "Shaper"
-                        : "Mounth"}
+                        : choice === "month"
+                          ? "Month"
+                          : "Hot potato"}
               </button>
             ),
           )}
@@ -1056,7 +1082,7 @@ export default function HomePage() {
                       palette,
                       count: density,
                     }
-                  : mode === "mounth"
+                  : mode === "month" || mode === "potato"
                     ? { mode, seed, invert }
                     : {
                         mode,
@@ -1085,9 +1111,11 @@ export default function HomePage() {
               ? "Dropping…"
               : mode === "shaper"
                 ? "Building the cloud…"
-                : mode === "mounth"
+                : mode === "month"
                   ? "Playing the round…"
-                  : "Fighting…"
+                  : mode === "potato"
+                    ? "Passing it round…"
+                    : "Fighting…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}

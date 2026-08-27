@@ -24,6 +24,7 @@
 
 import type { DropRound } from '../sim/drop';
 import type { MonthsRound } from '../sim/months';
+import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
 import { DEFAULT_KIT, KITS } from './kit';
@@ -176,6 +177,39 @@ export function renderMonthsAudio(round: MonthsRound): Promise<AudioBuffer> {
             slot: i === 2 ? OCTAVE : TICK,
             gain: 0.9,
           }),
+        );
+        break;
+    }
+  }
+  return renderHits(round.duration, list, sprite);
+}
+
+/**
+ * Hot potato's sound.
+ *
+ * The same tick for every knock, as everywhere else on the site. The octave is
+ * kept for the two things that change the game: the potato changing hands, and
+ * a month going out — and going out gets three of them, because it is the only
+ * moment in the mode that is worth a beat of its own.
+ */
+export function renderPotatoAudio(round: PotatoRound): Promise<AudioBuffer> {
+  const list: Hit[] = [];
+  for (const event of round.events) {
+    switch (event.kind) {
+      case 'wall':
+        list.push({ t: event.t, slot: TICK, gain: 0.7 });
+        break;
+      case 'pass':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.85 });
+        break;
+      case 'out':
+        [0, 0.09, 0.18].forEach((offset) =>
+          list.push({ t: event.t + offset, slot: OCTAVE, gain: 0.9 }),
+        );
+        break;
+      case 'win':
+        [0, 0.12, 0.24].forEach((offset, i) =>
+          list.push({ t: event.t + offset, slot: i === 2 ? OCTAVE : TICK, gain: 0.95 }),
         );
         break;
     }

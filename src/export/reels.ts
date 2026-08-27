@@ -11,12 +11,14 @@
 import type { Reel } from './encodeVideo';
 import { drawDropFrame, type FruitFace } from '../render/drawDrop';
 import { drawMonthsFrame } from '../render/drawMonths';
+import { drawPotatoFrame } from '../render/drawPotato';
 import { drawShapeFrame } from '../render/drawShape';
 import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { DropRound } from '../sim/drop';
 import { MONTHS, type MonthsRound } from '../sim/months';
+import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
 
@@ -141,7 +143,7 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `mounth-${round.seed}-${MONTHS[round.winner].label.toLowerCase()}-${Math.round(
+    name: `month-${round.seed}-${MONTHS[round.winner].label.toLowerCase()}-${Math.round(
       round.duration,
     )}s${dress.invert ? '-white' : ''}`,
     paint(ctx, index) {
@@ -151,6 +153,26 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
         invert: dress.invert,
         target: round.target,
         winner: round.winner,
+      });
+      release(round.frames, index);
+    },
+  };
+}
+
+/** Hot potato, painted from its own frames. */
+export function potatoReel(round: PotatoRound, dress: Dress = {}): Reel {
+  return {
+    durationInFrames: round.durationInFrames,
+    duration: round.duration,
+    name: `potato-${round.seed}-${MONTHS[round.survivor].label.toLowerCase()}-${Math.round(
+      round.duration,
+    )}s${dress.invert ? '-white' : ''}`,
+    paint(ctx, index) {
+      drawPotatoFrame(ctx, round.frames[index], {
+        width: WIDTH,
+        height: HEIGHT,
+        invert: dress.invert,
+        survivor: round.survivor,
       });
       release(round.frames, index);
     },
