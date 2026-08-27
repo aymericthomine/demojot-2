@@ -91,10 +91,6 @@ const FIRST_AT_TOP = 9;
 /** Long enough that the target can always be read off the curves. */
 const HARD_CAP = 150;
 
-/** Seconds the title stays up, and how long it takes to go. */
-export const TITLE_HOLD = 4;
-export const TITLE_FADE = 1.6;
-
 export interface MonthState {
   x: number;
   y: number;

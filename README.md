@@ -620,8 +620,11 @@ is a game of drifting through a place rather than of running somebody down, and
 at the fight's speed the middle is crossed too fast for a hold to mean anything.
 The holder's name is measured and shrunk to fit inside the zone rather than set
 at a fixed size — a name that hangs over the edge stops reading as the zone's
-own label. The title holds for four seconds and fades over one and a half, which
-is what the reference does to the frame.
+own label.
+
+**No writing anywhere but the balls.** The reference opens on a title over the
+arena and this did too; asked for without it, what is left is the board on plain
+black, and the board explains itself — a ring that fills is a ring that fills.
 
 ## Measured against the reference, not guessed
 

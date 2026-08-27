@@ -6,10 +6,15 @@
  * progress rings on top. The name goes *behind* on purpose — it is the size of
  * the zone, and a label that covered the ball standing in the zone would hide
  * the one thing the viewer is watching.
+ *
+ * There is no writing anywhere else. The reference opens on a title over the
+ * arena and this used to as well; asked for without it, what is left is the
+ * board, and the board explains itself — a ring that fills is a ring that
+ * fills.
  */
 
 import { ink } from './ink';
-import { BALL, MONTHS, TITLE_FADE, TITLE_HOLD, ZONE, type MonthFrame } from '../sim/months';
+import { BALL, MONTHS, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
 export interface MonthsLook {
@@ -17,12 +22,8 @@ export interface MonthsLook {
   height: number;
   /** White ground, every colour its complement. */
   invert?: boolean;
-  /** Seconds from the start, for the title fade. */
-  time: number;
   /** Seconds a full ring stands for. */
   target: number;
-  /** Drawn over the middle for the last moment, when a ring has closed. */
-  winner?: number;
 }
 
 /** Ball outline, and the progress ring outside it, in ball radii. */
@@ -52,7 +53,7 @@ export function drawMonthsFrame(
   frame: MonthFrame,
   look: MonthsLook,
 ): void {
-  const { width, height, invert = false, time, target } = look;
+  const { width, height, invert = false, target } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -148,24 +149,6 @@ export function drawMonthsFrame(
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(month.label, x, y);
-    ctx.restore();
-  }
-
-  // The question, for the first few seconds. It is how anybody knows what they
-  // are watching, and it is in the way after that.
-  const fade = 1 - Math.max(0, Math.min(1, (time - TITLE_HOLD) / TITLE_FADE));
-  if (fade > 0.01) {
-    ctx.save();
-    ctx.globalAlpha = fade;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = ink('#ffffff', invert);
-    ctx.font = `800 ${Math.round(width * 0.072)}px system-ui, sans-serif`;
-    ctx.letterSpacing = `${Math.round(width * 0.008)}px`;
-    ctx.fillText('HOLD THE CENTER', cx, height * 0.152);
-    ctx.fillStyle = ink('#b9bcc6', invert);
-    ctx.font = `600 ${Math.round(width * 0.042)}px system-ui, sans-serif`;
-    ctx.fillText("WHAT'S THE BEST MONTH?", cx, height * 0.196);
     ctx.restore();
   }
 }

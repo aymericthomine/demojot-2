@@ -149,9 +149,6 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
-        // The title fades on a clock, so the painter has to know where in the
-        // video this frame is.
-        time: index / FPS,
         target: round.target,
       });
       release(round.frames, index);
