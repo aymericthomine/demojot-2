@@ -13,7 +13,7 @@
  * fills.
  */
 
-import { ink } from './ink';
+import { ink, textOn } from './ink';
 import { BALL, MONTHS, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
@@ -28,8 +28,15 @@ export interface MonthsLook {
   winner: number;
 }
 
-/** The dark line drawn around a month, in ball radii. */
-const OUTLINE = 0.16;
+/**
+ * The dark line drawn around a month, in ball radii.
+ *
+ * Thin, because it is what stands between the month and its gauge: the line is
+ * centred on the ball's edge, so half of it sits outside and that half *is* the
+ * gap the ring has to clear. Measured off the reference, the arc's inner edge
+ * lands at 1.05 ball radii, which is this line and no more.
+ */
+const OUTLINE = 0.1;
 
 /** The progress ring outside it, in ball radii. */
 const RING_WIDTH = 0.18;
@@ -219,9 +226,10 @@ export function drawMonthsFrame(
       ctx.lineCap = 'butt';
     }
 
+    const fill = drained(month.color, lost);
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
-    ctx.fillStyle = drained(month.color, lost);
+    ctx.fillStyle = fill;
     ctx.fill();
     ctx.lineWidth = disc * OUTLINE;
     ctx.strokeStyle = ink('#101216', invert);
@@ -231,7 +239,12 @@ export function drawMonthsFrame(
     ctx.font = `700 ${Math.round(disc * 0.62)}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = drained('#ffffff', lost * 0.62);
+    // Whichever of black and white can be read on the colour actually under it
+    // — which is why it is asked of the drained fill and not of the month's own
+    // colour. The four pale months carry black writing while the game is on,
+    // and a pale month that goes out ends up on a dark grey where black would
+    // disappear; asking the fill answers both without a special case.
+    ctx.fillStyle = drained(textOn(fill), lost * 0.62);
     ctx.fillText(month.label, x, y);
     ctx.restore();
   }

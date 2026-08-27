@@ -24,6 +24,18 @@ export function ink(hex: string, invert: boolean): string {
 /** How far a colour has to be from the ground, on the same 0-to-1 scale. */
 const FLOOR = 0.28;
 
+/**
+ * Where writing stops wanting white under it and starts wanting black.
+ *
+ * Read off the reference rather than chosen: its twelve months split into eight
+ * carrying white and four carrying black, and on perceived brightness those two
+ * sets do not overlap — white tops out at 0.607 and black starts at 0.654. This
+ * sits between them. Relative luminance, the other obvious measure, does *not*
+ * separate them: it puts an orange that carries black below a green that
+ * carries white, so the rule it would give is not the rule in the picture.
+ */
+const READABLE = 0.63;
+
 const brightness = (n: number): number =>
   (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
 
@@ -58,4 +70,15 @@ export function legible(hex: string, invert: boolean): string {
   const g = blend((n >> 8) & 255);
   const b = blend(n & 255);
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+/**
+ * Black or white, whichever can be read on this colour.
+ *
+ * The rule, not a list: a colour dark enough takes white writing and a colour
+ * light enough takes black, so a palette can be changed without anybody having
+ * to remember which of its entries were the pale ones.
+ */
+export function textOn(hex: string): string {
+  return brightness(Number.parseInt(hex.slice(1), 16)) > READABLE ? '#000000' : '#ffffff';
 }

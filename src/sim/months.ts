@@ -33,24 +33,31 @@ import { FPS } from './style';
 const SUBSTEPS = 4;
 
 /**
- * The cast, in calendar order, with the colours off the reference.
+ * The cast, in calendar order, with the colours sampled off the reference.
  *
  * Twelve is not a choice: it is the months, and the mode is the question the
  * reference asks with them.
+ *
+ * Every colour here was read out of a frame rather than matched by eye — the
+ * median of an annulus inside each disc, taken clear of the writing at its
+ * centre and of the compression at its rim. The hues were already right; what
+ * was wrong was that they had been set at full saturation, and the reference's
+ * are lighter and softer than that. Four of them are light enough to want black
+ * writing on them, which is a rule and not a list — see `textOn`.
  */
 export const MONTHS: readonly { label: string; color: string }[] = [
-  { label: 'JAN', color: '#e8194b' },
-  { label: 'FEB', color: '#f5811f' },
-  { label: 'MAR', color: '#e8b71a' },
-  { label: 'APR', color: '#9ee626' },
-  { label: 'MAY', color: '#22c55e' },
-  { label: 'JUN', color: '#14b789' },
-  { label: 'JUL', color: '#3ad6e8' },
-  { label: 'AUG', color: '#2f5fe0' },
-  { label: 'SEP', color: '#6f3ae0' },
-  { label: 'OCT', color: '#c81ee0' },
-  { label: 'NOV', color: '#e81e6f' },
-  { label: 'DEC', color: '#96613a' },
+  { label: 'JAN', color: '#e94555' },
+  { label: 'FEB', color: '#ef9544' },
+  { label: 'MAR', color: '#f7d452' },
+  { label: 'APR', color: '#c5ee63' },
+  { label: 'MAY', color: '#5fc26d' },
+  { label: 'JUN', color: '#50af9b' },
+  { label: 'JUL', color: '#67d3ef' },
+  { label: 'AUG', color: '#4169ee' },
+  { label: 'SEP', color: '#8142ec' },
+  { label: 'OCT', color: '#d04fed' },
+  { label: 'NOV', color: '#ea508c' },
+  { label: 'DEC', color: '#956d4a' },
 ];
 
 /** Ball radius, in arena units. Measured off the reference: 22 px of 257. */
