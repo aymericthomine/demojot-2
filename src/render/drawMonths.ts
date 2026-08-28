@@ -202,18 +202,17 @@ export function drawMonthsFrame(
     // The empty track first, then the banked seconds over it as an arc from the
     // top going clockwise. Both under the disc, so a full ring cannot creep over
     // the label.
-    // No empty track behind a flag. On a coloured disc the track reads as a
-    // gauge waiting to fill; around a picture that already has its own edge it
-    // reads as a frame somebody mounted the picture in, which is the one thing
-    // the flags were asked not to have. The arc still appears the moment there
-    // is something to show — it just arrives without its outline.
-    if (!member.flag) {
-      ctx.beginPath();
-      ctx.strokeStyle = ink(TRACK, invert);
-      ctx.lineWidth = disc * RING_WIDTH;
-      ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
-      ctx.stroke();
-    }
+    //
+    // Every cast gets it, flags included. It was left off them for a while on
+    // the grounds that a picture with its own edge does not want a frame round
+    // it — but the track is not a frame, it is the gauge the whole mode is
+    // about, and a country with no empty ring is a country whose score cannot
+    // be read until it has one. The same board for all three casts.
+    ctx.beginPath();
+    ctx.strokeStyle = ink(TRACK, invert);
+    ctx.lineWidth = disc * RING_WIDTH;
+    ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
+    ctx.stroke();
 
     const share = Math.max(0, Math.min(1, frame.hold[i] / target));
     const sweep = share * Math.PI * 2;
