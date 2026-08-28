@@ -513,21 +513,25 @@ is wearing it, and there are three to pick from instead of six copies of two
 games.
 
 - **Months** — the twelve, in the colours sampled off the reference.
-- **Zodiac** — the twelve signs, in the colours sampled off theirs. Writing is
-  centred **vertically** on its ink and **horizontally** on its line, and
-  thickened by stroking it in its own colour. Where a glyph sits inside its em is
-  the font's business, so `textBaseline` put the signs visibly low; measuring the
-  ink from the baseline fixes that, and ascent and descent are measured from the
-  baseline so there is nothing for an engine to disagree about. Correcting the
-  horizontal the same way is what must *not* be done: those members are given
-  relative to the alignment point, engines do not agree where that point is once
-  `textAlign` has moved it, and doing it threw every sign nearly half a radius to
-  the right on Safari while doing nothing at all on Chrome — the same amount for
-  all twelve, which is the signature of a constant being applied rather than a
-  font being awkward. `textAlign = 'center'` alone lands within half a per cent
-  of the middle, measured. And the symbol faces a machine has carry no bold, so
-  asking for weight 700 returns the same hairline; stroking thickens it whatever
-  font drew it. They come out
+- **Zodiac** — the twelve signs, in the colours sampled off theirs, thickened by
+  stroking them in their own colour because the symbol faces a machine has carry
+  no bold and asking for weight 700 returns the same hairline.
+
+Centring them took three goes, and the lesson is that **every metric the canvas
+reports about a glyph is a trap**. `textBaseline` centres the em box, and where a
+glyph sits inside its em is the font's business. `textAlign = 'center'` centres
+the *advance width*, and a star sign's ink does not sit in the middle of its
+advance in the face Safari picks — which put all twelve nearly half a radius to
+the right, the same amount each. And correcting either with
+`actualBoundingBoxLeft` and `Right` swaps one engine's disagreement for
+another's: those are given relative to the alignment point, and engines do not
+agree where that point is once `textAlign` has moved it.
+
+So nothing is asked. The glyph is drawn onto a scratch canvas at a known size,
+the painted pixels are found, and the offset from where it landed to where it
+should have is what gets used. That is a measurement of the ink this machine
+actually puts down, cached once per label, and it is right on any machine by
+construction rather than by having been tested on one. They come out
   duller than the months' and that is the source's own choice, not a dimmed
   screenshot: white in that frame is 255 and its ground is 0. The glyphs carry
   U+FE0E behind them, because without it these twelve are emoji by default — the
@@ -562,10 +566,12 @@ leaves. Without it a wall is a coloured ring and nothing else, and several of th
 twelve share a colour, so eleven of them would say nothing about who used to be
 there — which is the whole point of leaving them on the floor.
 
-A flag disc carries **no rim**. A flag is already a finished picture with its own
-edge, and a line round it reads as a badge somebody mounted it in. The cost is
-Germany, whose top third is the ground it sits on and now runs into it — which is
-what the flag looks like.
+A flag disc carries **nothing around it** — no rim, and in Month no empty
+progress track either. A flag is already a finished picture with its own edge,
+and a line round it reads as a badge somebody mounted it in. The arc still
+appears the moment a country has banked something; it just arrives without its
+outline. The cost is Germany, whose top third is the ground it sits on and now
+runs into it — which is what the flag looks like.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.

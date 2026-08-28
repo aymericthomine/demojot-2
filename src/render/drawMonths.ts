@@ -202,11 +202,18 @@ export function drawMonthsFrame(
     // The empty track first, then the banked seconds over it as an arc from the
     // top going clockwise. Both under the disc, so a full ring cannot creep over
     // the label.
-    ctx.beginPath();
-    ctx.strokeStyle = ink(TRACK, invert);
-    ctx.lineWidth = disc * RING_WIDTH;
-    ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
-    ctx.stroke();
+    // No empty track behind a flag. On a coloured disc the track reads as a
+    // gauge waiting to fill; around a picture that already has its own edge it
+    // reads as a frame somebody mounted the picture in, which is the one thing
+    // the flags were asked not to have. The arc still appears the moment there
+    // is something to show — it just arrives without its outline.
+    if (!member.flag) {
+      ctx.beginPath();
+      ctx.strokeStyle = ink(TRACK, invert);
+      ctx.lineWidth = disc * RING_WIDTH;
+      ctx.arc(x, y, disc * RING_GAP, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     const share = Math.max(0, Math.min(1, frame.hold[i] / target));
     const sweep = share * Math.PI * 2;

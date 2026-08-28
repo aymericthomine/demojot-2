@@ -65,53 +65,6 @@ export const CAST_WEIGHT: Record<CastName, number> = {
 };
 
 /**
- * Writing centred vertically on its ink, and horizontally on its line.
- *
- * Two different problems that look like one. Vertically, `textBaseline` centres
- * the em box, and where a glyph sits inside its own em is the font's business
- * rather than the disc's — the star signs came out low, each by a different
- * amount. Measuring the ink from the baseline and centring *that* fixes it, and
- * `actualBoundingBoxAscent` and `Descent` are measured from the baseline, which
- * leaves nothing for an engine to disagree about.
- *
- * Horizontally there was never a problem to fix. `textAlign = 'center'` centres
- * the advance width and lands within half a per cent of the disc's middle,
- * measured. Correcting *that* with the ink box as well is what broke it: the
- * left and right members are given relative to the alignment point, and engines
- * do not agree on where that point is once `textAlign` has moved it. On the
- * browser this was written in the correction was worth nothing; on Safari it
- * threw every sign nearly half a radius to the right — the same amount for all
- * twelve, which is the signature of a constant being applied rather than a font
- * being awkward.
- */
-export function drawLabel(
-  ctx: CanvasRenderingContext2D,
-  text: string,
-  x: number,
-  y: number,
-  size: number,
-  color: string,
-  weight = 0,
-): void {
-  if (!text) return;
-  ctx.save();
-  ctx.font = `700 ${Math.round(size)}px system-ui, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-  const ink = ctx.measureText(text);
-  const dy = (ink.actualBoundingBoxAscent - ink.actualBoundingBoxDescent) / 2;
-  if (weight > 0) {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = size * weight;
-    ctx.lineJoin = 'round';
-    ctx.strokeText(text, x, y + dy);
-  }
-  ctx.fillStyle = color;
-  ctx.fillText(text, x, y + dy);
-  ctx.restore();
-}
-
-/**
  * The star signs, with the colours read off the reference frame.
  *
  * Sampled the same way the months were — the median of an annulus inside each
@@ -125,18 +78,18 @@ export function drawLabel(
  * text form, which is the monochrome sign the reference shows.
  */
 export const ZODIAC: readonly Member[] = [
-  { key: 'aries', label: '♈︎', color: '#c02a31' },
-  { key: 'taurus', label: '♉︎', color: '#5785b2' },
-  { key: 'gemini', label: '♊︎', color: '#76ba63' },
-  { key: 'cancer', label: '♋︎', color: '#e28338' },
-  { key: 'leo', label: '♌︎', color: '#864799' },
-  { key: 'virgo', label: '♍︎', color: '#e1d85d' },
-  { key: 'libra', label: '♎︎', color: '#68c9c7' },
-  { key: 'scorpio', label: '♏︎', color: '#c72e87' },
-  { key: 'sagittarius', label: '♐︎', color: '#965535' },
-  { key: 'capricorn', label: '♑︎', color: '#8bcbac' },
-  { key: 'aquarius', label: '♒︎', color: '#9ca1c6' },
-  { key: 'pisces', label: '♓︎', color: '#c9eb86' },
+  { key: 'aries', label: '\u2648\ufe0e', color: '#c02a31' },
+  { key: 'taurus', label: '\u2649\ufe0e', color: '#5785b2' },
+  { key: 'gemini', label: '\u264a\ufe0e', color: '#76ba63' },
+  { key: 'cancer', label: '\u264b\ufe0e', color: '#e28338' },
+  { key: 'leo', label: '\u264c\ufe0e', color: '#864799' },
+  { key: 'virgo', label: '\u264d\ufe0e', color: '#e1d85d' },
+  { key: 'libra', label: '\u264e\ufe0e', color: '#68c9c7' },
+  { key: 'scorpio', label: '\u264f\ufe0e', color: '#c72e87' },
+  { key: 'sagittarius', label: '\u2650\ufe0e', color: '#965535' },
+  { key: 'capricorn', label: '\u2651\ufe0e', color: '#8bcbac' },
+  { key: 'aquarius', label: '\u2652\ufe0e', color: '#9ca1c6' },
+  { key: 'pisces', label: '\u2653\ufe0e', color: '#c9eb86' },
 ];
 
 /**
@@ -148,9 +101,8 @@ export const ZODIAC: readonly Member[] = [
  * heavyweight bout rather than as an atlas.
  *
  * The colour on each is the one that stands for it when a single colour is all
- * there is room for — Germany's gold rather than its black, because a black ring
- * on a black ground is not a ring. Several of them collide, which does not
- * matter: no ball is ever identified by that colour alone, it wears its flag.
+ * there is room for. Several of them collide, which does not matter: no ball is
+ * ever identified by that colour alone, it wears its flag.
  */
 export const COUNTRIES: readonly Member[] = [
   { key: 'us', label: '', color: '#3a386f', flag: 'us' },
@@ -188,6 +140,107 @@ export const CAST_LABEL: Record<CastName, string> = {
 /** Every cast is twelve, because the games are. */
 export const castFor = (name: CastName | undefined): readonly Member[] =>
   CASTS[name ?? 'months'] ?? AS_MONTHS;
+
+/**
+ * Where a glyph's ink sits inside its own line, measured by drawing it.
+ *
+ * Every metric the canvas will report about this has turned out to be a trap.
+ * `textAlign = 'center'` centres the *advance width*, and a star sign's ink does
+ * not sit in the middle of its advance in the face Safari picks — which put all
+ * twelve of them the best part of half a radius to the right of their discs, the
+ * same amount each, on the only screen that matters. `textBaseline` centres the
+ * em box, which is a different lie in the vertical. And correcting either with
+ * `actualBoundingBoxLeft` and `Right` swaps one engine's disagreement for
+ * another's: those two are given relative to the alignment point, and engines do
+ * not agree where that point is once `textAlign` has moved it.
+ *
+ * So nothing is asked and the thing is drawn instead. The glyph goes onto a
+ * scratch canvas at a known size, the painted pixels are found, and the offset
+ * from where it landed to where it should have landed is what comes back. That
+ * is not a claim about fonts or engines; it is a measurement of the ink this
+ * machine actually puts down, and it is right on any machine by construction.
+ *
+ * Once per label, kept — twelve small canvases at the start of a cast, and none
+ * after.
+ */
+const INK = new Map<string, { dx: number; dy: number }>();
+
+const MEASURE_AT = 128;
+
+function inkCentre(text: string): { dx: number; dy: number } {
+  const known = INK.get(text);
+  if (known) return known;
+  const middle = { dx: 0, dy: 0 };
+  if (typeof OffscreenCanvas === 'undefined') return middle;
+
+  const span = MEASURE_AT * 2;
+  const sheet = new OffscreenCanvas(span, span);
+  const probe = sheet.getContext('2d', { willReadFrequently: true });
+  if (!probe) return middle;
+  probe.font = `700 ${MEASURE_AT}px system-ui, sans-serif`;
+  probe.textAlign = 'center';
+  probe.textBaseline = 'alphabetic';
+  probe.fillStyle = '#ffffff';
+  probe.fillText(text, MEASURE_AT, MEASURE_AT);
+
+  const pixels = probe.getImageData(0, 0, span, span).data;
+  let left = span;
+  let right = -1;
+  let top = span;
+  let bottom = -1;
+  for (let y = 0; y < span; y += 1) {
+    for (let x = 0; x < span; x += 1) {
+      if (pixels[(y * span + x) * 4 + 3] < 24) continue;
+      if (x < left) left = x;
+      if (x > right) right = x;
+      if (y < top) top = y;
+      if (y > bottom) bottom = y;
+    }
+  }
+  // Nothing was painted: an empty label, or a glyph this machine has no face
+  // for. Either way there is nothing to move.
+  if (right < 0) {
+    INK.set(text, middle);
+    return middle;
+  }
+  const found = {
+    dx: (MEASURE_AT - (left + right) / 2) / MEASURE_AT,
+    dy: (MEASURE_AT - (top + bottom) / 2) / MEASURE_AT,
+  };
+  INK.set(text, found);
+  return found;
+}
+
+/**
+ * Writing put in the middle of a disc, by where its ink lands.
+ */
+export function drawLabel(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  weight = 0,
+): void {
+  if (!text) return;
+  const { dx, dy } = inkCentre(text);
+  ctx.save();
+  ctx.font = `700 ${Math.round(size)}px system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const at = x + dx * size;
+  const on = y + dy * size;
+  if (weight > 0) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size * weight;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(text, at, on);
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(text, at, on);
+  ctx.restore();
+}
 
 /**
  * Put a cast member on a disc already drawn at `x, y`.
