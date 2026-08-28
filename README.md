@@ -525,42 +525,37 @@ games.
   U+FE0E behind them, because without it these twelve are emoji by default — the
   standard gives them emoji presentation — and would arrive as colour pictures on
   the very phones this is made for.
-- **Countries** — the twelve biggest economies, as flags **drawn rather than
-  typed**. The obvious way is the regional-indicator emoji and it is wrong twice
-  over: it is a smiley by another name, and half the platforms that matter refuse
-  to draw it, so a video made on Windows would come out spelling `DE` where
-  Germany should be. The palette is the reference icon set's rather than the
-  flags' own: every red in it is the same red, every blue the same blue, which is
-  what makes a set of flat icons look like a set. Official colours would be more
-  correct and would look worse — France's navy beside Russia's brighter blue
-  reads as one of the two being a mistake. In Hot potato a country that goes out
-  keeps its flag faintly inside its ring, because several of the twelve share a
-  colour and eleven bare rings would say nothing about who used to be there.
+- **Countries** — the twelve biggest economies, as **pictures cut out of the icon
+  set** they are matched to, one disc per country, masked to a circle a pixel
+  inside the edge so none of the page they sat on survives the crop.
 
-The flags are read at eighty pixels across, which is the whole brief. What has to
-survive is the *arrangement* — which way the bands run, where the charge sits,
-what two colours meet — not the fine detail of an emblem, so Mexico's eagle,
-Spain's arms and the fifty stars are drawn as the marks they read as at that
-size. Everything that carries recognition at a glance is exact.
+There was a drawn set here first — twelve painters putting bands and charges on a
+canvas — and it was replaced. Drawing could get the arrangement right and never
+the *character*: a set of flat icons is one hand making the same decisions twelve
+times, and reproducing that by hand reproduces a style rather than a picture. It
+also could not carry what does not survive being drawn from memory at eighty
+pixels, and the failures were instructive — a maple leaf came out as an asterisk
+until the notches were cut deep enough, and Mexico's eagle was a brown egg, then
+a mushroom with a smile once a wreath was added under it.
 
-Four things the drawing had to be told, all of them found by rendering it large
-and looking. A flag with black in it needs a rim that is neither black nor the
-ground: Germany's top third *is* the ground, and with the discs' usual near-black
-outline it came out as a half circle of red and gold floating in nothing. The
-crescent on Algeria's flag is a red disc with a white one laid over it rather
-than a hole cut out of one — cutting wants `destination-out`, and the canvas the
-encoder paints into is opaque, so there is nothing behind the hole to reveal.
-Brazil's band crosses the globe and is clipped to it; drawn unclipped it was a
-hoop floating above the blue, joined to nothing. And what makes a maple leaf read
-as a leaf rather than as an asterisk is the *depth of the notches* — three lobes
-separated by cuts that come most of the way back to the middle, not points spread
-evenly around a centre.
+What has not changed is why they are not emoji. The regional-indicator emoji is a
+smiley by another name, and half the platforms that matter refuse to draw it, so
+a video made on Windows would come out spelling `DE` where Germany should be.
 
-Mexico is the one that had to be argued down. The emblem is an eagle on a cactus
-over a wreath, and at a dozen pixels none of that survives: drawn as an ellipse
-it was a brown egg, and drawn with a wreath under it the arc read as a mouth and
-the whole mark as a face. What reads as a bird at any size is a body between two
-wings, so that is all there is.
+The pictures are carried as data rather than as files, for two reasons: a static
+export served under a path prefix has to be told that prefix for every asset it
+fetches, and a fetch that fails leaves a video with holes in it. Quantised to
+thirty-two colours each — which flat artwork loses nothing to — the set is
+seventy kilobytes. They are decoded once before the first frame, because painting
+a frame is synchronous and cannot wait for a picture.
+
+In Hot potato a country that goes out keeps its flag faintly inside the ring it
+leaves. Without it a wall is a coloured ring and nothing else, and several of the
+twelve share a colour, so eleven of them would say nothing about who used to be
+there — which is the whole point of leaving them on the floor.
+
+**They are somebody else's artwork.** That is worth knowing rather than
+discovering; the drawn set they replaced owed nothing to anyone.
 
 ## Measured against the reference, not guessed
 

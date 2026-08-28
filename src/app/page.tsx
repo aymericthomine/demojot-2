@@ -38,6 +38,7 @@ import {
 import { generateMonths } from "../sim/months";
 import { generatePotato } from "../sim/potato";
 import { CAST_LABEL, castFor, type CastName } from "../render/cast";
+import { loadFlags } from "../render/flags";
 import {
   DENSITIES,
   NORMAL_DENSITY,
@@ -388,6 +389,9 @@ export default function HomePage() {
             // play rather than being hunted for.
             const round = generatePotato(job.seed);
             total = round.durationInFrames;
+            // The flags are pictures and painting is synchronous, so they are
+            // decoded before the first frame rather than during it.
+            if (job.cast === "countries") await loadFlags();
             onStage("sound");
             audio = await renderPotatoAudio(round).catch(() => null);
             reel = potatoReel(round, { invert: job.invert, cast: job.cast });
@@ -397,6 +401,7 @@ export default function HomePage() {
             // read off it, so the length is exact by construction.
             const round = generateMonths(job.seed);
             total = round.durationInFrames;
+            if (job.cast === "countries") await loadFlags();
             onStage("sound");
             audio = await renderMonthsAudio(round).catch(() => null);
             reel = monthsReel(round, { invert: job.invert, cast: job.cast });

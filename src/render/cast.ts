@@ -14,7 +14,7 @@
  * painter from `flags.ts` and no text at all.
  */
 
-import { FLAGS, type FlagName } from './flags';
+import { drawFlag, type FlagName } from './flags';
 import { MONTHS } from '../sim/months';
 
 export type CastName = 'months' | 'zodiac' | 'countries';
@@ -182,9 +182,9 @@ export const castFor = (name: CastName | undefined): readonly Member[] =>
 /**
  * Put a cast member on a disc already drawn at `x, y`.
  *
- * A flag is clipped to the disc and painted square, so the circle does the
- * cropping and the bands run off the edge — which is what the reference does,
- * and the only way a tricolour reads as a flag rather than as a fitted picture.
+ * A flag is clipped to the disc as well as carrying its own round edge: the
+ * picture's corners are transparent, and the clip is what stops a half pixel of
+ * its antialiased rim from standing outside the disc it is filling.
  */
 export function drawMember(
   ctx: CanvasRenderingContext2D,
@@ -198,7 +198,6 @@ export function drawMember(
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.clip();
-  ctx.translate(x, y);
-  FLAGS[member.flag](ctx, radius);
+  drawFlag(ctx, member.flag, x, y, radius);
   ctx.restore();
 }
