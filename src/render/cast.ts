@@ -65,13 +65,24 @@ export const CAST_WEIGHT: Record<CastName, number> = {
 };
 
 /**
- * Writing centred on its ink rather than on its line.
+ * Writing centred vertically on its ink, and horizontally on its line.
  *
- * `textBaseline = 'middle'` centres the em box, and where a glyph sits inside
- * its own em is the font's business, not the disc's: the star signs came out
- * visibly low and off to one side, each by a different amount, which reads as
- * twelve balls printed carelessly. Measuring the ink and centring *that* puts
- * every one of them in the middle of its disc whatever face drew it.
+ * Two different problems that look like one. Vertically, `textBaseline` centres
+ * the em box, and where a glyph sits inside its own em is the font's business
+ * rather than the disc's — the star signs came out low, each by a different
+ * amount. Measuring the ink from the baseline and centring *that* fixes it, and
+ * `actualBoundingBoxAscent` and `Descent` are measured from the baseline, which
+ * leaves nothing for an engine to disagree about.
+ *
+ * Horizontally there was never a problem to fix. `textAlign = 'center'` centres
+ * the advance width and lands within half a per cent of the disc's middle,
+ * measured. Correcting *that* with the ink box as well is what broke it: the
+ * left and right members are given relative to the alignment point, and engines
+ * do not agree on where that point is once `textAlign` has moved it. On the
+ * browser this was written in the correction was worth nothing; on Safari it
+ * threw every sign nearly half a radius to the right — the same amount for all
+ * twelve, which is the signature of a constant being applied rather than a font
+ * being awkward.
  */
 export function drawLabel(
   ctx: CanvasRenderingContext2D,
@@ -88,16 +99,15 @@ export function drawLabel(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
   const ink = ctx.measureText(text);
-  const dx = (ink.actualBoundingBoxLeft - ink.actualBoundingBoxRight) / 2;
   const dy = (ink.actualBoundingBoxAscent - ink.actualBoundingBoxDescent) / 2;
   if (weight > 0) {
     ctx.strokeStyle = color;
     ctx.lineWidth = size * weight;
     ctx.lineJoin = 'round';
-    ctx.strokeText(text, x + dx, y + dy);
+    ctx.strokeText(text, x, y + dy);
   }
   ctx.fillStyle = color;
-  ctx.fillText(text, x + dx, y + dy);
+  ctx.fillText(text, x, y + dy);
   ctx.restore();
 }
 

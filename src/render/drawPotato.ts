@@ -165,12 +165,15 @@ export function drawPotatoFrame(
     ctx.arc(x, y, disc, 0, Math.PI * 2);
     ctx.fillStyle = member.color;
     ctx.fill();
-    ctx.lineWidth = disc * OUTLINE;
-    // A flag with black in it on a black ground needs a rim that is neither:
-    // Germany's top third *is* the ground, and with a near-black outline the
-    // disc came out as a half circle of red and gold floating in nothing.
-    ctx.strokeStyle = ink(member.flag ? '#585d69' : '#101216', invert);
-    ctx.stroke();
+    // No rim on a flag. A flag is already a finished picture with its own edge,
+    // and a line round it reads as a badge somebody mounted it in. The cost is
+    // Germany, whose top third is the ground it sits on and now runs into it —
+    // which is what the flag looks like, and was asked for.
+    if (!member.flag) {
+      ctx.lineWidth = disc * OUTLINE;
+      ctx.strokeStyle = ink('#101216', invert);
+      ctx.stroke();
+    }
 
     if (member.flag) {
       drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));

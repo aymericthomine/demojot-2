@@ -514,12 +514,20 @@ games.
 
 - **Months** — the twelve, in the colours sampled off the reference.
 - **Zodiac** — the twelve signs, in the colours sampled off theirs. Writing is
-  centred on its *ink* rather than on its line, and thickened by stroking it in
-  its own colour: where a glyph sits inside its em is the font's business, so
-  `textBaseline = 'middle'` put the signs visibly low and off to one side, each
-  by a different amount — twelve balls printed carelessly. And the symbol faces
-  a machine has do not carry a bold, so asking for weight 700 returns the same
-  hairline; stroking thickens it whatever font drew it. They come out
+  centred **vertically** on its ink and **horizontally** on its line, and
+  thickened by stroking it in its own colour. Where a glyph sits inside its em is
+  the font's business, so `textBaseline` put the signs visibly low; measuring the
+  ink from the baseline fixes that, and ascent and descent are measured from the
+  baseline so there is nothing for an engine to disagree about. Correcting the
+  horizontal the same way is what must *not* be done: those members are given
+  relative to the alignment point, engines do not agree where that point is once
+  `textAlign` has moved it, and doing it threw every sign nearly half a radius to
+  the right on Safari while doing nothing at all on Chrome — the same amount for
+  all twelve, which is the signature of a constant being applied rather than a
+  font being awkward. `textAlign = 'center'` alone lands within half a per cent
+  of the middle, measured. And the symbol faces a machine has carry no bold, so
+  asking for weight 700 returns the same hairline; stroking thickens it whatever
+  font drew it. They come out
   duller than the months' and that is the source's own choice, not a dimmed
   screenshot: white in that frame is 255 and its ground is 0. The glyphs carry
   U+FE0E behind them, because without it these twelve are emoji by default — the
@@ -553,6 +561,11 @@ In Hot potato a country that goes out keeps its flag faintly inside the ring it
 leaves. Without it a wall is a coloured ring and nothing else, and several of the
 twelve share a colour, so eleven of them would say nothing about who used to be
 there — which is the whole point of leaving them on the floor.
+
+A flag disc carries **no rim**. A flag is already a finished picture with its own
+edge, and a line round it reads as a badge somebody mounted it in. The cost is
+Germany, whose top third is the ground it sits on and now runs into it — which is
+what the flag looks like.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
