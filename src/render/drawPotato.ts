@@ -176,7 +176,10 @@ export function drawPotatoFrame(
     }
 
     if (member.flag) {
-      drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
+      // Out to the full radius: drawn inside it the fill shows round the edge
+      // as a ring in the member's colour, which reads as a mount rather than as
+      // a flag.
+      drawMember(ctx, member, x, y, disc);
     } else {
       drawLabel(ctx, member.label, x, y, disc * fit, textOn(member.color), weight);
     }

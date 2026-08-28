@@ -96,5 +96,11 @@ export function drawFlag(
 ): void {
   const picture = decoded?.get(name);
   if (!picture) return;
+  // These are cut at a hundred and sixteen pixels and land on a ball of eighty,
+  // so every one of them is a downscale. Asking for the good filter is the
+  // difference between a flag with clean bands and one whose stripes crawl.
+  const smoothing = ctx.imageSmoothingQuality;
+  ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(picture, x - radius, y - radius, radius * 2, radius * 2);
+  ctx.imageSmoothingQuality = smoothing;
 }

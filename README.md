@@ -566,6 +566,14 @@ leaves. Without it a wall is a coloured ring and nothing else, and several of th
 twelve share a colour, so eleven of them would say nothing about who used to be
 there — which is the whole point of leaving them on the floor.
 
+A flag **is** the disc, painted out to its full radius. Drawn a little inside it
+the fill showed round the edge as a ring in the member's colour — gold round
+Spain, green round Mexico — which reads as a picture mounted in a coloured
+surround rather than as a flag. Its circular edge is anti-aliased in the source
+crop rather than cut on a pixel boundary, because a hard mask leaves a
+stair-stepped rim once the picture is scaled down onto a ball, and that rim is
+exactly what makes a bitmap look like a bitmap next to a drawn shape.
+
 A flag disc carries **nothing around it** — no rim, and in Month no empty
 progress track either. A flag is already a finished picture with its own edge,
 and a line round it reads as a badge somebody mounted it in. The arc still

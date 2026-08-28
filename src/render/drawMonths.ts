@@ -257,11 +257,13 @@ export function drawMonthsFrame(
     }
 
     if (member.flag) {
-      // The flag goes inside the outline, not over it, so the disc keeps the
-      // edge that separates it from the ground and from anything behind it.
+      // The flag *is* the disc, out to its full radius. Drawn a little inside it
+      // the fill showed round the edge as a ring in the member's colour — gold
+      // round Spain, green round Mexico — which reads as a picture mounted in a
+      // coloured surround rather than as a flag.
       ctx.save();
       ctx.globalAlpha = 1 - lost * 0.72;
-      drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
+      drawMember(ctx, member, x, y, disc);
       ctx.restore();
     } else {
       // Whichever of black and white can be read on the colour actually under
