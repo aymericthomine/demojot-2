@@ -37,6 +37,24 @@ const SUBSTEPS = 4;
 /** How fast a month travels, in arena radii a second. The fight's own pace. */
 const SPEED = 0.58;
 
+/**
+ * The white band every month wears, in ball radii — and part of the ball.
+ *
+ * Month's gauge is a reading laid *over* its disc: it can cross the arena's rim
+ * and another month's edge, because nothing in the physics knows it is there.
+ * This one is the month's own surface. It is what arrives at a wall and what
+ * touches the next month, so two months meet band to band with their discs
+ * still clear of one another, and no band is ever caught hanging outside the
+ * ring it is being played in.
+ *
+ * Which makes it a fact about the physics that happens to be drawn, rather than
+ * a drawing. The painter imports it; it is not written down twice.
+ */
+export const BAND = 0.26;
+
+/** How far a month reaches, in arena radii: its disc and its band. */
+const REACH = BALL * (1 + BAND);
+
 /** Where the twelve start, as a fraction of the arena. */
 const OPENING_RING = 0.725;
 
@@ -82,6 +100,18 @@ const FUSE_SHORT = (SHORTEST - OUTRO) / FUSES;
 const FUSE_LONG = (LONGEST - OUTRO) / FUSES;
 
 /**
+ * How fast the holder's band blinks, in flashes a second.
+ *
+ * From slow at the top of a fuse to frantic at the bottom of it, because the
+ * number in the middle only shows for the last three seconds and the ring needs
+ * to carry the rest. Squared rather than straight so the acceleration is felt
+ * near the end rather than spread evenly over the whole burn — a rate that rises
+ * steadily reads as a constant, and a constant is not a countdown.
+ */
+const BLINK_SLOW = 1.2;
+const BLINK_FAST = 7.5;
+
+/**
  * How long a month stays quiet after ringing off something.
  *
  * A soundtrack is a list of moments, and a month wedged in a corner produces
@@ -107,6 +137,14 @@ export interface PotatoFrame {
   fuse: number;
   /** Nought while the game is on, one from the moment it is decided. */
   reveal: number;
+  /**
+   * Whether the holder's band is lit on this frame.
+   *
+   * Carried per frame rather than worked out from the fuse when painting: the
+   * rate changes as the fuse burns, so the phase is the integral of a changing
+   * rate and there is no closed form to read off a single frame's clock.
+   */
+  flash: boolean;
 }
 
 export type PotatoEventKind = 'wall' | 'pass' | 'out' | 'win';
@@ -201,12 +239,13 @@ export function generatePotato(seed: number): PotatoRound {
   const frames: PotatoFrame[] = [];
   const events: PotatoEvent[] = [];
   const dt = 1 / (FPS * SUBSTEPS);
-  const wall = 1 - BALL;
-  const touching = (BALL * 2) ** 2;
+  const wall = 1 - REACH;
+  const touching = (REACH * 2) ** 2;
 
   let holder = opening;
   let fuse = length;
   let time = 0;
+  let phase = 0;
   let decidedAt = -1;
   let survivor = -1;
 
@@ -217,6 +256,7 @@ export function generatePotato(seed: number): PotatoRound {
       holder: decidedAt >= 0 ? -1 : holder,
       fuse: Math.max(0, fuse),
       reveal: decidedAt >= 0 ? 1 : 0,
+      flash: Math.floor(phase) % 2 === 0,
     });
     if (decidedAt >= 0 && frame >= decidedAt + Math.round(OUTRO * FPS)) break;
 
@@ -259,7 +299,7 @@ export function generatePotato(seed: number): PotatoRound {
           const distance = Math.sqrt(gap);
           const nx = dx / distance;
           const ny = dy / distance;
-          const overlap = BALL * 2 - distance;
+          const overlap = REACH * 2 - distance;
 
           if (a.out || b.out) {
             // One of them is a wall. The wall does not move and does not take
@@ -317,6 +357,10 @@ export function generatePotato(seed: number): PotatoRound {
       if (decidedAt >= 0) continue;
 
       fuse -= dt;
+      // The phase is accumulated rather than derived, because the rate it is
+      // accumulating at is itself a function of how much fuse is left.
+      const burnt = 1 - Math.max(0, fuse) / length;
+      phase += (BLINK_SLOW + (BLINK_FAST - BLINK_SLOW) * burnt * burnt) * dt;
       if (fuse <= 0) {
         balls[holder].out = true;
         balls[holder].vx = 0;
