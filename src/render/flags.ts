@@ -8,12 +8,19 @@
  * A drawn flag is the same picture on every machine, and it is the only kind
  * that survives being encoded at eighty pixels across.
  *
- * Eighty pixels is also the brief. These are read at the size of a thumbnail on
- * a phone, so what has to survive is the *arrangement* — which way the bands
- * run, where the charge sits, what two colours meet — and not the fine detail of
- * an emblem. Mexico's eagle, Spain's arms and the fifty stars are all beyond the
- * pixel budget and are drawn as the marks they read as at that size. Everything
- * that carries recognition at a glance is exact.
+ * **The palette is the reference's, not the flags'.** Sampled off the icon set
+ * this was matched to, every red in it is the same red, every blue the same
+ * blue, every gold the same gold — which is what makes a set of flat icons look
+ * like a set rather than like twelve pictures that happen to be round. Official
+ * colours would be more correct and would look worse: France's navy beside
+ * Russia's brighter blue reads as one of the two being a mistake.
+ *
+ * Eighty pixels is the other half of the brief. These are read at the size of a
+ * thumbnail on a phone, so what has to survive is the *arrangement* — which way
+ * the bands run, where the charge sits, what two colours meet — and not the fine
+ * detail of an emblem. Spain's arms and Mexico's eagle are drawn as the marks
+ * they read as at that size; everything that carries recognition at a glance is
+ * exact.
  *
  * Each painter draws into a box from `-r` to `r` about the origin. The caller
  * has already clipped to the disc, so a flag is painted square and the circle
@@ -22,20 +29,34 @@
  */
 
 export type FlagName =
-  | 'de'
-  | 'fr'
-  | 'es'
-  | 'gb'
-  | 'ru'
   | 'us'
-  | 'br'
-  | 'ca'
-  | 'mx'
+  | 'cn'
+  | 'jp'
+  | 'de'
   | 'in'
-  | 'il'
-  | 'dz';
+  | 'gb'
+  | 'fr'
+  | 'it'
+  | 'ca'
+  | 'ru'
+  | 'es'
+  | 'mx';
 
 type Painter = (ctx: CanvasRenderingContext2D, r: number) => void;
+
+/** The set's own colours, read off the reference icons. */
+const RED = '#ff0b00';
+const BLUE = '#014ebf';
+const GOLD = '#fece00';
+const NAVY = '#3a386f';
+const WHITE = '#ffffff';
+const BLACK = '#000000';
+const SAFFRON = '#fe9c22';
+const INDIA_GREEN = '#018900';
+const ITALY_GREEN = '#009a56';
+const MEXICO_GREEN = '#01643e';
+const CHAKRA = '#080467';
+const EAGLE = '#5c4a2a';
 
 /**
  * Equal bands across the box.
@@ -127,40 +148,101 @@ function leaf(ctx: CanvasRenderingContext2D, size: number): void {
 }
 
 export const FLAGS: Record<FlagName, Painter> = {
-  de: bands(['#000000', '#dd0000', '#ffce00'], false),
-  fr: bands(['#002395', '#ffffff', '#ed2939'], true),
-  ru: bands(['#ffffff', '#0039a6', '#d52b1e'], false),
+  ru: bands([WHITE, BLUE, RED], false),
+  de: bands([BLACK, RED, GOLD], false),
+  fr: bands([BLUE, WHITE, RED], true),
+  it: bands([ITALY_GREEN, WHITE, RED], true),
 
-  es: split(
-    [
-      [0.25, '#aa151b'],
-      [0.5, '#f1bf00'],
-      [0.25, '#aa151b'],
-    ],
-    false,
-  ),
+  jp: (ctx, r) => {
+    ctx.fillStyle = WHITE;
+    ctx.fillRect(-r, -r, 2 * r, 2 * r);
+    ctx.fillStyle = RED;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.44, 0, Math.PI * 2);
+    ctx.fill();
+  },
+
+  cn: (ctx, r) => {
+    ctx.fillStyle = RED;
+    ctx.fillRect(-r, -r, 2 * r, 2 * r);
+    ctx.fillStyle = GOLD;
+    star(ctx, -r * 0.5, -r * 0.42, r * 0.26);
+    // The four small ones in their arc to the right of it. Each really points at
+    // the big star; that rotation is a pixel's worth of difference here and is
+    // not drawn.
+    for (const [x, y] of [
+      [-0.09, -0.68],
+      [0.05, -0.5],
+      [0.05, -0.26],
+      [-0.09, -0.08],
+    ] as const) {
+      star(ctx, x * r, y * r, r * 0.1);
+    }
+  },
+
+  in: (ctx, r) => {
+    bands([SAFFRON, WHITE, INDIA_GREEN], false)(ctx, r);
+    ctx.strokeStyle = CHAKRA;
+    ctx.lineWidth = Math.max(1, r * 0.05);
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.26, 0, Math.PI * 2);
+    ctx.stroke();
+    // Spokes, thinned to eight: twenty-four at this size is a filled disc.
+    for (let i = 0; i < 8; i += 1) {
+      const angle = (i * Math.PI) / 4;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(angle) * r * 0.26, Math.sin(angle) * r * 0.26);
+      ctx.stroke();
+    }
+  },
 
   ca: (ctx, r) => {
     split(
       [
-        [0.25, '#d80621'],
-        [0.5, '#ffffff'],
-        [0.25, '#d80621'],
+        [0.25, RED],
+        [0.5, WHITE],
+        [0.25, RED],
       ],
       true,
     )(ctx, r);
-    ctx.fillStyle = '#d80621';
+    ctx.fillStyle = RED;
     leaf(ctx, r * 0.52);
   },
 
+  es: (ctx, r) => {
+    split(
+      [
+        [0.25, RED],
+        [0.5, GOLD],
+        [0.25, RED],
+      ],
+      false,
+    )(ctx, r);
+    // The arms, as the shield-shaped mark they come down to. The quarters, the
+    // pillars and the crown are all under a pixel here; what is left is that
+    // Spain's gold band carries a small red charge to the left of centre.
+    ctx.fillStyle = RED;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.46, -r * 0.17);
+    ctx.lineTo(-r * 0.22, -r * 0.17);
+    ctx.lineTo(-r * 0.22, r * 0.06);
+    ctx.quadraticCurveTo(-r * 0.34, r * 0.22, -r * 0.46, r * 0.06);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = GOLD;
+    ctx.fillRect(-r * 0.4, -r * 0.11, r * 0.05, r * 0.18);
+    ctx.fillRect(-r * 0.31, -r * 0.11, r * 0.05, r * 0.18);
+  },
+
   mx: (ctx, r) => {
-    bands(['#006847', '#ffffff', '#ce1126'], true)(ctx, r);
+    bands([MEXICO_GREEN, WHITE, RED], true)(ctx, r);
     // The eagle, and only the eagle. The emblem is a bird on a cactus over a
     // wreath and at a dozen pixels none of that survives — a first try with the
     // wreath under it read as a mouth, and the whole mark as a face. What reads
     // as a bird at any size is a body between two wings, so that is all there
     // is, in the flat manner the rest of the set is drawn in.
-    ctx.fillStyle = '#5c4a2a';
+    ctx.fillStyle = EAGLE;
     ctx.beginPath();
     ctx.ellipse(0, r * 0.02, r * 0.055, r * 0.16, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -174,107 +256,15 @@ export const FLAGS: Record<FlagName, Painter> = {
     }
   },
 
-  in: (ctx, r) => {
-    bands(['#ff9933', '#ffffff', '#138808'], false)(ctx, r);
-    ctx.strokeStyle = '#000080';
-    ctx.lineWidth = Math.max(1, r * 0.05);
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.28, 0, Math.PI * 2);
-    ctx.stroke();
-    // Spokes, thinned to eight: twenty-four at this size is a filled disc.
-    for (let i = 0; i < 8; i += 1) {
-      const angle = (i * Math.PI) / 4;
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * r * 0.28, Math.sin(angle) * r * 0.28);
-      ctx.stroke();
-    }
-  },
-
-  il: (ctx, r) => {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-r, -r, 2 * r, 2 * r);
-    ctx.fillStyle = '#0038b8';
-    ctx.fillRect(-r, -r * 0.72, 2 * r, r * 0.22);
-    ctx.fillRect(-r, r * 0.5, 2 * r, r * 0.22);
-    ctx.strokeStyle = '#0038b8';
-    ctx.lineWidth = Math.max(1, r * 0.07);
-    for (const flip of [1, -1]) {
-      ctx.beginPath();
-      for (let i = 0; i < 3; i += 1) {
-        const angle = -Math.PI / 2 + (i * Math.PI * 2) / 3;
-        const x = Math.cos(angle) * r * 0.42;
-        const y = Math.sin(angle) * r * 0.42 * flip;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.stroke();
-    }
-  },
-
-  dz: (ctx, r) => {
-    ctx.fillStyle = '#006233';
-    ctx.fillRect(-r, -r, r + 0.5, 2 * r);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, -r, r, 2 * r);
-    // The crescent is a red disc with a white one laid over it, not a hole cut
-    // out of one. Cutting would want `destination-out`, and the canvas the
-    // encoder paints into is opaque — punching a hole in it has nothing behind
-    // it to reveal, so what the flag would get is whatever that browser does
-    // with a composite mode on a surface that has no alpha.
-    ctx.fillStyle = '#d21034';
-    ctx.beginPath();
-    ctx.arc(-r * 0.04, 0, r * 0.44, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(r * 0.1, 0, r * 0.36, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#d21034';
-    star(ctx, r * 0.3, 0, r * 0.22);
-  },
-
-  br: (ctx, r) => {
-    ctx.fillStyle = '#009c3b';
-    ctx.fillRect(-r, -r, 2 * r, 2 * r);
-    ctx.fillStyle = '#ffdf00';
-    ctx.beginPath();
-    ctx.moveTo(0, -r * 0.8);
-    ctx.lineTo(r * 0.86, 0);
-    ctx.lineTo(0, r * 0.8);
-    ctx.lineTo(-r * 0.86, 0);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = '#002776';
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
-    ctx.fill();
-    // The band crosses the globe rather than arching over it. Drawn as a wide
-    // arc clipped to the globe, which is what it is on the flag: a curve whose
-    // centre is far below, cutting the disc on a gentle rise. Unclipped it came
-    // out as a hoop floating above the blue, joined to nothing.
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = r * 0.13;
-    ctx.beginPath();
-    ctx.arc(0, r * 0.86, r * 0.82, Math.PI * 1.08, Math.PI * 1.92);
-    ctx.stroke();
-    ctx.restore();
-  },
-
   gb: (ctx, r) => {
-    ctx.fillStyle = '#012169';
+    ctx.fillStyle = NAVY;
     ctx.fillRect(-r, -r, 2 * r, 2 * r);
     // The saltire twice — white behind, red in front and thinner — then the
     // cross of St George over both, which is the order the flag is built in.
     ctx.lineCap = 'butt';
     for (const [color, width] of [
-      ['#ffffff', 0.34],
-      ['#c8102e', 0.16],
+      [WHITE, 0.34],
+      [RED, 0.16],
     ] as const) {
       ctx.strokeStyle = color;
       ctx.lineWidth = r * width;
@@ -285,25 +275,25 @@ export const FLAGS: Record<FlagName, Painter> = {
       ctx.lineTo(-r, r);
       ctx.stroke();
     }
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = WHITE;
     ctx.fillRect(-r, -r * 0.3, 2 * r, r * 0.6);
     ctx.fillRect(-r * 0.3, -r, r * 0.6, 2 * r);
-    ctx.fillStyle = '#c8102e';
+    ctx.fillStyle = RED;
     ctx.fillRect(-r, -r * 0.17, 2 * r, r * 0.34);
     ctx.fillRect(-r * 0.17, -r, r * 0.34, 2 * r);
   },
 
   us: (ctx, r) => {
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = WHITE;
     ctx.fillRect(-r, -r, 2 * r, 2 * r);
-    ctx.fillStyle = '#b31942';
+    ctx.fillStyle = RED;
     const stripe = (2 * r) / 13;
     for (let i = 0; i < 13; i += 2) ctx.fillRect(-r, -r + stripe * i, 2 * r, stripe + 0.5);
-    ctx.fillStyle = '#0a3161';
+    ctx.fillStyle = NAVY;
     ctx.fillRect(-r, -r, r * 0.9, stripe * 7);
     // Twenty dots for fifty stars. At this size a star is three pixels and a
     // grid of them is what the canton reads as anyway.
-    ctx.fillStyle = '#ffffff';
+    ctx.fillStyle = WHITE;
     for (let row = 0; row < 4; row += 1) {
       for (let col = 0; col < 5; col += 1) {
         ctx.beginPath();

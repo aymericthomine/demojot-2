@@ -525,10 +525,17 @@ games.
   U+FE0E behind them, because without it these twelve are emoji by default — the
   standard gives them emoji presentation — and would arrive as colour pictures on
   the very phones this is made for.
-- **Countries** — twelve flags, **drawn rather than typed**. The obvious way is
-  the regional-indicator emoji and it is wrong twice over: it is a smiley by
-  another name, and half the platforms that matter refuse to draw it, so a video
-  made on Windows would come out spelling `DE` where Germany should be.
+- **Countries** — the twelve biggest economies, as flags **drawn rather than
+  typed**. The obvious way is the regional-indicator emoji and it is wrong twice
+  over: it is a smiley by another name, and half the platforms that matter refuse
+  to draw it, so a video made on Windows would come out spelling `DE` where
+  Germany should be. The palette is the reference icon set's rather than the
+  flags' own: every red in it is the same red, every blue the same blue, which is
+  what makes a set of flat icons look like a set. Official colours would be more
+  correct and would look worse — France's navy beside Russia's brighter blue
+  reads as one of the two being a mistake. In Hot potato a country that goes out
+  keeps its flag faintly inside its ring, because several of the twelve share a
+  colour and eleven bare rings would say nothing about who used to be there.
 
 The flags are read at eighty pixels across, which is the whole brief. What has to
 survive is the *arrangement* — which way the bands run, where the charge sits,

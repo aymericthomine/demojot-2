@@ -134,7 +134,16 @@ export function drawPotatoFrame(
       ctx.arc(x, y, ball * (1 - WALL_WIDTH / 2), 0, Math.PI * 2);
       ctx.stroke();
 
-      if (!member.flag) {
+      if (member.flag) {
+        // A wall keeps its flag, faintly. Without it an out country is a
+        // coloured ring and nothing else — and several of the twelve share a
+        // colour, so eleven walls would end up telling you nothing about who
+        // used to be there, which is the whole point of leaving them on.
+        ctx.save();
+        ctx.globalAlpha = SPENT;
+        drawMember(ctx, member, x, y, ball * (1 - WALL_WIDTH));
+        ctx.restore();
+      } else {
         drawLabel(ctx, member.label, x, y, ball * fit, ink(dim(member.color, SPENT), invert), weight);
       }
       continue;

@@ -130,25 +130,31 @@ export const ZODIAC: readonly Member[] = [
 ];
 
 /**
- * The twelve countries off the reference, in the order it lists them.
+ * The twelve biggest countries, with the reference's own colours.
  *
- * The colour on each is the one that stands for the flag when a single colour is
- * all there is room for — Germany's gold rather than its black, because a black
- * ring on a black ground is not a ring.
+ * Biggest by what they are worth rather than by what they cover: the twelve
+ * largest economies that the reference set also draws, which is what a viewer
+ * means by a big country and what makes a ring of twelve flags read as a
+ * heavyweight bout rather than as an atlas.
+ *
+ * The colour on each is the one that stands for it when a single colour is all
+ * there is room for — Germany's gold rather than its black, because a black ring
+ * on a black ground is not a ring. Several of them collide, which does not
+ * matter: no ball is ever identified by that colour alone, it wears its flag.
  */
 export const COUNTRIES: readonly Member[] = [
-  { key: 'de', label: '', color: '#ffce00', flag: 'de' },
-  { key: 'fr', label: '', color: '#3355c8', flag: 'fr' },
-  { key: 'es', label: '', color: '#f1bf00', flag: 'es' },
-  { key: 'gb', label: '', color: '#c8102e', flag: 'gb' },
-  { key: 'ru', label: '', color: '#2f6fd0', flag: 'ru' },
-  { key: 'us', label: '', color: '#3f6fb0', flag: 'us' },
-  { key: 'br', label: '', color: '#009c3b', flag: 'br' },
-  { key: 'ca', label: '', color: '#d80621', flag: 'ca' },
-  { key: 'mx', label: '', color: '#00875c', flag: 'mx' },
-  { key: 'in', label: '', color: '#ff9933', flag: 'in' },
-  { key: 'il', label: '', color: '#2f6fd8', flag: 'il' },
-  { key: 'dz', label: '', color: '#009450', flag: 'dz' },
+  { key: 'us', label: '', color: '#3a386f', flag: 'us' },
+  { key: 'cn', label: '', color: '#ff0b00', flag: 'cn' },
+  { key: 'jp', label: '', color: '#ff0b00', flag: 'jp' },
+  { key: 'de', label: '', color: '#fece00', flag: 'de' },
+  { key: 'in', label: '', color: '#fe9c22', flag: 'in' },
+  { key: 'gb', label: '', color: '#014ebf', flag: 'gb' },
+  { key: 'fr', label: '', color: '#014ebf', flag: 'fr' },
+  { key: 'it', label: '', color: '#009a56', flag: 'it' },
+  { key: 'ca', label: '', color: '#ff0b00', flag: 'ca' },
+  { key: 'ru', label: '', color: '#014ebf', flag: 'ru' },
+  { key: 'es', label: '', color: '#fece00', flag: 'es' },
+  { key: 'mx', label: '', color: '#01643e', flag: 'mx' },
 ];
 
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({
