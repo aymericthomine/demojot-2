@@ -19,13 +19,12 @@
  *    to not be holding. Nothing a month does can add time, so there is no way to
  *    play for safety, only to pass it on.
  *
- * **The length is not searched for and not asked of the seed.** Eleven months go
- * out, one per fuse, so a round is eleven fuses and an ending — and that would
- * make every video exactly the same length, which is the one property a
- * duplicate detector reads first. So the seed sets the *fuse* instead, and the
- * length follows from it: four and a half seconds to five and a half puts a
- * round between fifty and sixty-four, without a search and without two videos
- * running to the same frame.
+ * **The length is not searched for.** Eleven months go out, one per fuse, so a
+ * round is eleven fuses and an ending — which means the length is a sum rather
+ * than a hunt. The seed picks the fuse and the length follows; a floor of sixty
+ * seconds and a ceiling of seventy-four are what the fuse is derived from,
+ * rather than the other way about, so the number anybody actually has an
+ * opinion about is the one written down.
  */
 
 import { BALL, MONTHS } from './months';
@@ -45,15 +44,16 @@ const OPENING_RING = 0.725;
 const FIRST_AT_TOP = 9;
 
 /**
- * The fuse, in seconds, at its shortest and its longest.
+ * The run a round is meant to make, in seconds.
  *
- * The seed picks one and it holds for the whole round. Eleven of them plus the
- * ending is the length of the video, so this is also the only dial there is on
- * that: a round comes out between fifty and sixty-four seconds, and no two fuses
- * give the same one.
+ * Stated as the length and not as the fuse, because the length is the thing
+ * anybody has an opinion about — a minute is the floor a video has to clear —
+ * and the fuse is only how it is arrived at. Written the other way round, a
+ * floor of sixty seconds is a sum somebody has to redo by hand every time the
+ * cast or the ending changes.
  */
-const FUSE_SHORT = 4.4;
-const FUSE_LONG = 5.6;
+const SHORTEST = 60;
+const LONGEST = 74;
 
 /**
  * How long a month is safe from being handed it straight back.
@@ -66,6 +66,20 @@ const HANDS_OFF = 0.3;
 
 /** Seconds of survivor held after the last month goes out. */
 const OUTRO = 2;
+
+/**
+ * The fuse, in seconds, at its shortest and its longest — derived, not chosen.
+ *
+ * Eleven months go out, one per fuse, and then the ending: that sum *is* the
+ * video, so the fuse is the length divided by the number of times it has to
+ * burn. The seed picks one and it holds for the whole round, which is also the
+ * only reason two rounds run to different lengths — eleven fixed fuses would
+ * make every video the same length to the frame, and identical durations are
+ * the first thing a duplicate detector reads.
+ */
+const FUSES = MONTHS.length - 1;
+const FUSE_SHORT = (SHORTEST - OUTRO) / FUSES;
+const FUSE_LONG = (LONGEST - OUTRO) / FUSES;
 
 /**
  * How long a month stays quiet after ringing off something.

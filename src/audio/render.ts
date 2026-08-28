@@ -22,12 +22,10 @@
  * that uses it. Nothing else in the project has that exposure.
  */
 
-import type { DropRound } from '../sim/drop';
 import type { MonthsRound } from '../sim/months';
 import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
-import { DEFAULT_KIT, KITS } from './kit';
 
 const SAMPLE_RATE = 48000;
 
@@ -217,90 +215,3 @@ export function renderPotatoAudio(round: PotatoRound): Promise<AudioBuffer> {
   return renderHits(round.duration, list, sprite);
 }
 
-/**
- * The drop's sound.
- *
- * The same tick, on the same terms: a fruit landing and two fruits becoming one
- * are the same noise, because that is what the fight does and there is no reason
- * for the two modes to sound like different sites. The octave is kept for the
- * one thing worth marking — a pair at the top of the ladder bursting.
- */
-export function renderDropAudio(round: DropRound, kit = DEFAULT_KIT): Promise<AudioBuffer> {
-  const chosen = KITS[kit] ?? KITS[DEFAULT_KIT];
-  const list: Hit[] = [];
-  for (const event of round.events) {
-    switch (event.kind) {
-      case 'land':
-        list.push({ t: event.t, slot: TICK, gain: 0.7 });
-        break;
-      case 'merge':
-        list.push({ t: event.t, slot: TICK, gain: 0.85 });
-        break;
-      case 'burst':
-        [0, 0.1, 0.2].forEach((offset, i) =>
-          list.push({
-            t: event.t + offset,
-            slot: i === 2 ? OCTAVE : TICK,
-            gain: 0.85,
-          }),
-        );
-        break;
-    }
-  }
-  return renderHits(round.duration, list, () => decode(chosen.name, chosen.sample), 0.16);
-}
-
-/** Interleaved float samples, which is what the encoder wants. */
-export function interleave(buffer: AudioBuffer): Float32Array {
-  const channels = buffer.numberOfChannels;
-  const out = new Float32Array(buffer.length * channels);
-  for (let c = 0; c < channels; c += 1) {
-    const data = buffer.getChannelData(c);
-    for (let i = 0; i < buffer.length; i += 1) out[i * channels + c] = data[i];
-  }
-  return out;
-}
-
-/**
- * Plays a few ticks of a kit, so the picker can be listened to rather than read.
- *
- * Four hits at the cadence the chute feeds at, which is what the choice actually
- * sounds like — one tick in isolation tells you very little. Decoded through the
- * live context rather than the offline one so the buffer is at the rate the
- * hardware is running at.
- */
-let speaker: AudioContext | null = null;
-const heard = new Map<string, Promise<AudioBuffer>>();
-
-export async function previewKit(index: number): Promise<void> {
-  const chosen = KITS[index] ?? KITS[DEFAULT_KIT];
-  speaker ??= new AudioContext();
-  const ctx = speaker;
-  // Browsers start a context suspended until a gesture; this is called from a
-  // click, so resuming here is allowed.
-  if (ctx.state === 'suspended') await ctx.resume();
-
-  let buffer = heard.get(chosen.name);
-  if (!buffer) {
-    buffer = (async () => {
-      const binary = atob(chosen.sample);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-      return ctx.decodeAudioData(bytes.buffer);
-    })();
-    heard.set(chosen.name, buffer);
-  }
-  const sample = await buffer;
-
-  const master = ctx.createGain();
-  master.gain.value = 0.5;
-  master.connect(ctx.destination);
-  [0, 0.34, 0.5, 0.84].forEach((offset, i) => {
-    const node = ctx.createBufferSource();
-    node.buffer = sample;
-    const amp = ctx.createGain();
-    amp.gain.value = i === 3 ? 0.9 : 0.75;
-    node.connect(amp).connect(master);
-    node.start(ctx.currentTime + offset);
-  });
-}

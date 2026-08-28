@@ -6,10 +6,6 @@ clock and the encoder, and nothing else.
 **Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
 wall, taking them off each other until one ball is left holding rope.
 
-**Fruit drop** — a chute lets go of a piece into a bowl three times a second, and
-two of the same kind that touch become one of the next kind up. Eight kinds, and
-the video ends when the eighth is made.
-
 **Shaper** — a shape made of points turns once every six seconds, and you cannot
 tell which way. Silent, and made to loop.
 
@@ -253,199 +249,6 @@ afterwards: a ball takes every thread it touches, so it is never on the far side
 of one. Checked on every frame of five full rounds spanning every ball count,
 thread count and ball size: zero crossings.
 
-## Fruit drop
-
-The bowl is a flask: a circle with its top arc missing between two vertical
-walls, which is where the chute comes in. Fruit falls in, piles up, and merges.
-Nothing is aimed — there is no player — so the video is what the pile does.
-
-Two things were measured off the reference rather than chosen, and both decide
-how it reads:
-
-- **The bowl is wider than the frame.** Radius 0.519 of the frame width, centred
-  a little above the middle, so the ring is clipped by a few pixels either side.
-  The outline is 8 px of 576, the neck 83 px across.
-- **The column falls.** Five earlier reference videos held their column at a
-  constant 67 px of spacing and 6.5 px a frame, which no falling body does, so
-  this was built as a conveyor. The reference it now follows does the opposite
-  and does it cleanly: tracking seven pieces and fitting their speed against how
-  far each had fallen gives 5.0 px a frame at the top of the chute rising to 11.6
-  near the bottom of the bowl, one constant acceleration, and gaps that grow from
-  107 px to 202 px down the column. A piece is let go at 280 px/s and gathers
-  speed the whole way; it stays clear of everything until it meets the wall or
-  the pile.
-- **Gravity is 204 px/s² in a bowl 503 px across** — 0.41 bowl radii a second
-  squared, a seventieth of earth's, which is why everything here floats. It is
-  the same number for the falling column and for the bowl, because a piece does
-  not know which one it is in, and it is the most reliable measurement in this
-  file: one straight line through seven tracks.
-- **The outline is a rainbow laid along its own length.** Sampled every thirty
-  degrees round the reference at four times twenty seconds apart: red just below
-  the left of the neck, orange and yellow down the left, green at the bottom,
-  cyan and blue up the right, violet at the right of the neck — and it does not
-  move, the same reading at two seconds and at thirty-two. So it is one hue ramp
-  along the path, eased so the reds hold the left of the bowl, and the left rail
-  of the neck is washed out to white where the ramp starts. Drawn as ninety-six
-  short strokes, because a canvas gradient runs in a straight line and would put
-  the same colour on the top and the bottom of the bowl.
-- **The bowl is 503 px across in a 1080 px frame, its middle 1144 px down a 1920
-  px one.** Smaller and lower than the earlier videos framed it.
-
-**A piece weighs what it is wide.** Everything used to weigh the same, so a big
-one landing on a small one shared the blow evenly and neither went anywhere
-interesting. Weight by *area* was the first attempt and it overshot: twenty times
-between the ends of the ladder turned the big ones at the bottom into a floor
-rather than pieces, so nothing could move them and nothing above them could go
-anywhere either. Width puts three and a half between the ends — enough that an
-arriving piece throws what it lands on in proportion to its size, little enough
-that the bottom still shifts. Mean speed by rank over one drop: 0.55 bowl radii a
-second at the bottom of the ladder, 0.25 near the top.
-
-**And overlap is turned into speed, not only position.** The relaxation passes
-separate two pieces by moving them, which leaves both exactly where they were
-put: a pile pressed together stays pressed together, and that is what reads as
-jamming. A crowd now pushes itself apart — worth almost nothing for a resting
-contact and a real shove for a crush. With sliding made frictionless as well,
-nineteen pieces in twenty are moving at any moment.
-
-**The bowl does not settle into a heap.** Four numbers decide that and all four
-were set too cautiously. The wall gives back more than half of what hits it — it
-is the one thing in the bowl that cannot move, so it is the only contact that
-can return a piece to where it came from. Two pieces give back three fifths, so
-a push passes along and keeps passing along instead of being absorbed. Almost
-nothing is rubbed off a slide, which matters more than it looks: pieces at the
-bottom are in contact constantly, so a twelfth per contact was quietly the
-largest brake in the bowl. And the threshold below which a contact takes
-everything instead of bouncing is now fifteen times lower, because anywhere near
-the speed of an ordinary nudge it swallowed every one of them.
-
-Then further, because half measures were still a heap: the wall gives back four
-fifths, two pieces give back two thirds, gravity is a third of what the reference
-measures, and a merge kicks half again as hard sideways and upwards. That is past
-what a real fruit does, and it is the point — the energy budget here is tiny,
-since a piece arrives at the speed of the chute and nothing else puts anything
-in. A merge is the only event that creates movement rather than passing it
-around.
-
-The low gravity is what makes it read as soft rather than sharp: the same
-rebound climbs further and stays up longer, so the bowl is busy without anything
-in it snapping about. It ended up at a sixteenth of what the reference measures,
-which is a choice and not a reading — a rebound now climbs sixteen times as far
-and hangs sixteen times as long, and the pile stops being pressed together by its
-own weight. Three fifths of the pieces are in the upper half of the bowl at any
-moment, drifting through it rather than heaped in the bottom of it. Measured on the same seed: **four fifths of the pieces are
-moving at any moment**, at half again the speed, where before it was under half
-of them. Sixteen drops run sixty-five seconds to a minute fifty-three, every one
-ending on the eighth element and none inside a minute.
-
-**Gravity is weak, and that is measured too.** A loose fruit in the reference
-drifts down at about thirty pixels a second and gathers speed so slowly it reads
-as floating. It is worth keeping for two reasons beyond fidelity: a fruit under
-earth gravity would double its spacing every few tenths of a second, so the bowl
-would be empty between one fruit and the next; and weak gravity is what makes a
-bounce worth having. A third of an impact comes back, which climbs about a fifth
-of the bowl and takes two thirds of a second to do it — under a hard gravity the
-same rebound would be a twitch. Below a threshold a contact takes everything
-instead, or a pile of thirty would tremble for the whole video rather than
-settle.
-
-Growth up the ladder is 1.20 per rank, which is also measured: a strawberry is
-40 px across in that frame and the dragon fruit seven ranks up is 122.
-
-**A column down the exact middle of a round bowl builds a tower, not a pile.**
-Every contact normal points straight up, nothing is ever pushed sideways, and
-the first version spent the whole video growing one stack of fruit up the chute.
-Two things fix it, and both are small: a fruit is let go within half a radius of
-the middle, and a merge shoves what it makes off to one side. The column still
-reads as straight.
-
-**The eighth element is the ending, and it sets the length.** A piece of rank `k`
-costs `2^k` of the first, so the eighth costs a hundred and twenty-eight
-strawberries — anywhere from a minute to two and a quarter, and the pile decides
-which. The cadence is not touched to fix that: the column comes down at one
-speed, evenly spaced, and that is the whole look. What varies is the deal, and a
-deal that runs past a minute and fifty is simply dealt again. That is affordable
-only because of the grid below — a drop plays out in under a second, so the
-search costs a second or two rather than a minute. Sixteen seeds: sixty-five
-seconds at the shortest, eighty-four in the middle, a minute forty-two at the
-longest, every one ending on the eighth and none inside a minute.
-
-**The column is laid out downwards from the top of the frame**, not upwards from
-the mouth of the bowl. Upwards, the last piece of the opening column landed
-wherever the spacing happened to leave it — a sixth of a gap short of the top —
-so the first piece the chute released came a gap and a half behind the one in
-front of it. That hole then travelled down the column and through the whole
-video, which is exactly what the even spacing exists to prevent.
-
-**The column comes down the exact middle.** It used to be let go within half a
-radius of centre, because a column down the middle of a round bowl builds a
-tower rather than a pile — every contact normal points straight up, so nothing
-is ever pushed sideways. What breaks the symmetry now is the shove a merge gives
-what it makes, which turns out to be enough on its own: the pile spreads across
-four fifths of the bowl and the column stays straight.
-
-Two of a kind merge a hair before they touch — a tenth of a radius. Nothing aims
-here, so a pair that never quite meets is the whole reason a drop runs long, and
-that tenth is half a minute off the tail of the video. It is invisible: the halos
-of two pieces that close have been overlapping for a while.
-
-**The neighbour grid.** Every pair of pieces used to be tested against every
-other, three times a substep, eight substeps a frame — a hundred thousand tests
-a frame at sixty pieces, and a long drop took sixteen seconds to play out. The
-bowl is now divided into cells a little wider than a middling piece; each piece
-is filed under every cell its box covers, and only pieces sharing a cell are
-tested. Two that touch have overlapping boxes and therefore share a cell, so
-nothing is missed, and a pair sharing two cells is settled in the one holding the
-point between them, so nothing is done twice. Five times faster, and it is what
-makes a two-minute drop bearable on a phone.
-
-**Your own fruit.** Each rank takes an image — cropped square, clipped to the
-circle, so a cut-out photograph on transparent ground works best — or an emoji,
-or just its colour. The colour is the halo either way; emoji paint themselves,
-so the halo is the only colour the page controls.
-
-**🎲 Random emoji** deals the whole ladder at once. Eight themes — fruit, gems,
-planets, animals, sweets, sea, sport, faces — each eight glyphs in size order,
-because the ladder is a size ladder and a bee has to be a rank below a bear or
-the merges read backwards. About one roll in five ignores the themes and deals
-eight glyphs that have no business being in the same bowl. It never deals the
-same thing twice running.
-
-**Everything rings when it is hit.** A piece is a rigid circle, so an impact
-that ought to deform something soft just stops it dead and a pile of anything
-reads as a pile of pebbles. So a knock leaves a squash that decays over a third
-of a second at eleven cycles a second, scaled by how hard the knock was. It is
-drawn, not simulated: nothing moves and nothing merges because of it. Something
-is ringing in about half the frames of a drop, one or two pieces at a time.
-
-**Drawn sets** — gems, diamonds, jelly cats, planets — are not emoji at all.
-Emoji are somebody else's artwork rendered by the machine's font, so they look
-different on every device and cannot be tuned; these are drawn out of arcs and
-polygons and gradients, which means a gem is the same gem everywhere and its
-colour is a number this repository owns. A brilliant cut has a table, a girdle
-and a pavilion; the ringed planet gives up some of its width so the ring has
-somewhere to go without hanging over its neighbours. The gems are one cut at eight
-sizes: a tray of hearts and marquises and princesses was tried and it read as a
-collection rather than as one thing growing, which is what this is. The other
-outlines are still in the file and the faceting routine draws any of them.
-
-Each set is scaled until its silhouette meets the circle the simulation is
-actually using. A piece drawn inside its circle rather than out to it looks like
-it is floating: two resting against each other show a gap the width of whatever
-the artwork left over, and on a white ground there is no halo to cover it. An
-octagon's flat faces sit at 0.92 of its radius, a lit sphere was drawn at 0.88, a
-brilliant cut is shorter than it is wide.
-
-**The sound** is one of five, each cut from a different reference video at its
-most isolated hit — the loudest onset with the quietest two hundred milliseconds
-either side, trimmed to its transient and faded so a cut sample cannot click.
-They run from a 2.4 kHz glass tick that is gone in forty milliseconds to a
-560 Hz knock. The octave used to mark the last element is the same sample played
-at twice the rate rather than a second recording. **▶** plays four ticks at the
-rate the chute feeds, which is what the choice actually sounds like — one tick in
-isolation tells you very little — and picking one plays it, since a row of five
-words is not something anybody can choose between by reading.
-
 ## Shaper
 
 A shape made of points, turning once every six seconds. The whole mode exists for
@@ -675,12 +478,23 @@ a wall is. The band is stepped off the rim rather than laid flush like Month's
 gauge: it is red, and two of the twelve are near enough to red that a flush band
 would join up with them.
 
-**The length is neither searched for nor asked of the seed.** Eleven months go
-out, one per fuse, so a round is eleven fuses and an ending — which would make
-every video exactly the same length, the one property a duplicate detector reads
-first. So the seed sets the *fuse* instead and the length follows: 4.4 to 5.6
-seconds puts a round between fifty and sixty-four, with no search and no two
-videos running to the same frame.
+**The length is a sum, not a hunt.** Eleven months go out, one per fuse, so a
+round is eleven fuses and an ending. That is written down as the *length* —
+sixty seconds at the floor, seventy-four at the ceiling — and the fuse is
+derived from it, rather than the other way about: a floor of a minute is the
+number anybody has an opinion about, and stated as a fuse it is a sum somebody
+has to redo by hand every time the cast or the ending changes. Measured over a
+hundred and twenty seeds: 60.6 to 73.8 seconds, none under the minute, and a
+hundred distinct lengths. The seed picking the fuse is also the only reason two
+rounds differ in length at all — eleven fixed fuses would make every video the
+same length to the frame, and identical durations are the first thing a
+duplicate detector reads.
+
+**The fuse only shows with three seconds left.** A number counting down from
+five for the better part of a minute is wallpaper — the eye stops reading it —
+whereas one that arrives is an event, and it arrives at the only point where it
+changes what you are watching for. It goes red for the last second and a half of
+the three, which is the reference's own tell.
 
 The soundtrack needed a guard the other modes do not. A month wedged against a
 wall produces contact on every substep — a real contact, but not a real knock —

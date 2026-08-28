@@ -52,7 +52,16 @@ const HOT = '#ff2d3f';
 /** How much of its colour an out month keeps. */
 const SPENT = 0.42;
 
-/** The fuse, and the second and a half it spends looking like a problem. */
+/**
+ * The fuse: when it shows at all, and when it starts looking like a problem.
+ *
+ * It appears with three seconds left rather than running the whole round. A
+ * number counting down from five for fifty-odd seconds is wallpaper — the eye
+ * stops reading it — whereas one that arrives is an event, and it arrives at
+ * the only point where it changes what you are watching for. The red is the
+ * reference's own tell, kept for the last second and a half of the three.
+ */
+const FUSE_SHOWS = 3;
 const FUSE_COLD = '#4c505c';
 const FUSE_HOT = '#ff2d3f';
 const PANIC = 1.5;
@@ -92,7 +101,7 @@ export function drawPotatoFrame(
   // survivor there is nothing left to count, and a frozen nought on the last
   // two seconds would read as a clock that broke rather than as a game that
   // ended.
-  if (frame.reveal < 1) {
+  if (frame.reveal < 1 && frame.fuse <= FUSE_SHOWS) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

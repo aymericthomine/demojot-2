@@ -9,14 +9,11 @@
  */
 
 import type { Reel } from './encodeVideo';
-import { drawDropFrame, type FruitFace } from '../render/drawDrop';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPotatoFrame } from '../render/drawPotato';
 import { drawShapeFrame } from '../render/drawShape';
 import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
-import type { ShapeSet } from '../render/shapes';
 import { drawFrame, type BallFace } from '../render/drawFrame';
-import type { DropRound } from '../sim/drop';
 import { MONTHS, type MonthsRound } from '../sim/months';
 import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
@@ -39,12 +36,6 @@ export interface BattleDress extends Dress {
    * two different videos and should not be named the same thing.
    */
   speed?: number;
-}
-
-export interface DropDress extends Dress {
-  faces?: readonly (FruitFace | null | undefined)[];
-  /** Draw the pieces from `shapes.ts` rather than typing emoji. */
-  shape?: ShapeSet;
 }
 
 /** Frames are dropped as they are painted; the array is the round's own. */
@@ -73,29 +64,6 @@ export function battleReel(round: Round, dress: BattleDress = {}): Reel {
         // this wide, so drawing them any other size would show rope being taken
         // at a distance.
         size: setup.size,
-      });
-      release(round.frames, index);
-    },
-  };
-}
-
-export function dropReel(round: DropRound, dress: DropDress = {}): Reel {
-  return {
-    durationInFrames: round.durationInFrames,
-    duration: round.duration,
-    name: `drop-${round.setup.seed}-${dress.shape ?? 'emoji'}-${Math.round(round.duration)}s${
-      dress.invert ? '-white' : ''
-    }`,
-    paint(ctx, index) {
-      drawDropFrame(ctx, round.frames[index], {
-        width: WIDTH,
-        height: HEIGHT,
-        // The outline's gradient turns with the clock, so the painter has to
-        // know where in the video this frame is.
-        time: index / FPS,
-        invert: dress.invert,
-        faces: dress.faces,
-        shape: dress.shape,
       });
       release(round.frames, index);
     },

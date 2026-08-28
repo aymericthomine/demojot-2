@@ -16,8 +16,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  previewKit,
-  renderDropAudio,
   renderMonthsAudio,
   renderPotatoAudio,
   renderRoundAudio,
@@ -33,18 +31,12 @@ import {
 } from "../export/encodeVideo";
 import {
   battleReel,
-  dropReel,
   monthsReel,
   potatoReel,
   shaperReel,
 } from "../export/reels";
-import { ELEMENTS, generateDrop } from "../sim/drop";
 import { MONTHS, generateMonths } from "../sim/months";
 import { generatePotato } from "../sim/potato";
-import { FRUITS } from "../sim/fruit";
-import { dealPack } from "../sim/packs";
-import { DEFAULT_KIT, KITS } from "../audio/kit";
-import { SHAPE_LABEL, SHAPE_SETS, type ShapeSet } from "../render/shapes";
 import {
   DENSITIES,
   NORMAL_DENSITY,
@@ -78,7 +70,6 @@ import {
 } from "../sim/simulate";
 import { COLORS, FPS, HEIGHT, WIDTH } from "../sim/style";
 import type { BallFace } from "../render/drawFrame";
-import type { FruitFace } from "../render/drawDrop";
 
 /**
  * The two things this site makes.
@@ -87,7 +78,7 @@ import type { FruitFace } from "../render/drawDrop";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "drop" | "beast" | "shaper" | "month" | "potato";
+type Mode = "battle" | "beast" | "shaper" | "month" | "potato";
 
 /**
  * What the fixed mode is fixed to.
@@ -164,14 +155,6 @@ type Job =
       /** A chequerboard ground. The fixed mode's own, like its white. */
       checker: boolean;
       faces: readonly BallFace[];
-    }
-  | {
-      mode: "drop";
-      seed: number;
-      invert: boolean;
-      kit: number;
-      shape: ShapeSet | null;
-      faces: readonly FruitFace[];
     }
   | {
       mode: "shaper";
@@ -253,51 +236,6 @@ export default function HomePage() {
   const [palette, setPalette] = useState<Palette | null>(null);
   const [density, setDensity] = useState<Density>(NORMAL_DENSITY);
 
-  const [kit, setKit] = useState(DEFAULT_KIT);
-  const [shape, setShape] = useState<ShapeSet | null>(null);
-  // One entry per rank of the ladder, by index, same as the balls: kept at full
-  // length so changing the ladder never loses what was already set.
-  const [fruits, setFruits] = useState<FruitFace[]>(() =>
-    Array.from({ length: ELEMENTS }, () => ({})),
-  );
-
-  const setFruit = (rank: number, patch: Partial<FruitFace>) =>
-    setFruits((old) =>
-      old.map((f, i) => (i === rank ? { ...f, ...patch } : f)),
-    );
-
-  const setFruitImage = async (rank: number, file: File | null) => {
-    const image = file ? await createImageBitmap(file).catch(() => null) : null;
-    setFruit(rank, { image });
-  };
-
-  // What the ladder is currently wearing, so the roll can say so and never deal
-  // the same theme twice in a row.
-  const [dressed, setDressed] = useState<string | null>(null);
-
-  const rollFruits = () => {
-    const dealt = dealPack(Math.random(), dressed ?? undefined);
-    setDressed(dealt.name);
-    // A roll is a set of emoji, so it turns the drawn set off.
-    setShape(null);
-    // Images are left alone: an uploaded picture beats a glyph anyway, and
-    // losing one to a button labelled "emoji" would be a surprise.
-    setFruits((old) =>
-      old.map((face, rank) => ({ ...face, ...(dealt.faces[rank] ?? {}) })),
-    );
-  };
-
-  const clearFruits = () => {
-    setDressed(null);
-    setFruits(Array.from({ length: ELEMENTS }, () => ({})));
-  };
-
-  const pickShape = (choice: ShapeSet | null) => {
-    setShape(choice);
-    // The drawn sets bring their own colours and shapes, so anything a roll or
-    // a picker left behind would fight with them.
-    if (choice) clearFruits();
-  };
   // One entry per ball, by index, kept at full length so changing the count
   // never loses what was already set on the balls that stay.
   const [faces, setFaces] = useState<BallFace[]>(() =>
@@ -407,7 +345,6 @@ export default function HomePage() {
           let audio: AudioBuffer | null;
           let summary: string;
           if (
-            job.mode !== "drop" &&
             job.mode !== "shaper" &&
             job.mode !== "month" &&
             job.mode !== "potato"
@@ -460,7 +397,7 @@ export default function HomePage() {
             audio = await renderMonthsAudio(round).catch(() => null);
             reel = monthsReel(round, { invert: job.invert });
             summary = `${round.duration.toFixed(1)}s · ${MONTHS[round.winner].label} held ${round.target.toFixed(1)}s`;
-          } else if (job.mode === "shaper") {
+          } else {
             // Nothing to play out: the cloud is built once and every frame is
             // the same points at a different angle. No soundtrack either — the
             // loop is meant to be watched, and scored by whoever posts it.
@@ -474,21 +411,6 @@ export default function HomePage() {
             total = reel.durationInFrames;
             audio = null;
             summary = `${recipeName(setup.recipe)} · ${setup.palette.name} · ${reel.duration}s loop`;
-          } else {
-            // No length is asked for: the drop ends when the eighth element is
-            // made, which is never inside a minute.
-            const round = generateDrop(job.seed);
-            total = round.durationInFrames;
-            onStage("sound");
-            audio = await renderDropAudio(round, job.kit).catch(() => null);
-            reel = dropReel(round, {
-              invert: job.invert,
-              faces: job.faces,
-              shape: job.shape ?? undefined,
-            });
-            // Not a glyph and not a fruit's name: the ladder may be wearing
-            // diamonds, and every drop ends on the eighth anyway.
-            summary = `${round.duration.toFixed(1)}s · ${round.best + 1} of ${ELEMENTS}`;
           }
 
           const result = await encodeVideo({
@@ -544,9 +466,7 @@ export default function HomePage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           {mode === "battle"
             ? "Ball Battle"
-            : mode === "drop"
-              ? "Fruit Drop"
-              : mode === "shaper"
+            : mode === "shaper"
                 ? "Shaper"
                 : mode === "month"
                   ? "Month"
@@ -557,9 +477,7 @@ export default function HomePage() {
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
             ? "Balls in a ring fighting over threads pinned to the wall. The anchors never move; run through somebody else's thread and it comes away with you, turning your colour. Full hands break rope instead of taking it, and a ball holding none is out."
-            : mode === "drop"
-              ? "A chute drops a piece into the bowl three times a second. Two of the same kind that touch become one of the next kind up, eight kinds in all, and the video ends when the eighth is made — which takes between a minute and two and a half. Nothing is aimed; the pile does the rest."
-              : mode === "shaper"
+            : mode === "shaper"
                 ? "A shape made of points, turning once every six seconds, and you cannot tell which way. The projection is flat and nothing is hidden, so the picture fits the shape going left and its mirror image going right equally well — your eye picks one, then swaps. The loop joins end to end."
                 : mode === "month"
                   ? "Hold the centre. Twelve balls, one a month, loose in the ring; while exactly one of them is in the zone in the middle, that month banks the seconds. Two at once and nobody scores. Every ball wears a ring of what it has banked, and the video ends the moment one of those rings closes."
@@ -571,7 +489,7 @@ export default function HomePage() {
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(["battle", "drop", "beast", "shaper", "month", "potato"] as const).map(
+          {(["battle", "beast", "shaper", "month", "potato"] as const).map(
             (choice) => (
               <button
                 key={choice}
@@ -586,9 +504,7 @@ export default function HomePage() {
               >
                 {choice === "battle"
                   ? "Ball battle"
-                  : choice === "drop"
-                    ? "Fruit drop"
-                    : choice === "beast"
+                  : choice === "beast"
                       ? "MrBeast"
                       : choice === "shaper"
                         ? "Shaper"
@@ -896,163 +812,6 @@ export default function HomePage() {
           </>
         )}
 
-        {mode === "drop" && (
-          <>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">Pieces</span>
-              {([null, ...SHAPE_SETS] as const).map((choice) => (
-                <button
-                  key={choice ?? "emoji"}
-                  type="button"
-                  onClick={() => pickShape(choice)}
-                  disabled={busy}
-                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                    shape === choice
-                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                  }`}
-                >
-                  {choice ? SHAPE_LABEL[choice] : "emoji"}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <span className="px-1 text-sm text-[#8b90a0]">Sound</span>
-              <button
-                type="button"
-                onClick={() => void previewKit(kit)}
-                title="Hear it — four ticks at the rate the chute feeds"
-                className="rounded-lg border border-[#23262f] bg-white/[0.04] px-2.5 py-1 text-sm hover:border-[#3a3f4d]"
-              >
-                ▶
-              </button>
-              {KITS.map((sound, index) => (
-                <button
-                  key={sound.name}
-                  type="button"
-                  onClick={() => {
-                    setKit(index);
-                    // Picking one plays it: a row of five words is not a thing
-                    // anybody can choose between by reading.
-                    void previewKit(index);
-                  }}
-                  disabled={busy}
-                  title={sound.note}
-                  className={`rounded-lg border px-3 py-1 text-sm disabled:opacity-40 ${
-                    kit === index
-                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                  }`}
-                >
-                  {sound.name}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1 px-1 text-[11px] leading-relaxed text-[#5c616e]">
-              {KITS[kit].note}
-            </p>
-
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={rollFruits}
-                disabled={busy}
-                className="rounded-lg border border-[#23262f] bg-white/[0.04] px-3 py-1 text-sm hover:border-[#3a3f4d] disabled:opacity-40"
-              >
-                🎲 Random emoji
-              </button>
-              {dressed && (
-                <>
-                  <span className="text-[11px] text-emerald-300">
-                    {dressed}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={clearFruits}
-                    disabled={busy}
-                    title="Back to the fruit"
-                    className="text-[11px] text-[#5c616e] hover:text-white"
-                  >
-                    ↺
-                  </button>
-                </>
-              )}
-            </div>
-
-            <details className="mt-2 rounded-xl border border-[#23262f] bg-black/20">
-              <summary className="cursor-pointer px-3 py-2 text-sm text-[#8b90a0]">
-                Your own pieces — one image per rank
-              </summary>
-              <div className="grid grid-cols-2 gap-2 px-3 pt-1 pb-3">
-                {FRUITS.map((fruit, rank) => (
-                  <div key={fruit.name} className="flex items-center gap-2">
-                    <label className="relative size-6 shrink-0 cursor-pointer">
-                      <span
-                        className={`block size-6 rounded-full border ${
-                          fruits[rank]?.color
-                            ? "border-emerald-400"
-                            : "border-white/40"
-                        }`}
-                        style={{
-                          background: fruits[rank]?.color ?? fruit.color,
-                        }}
-                      />
-                      <input
-                        type="color"
-                        value={fruits[rank]?.color ?? fruit.color}
-                        disabled={busy}
-                        onChange={(event) =>
-                          setFruit(rank, { color: event.target.value })
-                        }
-                        className="absolute inset-0 cursor-pointer opacity-0"
-                      />
-                    </label>
-                    <input
-                      type="text"
-                      value={fruits[rank]?.glyph ?? ""}
-                      disabled={busy}
-                      placeholder={fruit.glyph}
-                      onChange={(event) =>
-                        setFruit(rank, {
-                          glyph: event.target.value.slice(0, 4),
-                        })
-                      }
-                      className="w-12 rounded-lg border border-[#23262f] bg-black/40 px-2 py-1 text-center text-sm outline-none disabled:opacity-40"
-                    />
-                    <label
-                      className={`cursor-pointer rounded-lg border px-2 py-1 text-[11px] ${
-                        fruits[rank]?.image
-                          ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                          : "border-[#23262f] bg-white/[0.04] text-[#8b90a0] hover:border-[#3a3f4d]"
-                      }`}
-                    >
-                      {fruits[rank]?.image ? "image ✓" : "image"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        disabled={busy}
-                        onChange={(event) =>
-                          void setFruitImage(
-                            rank,
-                            event.target.files?.[0] ?? null,
-                          )
-                        }
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                ))}
-              </div>
-              <p className="px-3 pb-3 text-[11px] leading-relaxed text-[#5c616e]">
-                Ranks run smallest first. An image is cropped square and clipped
-                to the circle, so a cut-out photograph on transparent ground
-                works best; it wins over the emoji. The colour is the halo.
-              </p>
-            </details>
-          </>
-        )}
-
         <label
           hidden={steady}
           className="mt-2 flex cursor-pointer items-center gap-2 px-1 py-1 text-sm text-[#8b90a0] select-none has-disabled:cursor-default has-disabled:opacity-40"
@@ -1071,9 +830,7 @@ export default function HomePage() {
           type="button"
           onClick={() =>
             run(
-              mode === "drop"
-                ? { mode, seed, invert, kit, shape, faces: fruits }
-                : mode === "shaper"
+              mode === "shaper"
                   ? {
                       mode,
                       seed,
@@ -1107,9 +864,7 @@ export default function HomePage() {
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
           {stage.kind === "fighting"
-            ? mode === "drop"
-              ? "Dropping…"
-              : mode === "shaper"
+            ? mode === "shaper"
                 ? "Building the cloud…"
                 : mode === "month"
                   ? "Playing the round…"
