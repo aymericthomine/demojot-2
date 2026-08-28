@@ -212,6 +212,80 @@ function inkCentre(text: string): { dx: number; dy: number } {
 }
 
 /**
+ * A colour split into the colour itself and how much of it there is.
+ *
+ * Only `rgba(...)` carries an alpha here — everything else in this project is a
+ * hex triple — so anything that does not parse is simply opaque.
+ */
+const RGBA = /^rgba\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*\)$/;
+
+function split(color: string): { solid: string; alpha: number } {
+  const parts = RGBA.exec(color);
+  if (!parts) return { solid: color, alpha: 1 };
+  return { solid: `rgb(${parts[1]},${parts[2]},${parts[3]})`, alpha: Number(parts[4]) };
+}
+
+/**
+ * A scratch sheet for writing that has to go down as one layer.
+ *
+ * Kept between calls and only ever grown, because the alternative is a canvas
+ * the size of the zone allocated on every one of four thousand frames.
+ */
+let sheet: OffscreenCanvas | null = null;
+
+/**
+ * Thickened writing, laid down in one pass.
+ *
+ * The star signs are thickened by stroking the glyph as well as filling it,
+ * because the faces that carry those symbols have no bold. That is fine while
+ * the colour is opaque, and wrong the moment it is not: two passes over the
+ * same ground composite twice, so the stroked band ends up denser than the
+ * middle and the outline shows through as a seam. On the holder's sign, which
+ * is written across the zone at eighty-five per cent, it looked like a glyph
+ * drawn with a pen that had run out — exactly the lines it was not supposed to
+ * have.
+ *
+ * So the two passes go onto a scratch sheet at full strength, where they may
+ * overlap all they like, and the sheet is composited once at the alpha asked
+ * for. One layer, one density, no seam.
+ */
+function layered(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  at: number,
+  on: number,
+  size: number,
+  solid: string,
+  weight: number,
+  alpha: number,
+): boolean {
+  if (typeof OffscreenCanvas === 'undefined') return false;
+  // Three ems square, written about its middle: enough for a glyph that hangs
+  // above its baseline and below it, plus the stroke that thickens it.
+  const span = Math.ceil(size * 3);
+  const pad = span / 2;
+  if (!sheet || sheet.width < span || sheet.height < span) sheet = new OffscreenCanvas(span, span);
+  const paint = sheet.getContext('2d');
+  if (!paint) return false;
+  paint.clearRect(0, 0, sheet.width, sheet.height);
+  paint.font = `700 ${Math.round(size)}px system-ui, sans-serif`;
+  paint.textAlign = 'center';
+  paint.textBaseline = 'alphabetic';
+  paint.strokeStyle = solid;
+  paint.lineWidth = size * weight;
+  paint.lineJoin = 'round';
+  paint.strokeText(text, pad, pad);
+  paint.fillStyle = solid;
+  paint.fillText(text, pad, pad);
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(sheet, 0, 0, span, span, at - pad, on - pad, span, span);
+  ctx.restore();
+  return true;
+}
+
+/**
  * Writing put in the middle of a disc, by where its ink lands.
  */
 export function drawLabel(
@@ -225,12 +299,17 @@ export function drawLabel(
 ): void {
   if (!text) return;
   const { dx, dy } = inkCentre(text);
+  const at = x + dx * size;
+  const on = y + dy * size;
+  const { solid, alpha } = split(color);
+  // Thickened *and* see-through is the one combination that cannot be painted
+  // straight onto the frame. Everything else is a single pass and goes down as
+  // it always did.
+  if (weight > 0 && alpha < 1 && layered(ctx, text, at, on, size, solid, weight, alpha)) return;
   ctx.save();
   ctx.font = `700 ${Math.round(size)}px system-ui, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  const at = x + dx * size;
-  const on = y + dy * size;
   if (weight > 0) {
     ctx.strokeStyle = color;
     ctx.lineWidth = size * weight;
