@@ -59,6 +59,9 @@ const HOT = '#ff2d3f';
 /** How much of its colour an out month keeps. */
 const SPENT = 0.42;
 
+/** What a flag is laid on, where a month would have its colour. */
+const UNDER = '#31343d';
+
 /**
  * The fuse: when it shows at all, and when it starts looking like a problem.
  *
@@ -164,9 +167,13 @@ export function drawPotatoFrame(
       ctx.stroke();
     }
 
+    // A flag sits on grey, not on its country's colour: the picture is clipped
+    // to the disc, and a clipped edge is a blend rather than a cut, so on the
+    // country's own colour the outer ring of pixels came out as a hairline
+    // border in that colour round every flag.
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
-    ctx.fillStyle = member.color;
+    ctx.fillStyle = member.flag ? UNDER : member.color;
     ctx.fill();
     // No rim on a flag. A flag is already a finished picture with its own edge,
     // and a line round it reads as a badge somebody mounted it in. The cost is

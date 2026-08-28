@@ -240,7 +240,14 @@ export function drawMonthsFrame(
       ctx.lineCap = 'butt';
     }
 
-    const fill = drained(member.color, lost);
+    // A flag sits on grey, not on its country's colour. The picture is clipped
+    // to the disc, and a clipped edge is a blend rather than a cut: the outer
+    // ring of pixels comes out part flag and part whatever is underneath. On
+    // the country's own colour that showed as a hairline round every disc —
+    // blue on Russia, red on Japan, yellow on Germany — which is a border, and
+    // borders are the one thing the flags were asked not to have. On the grey
+    // the months drain to, the same blend disappears into the track outside it.
+    const fill = member.flag ? SPENT : drained(member.color, lost);
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
     ctx.fillStyle = fill;
