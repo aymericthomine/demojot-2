@@ -2,17 +2,11 @@
  * One frame of Hot potato.
  *
  * Three states and the picture has to say which is which at a glance, on a
- * phone, in a second: a month still in is a filled disc inside a white band, a
- * month that is out is the hollow ring it left behind, and the one holding the
- * potato has its band go red and blink. Filled against hollow does the work
- * that dimming alone would not — a dark disc among bright ones reads as a
- * colour choice, whereas a ring with nothing in it reads as something that used
- * to be there.
- *
- * The band is not an ornament: it is the month's edge as far as the simulation
- * is concerned, so bands are what meet when two months collide and what stops
- * at the arena's rim. Which is why its width lives in the simulation and is
- * imported here rather than chosen.
+ * phone, in a second: a month still in is a filled disc, a month that is out is
+ * the hollow ring it left behind, and the one holding the potato wears a red
+ * band round it. Filled against hollow does the work that dimming alone would
+ * not — a dark disc among bright ones reads as a colour choice, whereas a ring
+ * with nothing in it reads as something that used to be there.
  *
  * The fuse is written across the middle, behind everything, because it is the
  * only number in the mode and the whole of its tension. It goes red for the last
@@ -22,7 +16,7 @@
 import { drawLabel, drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL } from '../sim/months';
-import { BAND, type PotatoFrame } from '../sim/potato';
+import type { PotatoFrame } from '../sim/potato';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
 export interface PotatoLook {
@@ -47,24 +41,19 @@ const OUTLINE = 0.1;
 const WALL_WIDTH = 0.16;
 
 /**
- * Where the band sits, in ball radii — flush, and derived from its width.
+ * The holder's band, and where it sits.
  *
- * A stroke is centred on the radius it is given, so a band whose inner edge is
- * to land exactly on the month's rim is drawn half its own width outside it.
- * That is the whole of the geometry, and writing it as a sum rather than as a
- * number keeps it true if the band ever changes thickness — which it cannot do
- * quietly, because the same figure is what the simulation collides with.
- *
- * It goes on *after* the disc. Painted before, the month's dark outline would
- * come down over the band's inner edge and leave a line between the two, and a
- * band with a gap under it is the thing this stopped being.
+ * Not flush the way Month's gauge is, and for a reason: that ring is a reading
+ * *of* the month and belongs against it, while this one is a thing the month is
+ * carrying. It is also red, and two of the twelve are near enough to red that a
+ * band laid straight on their rim would join up with them. The dark of the
+ * ground shows through the step, so it reads as separate on every colour.
  */
-const BAND_GAP = 1 + BAND / 2;
+const HALO_WIDTH = 0.26;
+const HALO_STEP = 0.08;
+const HALO_GAP = 1 + OUTLINE / 2 + HALO_WIDTH / 2 + HALO_STEP;
 
-/** What the band is normally: white, on every month, the same. */
-const COOL = '#ffffff';
-
-/** And what it turns while a month is holding it. Not its colour: the potato's. */
+/** What the holder's band is painted in. Not a month's colour: the potato's. */
 const HOT = '#ff2d3f';
 
 /** How much of its colour an out month keeps. */
@@ -138,13 +127,11 @@ export function drawPotatoFrame(
     if (here.out) {
       // What is left of a month: the ring it was, with nothing in it. Drawn so
       // that its outer edge is exactly the surface everybody bounces off, which
-      // is the only way the picture and the physics agree about where a wall is
-      // — and since a month reaches as far as its band, that edge is where the
-      // band was and not where the disc was.
+      // is the only way the picture and the physics agree about where a wall is.
       ctx.beginPath();
       ctx.strokeStyle = ink(dim(member.color, SPENT), invert);
       ctx.lineWidth = ball * WALL_WIDTH;
-      ctx.arc(x, y, ball * (1 + BAND - WALL_WIDTH / 2), 0, Math.PI * 2);
+      ctx.arc(x, y, ball * (1 - WALL_WIDTH / 2), 0, Math.PI * 2);
       ctx.stroke();
 
       if (member.flag) {
@@ -165,6 +152,17 @@ export function drawPotatoFrame(
     // The survivor grows a little once it is the last one, so the eye lands on
     // it rather than hunting the ring for the one disc that is still filled.
     const disc = i === survivor ? ball * (1 + 0.14 * frame.reveal) : ball;
+
+    // The band blinks, and faster the less fuse there is. The number in the
+    // middle only shows for the last three seconds, so between whistles the
+    // ring is the only thing saying how close this is.
+    if (i === frame.holder && frame.flash) {
+      ctx.beginPath();
+      ctx.strokeStyle = HOT;
+      ctx.lineWidth = disc * HALO_WIDTH;
+      ctx.arc(x, y, disc * HALO_GAP, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
@@ -188,16 +186,5 @@ export function drawPotatoFrame(
     } else {
       drawLabel(ctx, member.label, x, y, disc * fit, textOn(member.color), weight);
     }
-
-    // And the band over the lot of it. White on everybody, so what the eye
-    // reads is the *surface* — the thing that arrives at the next month — and
-    // then red on whoever is holding, blinking faster the less fuse is left.
-    // The number in the middle only shows for the last three seconds, so
-    // between whistles this is the only thing saying how close the round is.
-    ctx.beginPath();
-    ctx.strokeStyle = i === frame.holder && frame.flash ? HOT : ink(COOL, invert);
-    ctx.lineWidth = disc * BAND;
-    ctx.arc(x, y, disc * BAND_GAP, 0, Math.PI * 2);
-    ctx.stroke();
   }
 }
