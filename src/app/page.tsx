@@ -35,8 +35,9 @@ import {
   potatoReel,
   shaperReel,
 } from "../export/reels";
-import { MONTHS, generateMonths } from "../sim/months";
+import { generateMonths } from "../sim/months";
 import { generatePotato } from "../sim/potato";
+import { CAST_LABEL, castFor, type CastName } from "../render/cast";
 import {
   DENSITIES,
   NORMAL_DENSITY,
@@ -164,8 +165,8 @@ type Job =
       palette: Palette | null;
       count: Density;
     }
-  | { mode: "month"; seed: number; invert: boolean }
-  | { mode: "potato"; seed: number; invert: boolean };
+  | { mode: "month"; seed: number; invert: boolean; cast: CastName }
+  | { mode: "potato"; seed: number; invert: boolean; cast: CastName };
 
 type Stage =
   | { kind: "idle" }
@@ -218,6 +219,9 @@ export default function HomePage() {
   const [mode, setMode] = useState<Mode>("battle");
   const [seed, setSeed] = useState(() => randomSeed());
   const [invert, setInvert] = useState(false);
+  // Who the twelve balls are in the two modes that have twelve. A dress, not a
+  // mode: the same seed plays the same round whichever cast is wearing it.
+  const [cast, setCast] = useState<CastName>("months");
   const [threads, setThreads] = useState<ThreadCount>(THREAD_CHOICES[0]);
   const [balls, setBalls] = useState(BALL_COUNT);
   const [size, setSize] = useState<BallSize>(NORMAL_SIZE);
@@ -386,8 +390,8 @@ export default function HomePage() {
             total = round.durationInFrames;
             onStage("sound");
             audio = await renderPotatoAudio(round).catch(() => null);
-            reel = potatoReel(round, { invert: job.invert });
-            summary = `${round.duration.toFixed(1)}s · ${MONTHS[round.survivor].label} survives · ${round.fuse.toFixed(1)}s fuse`;
+            reel = potatoReel(round, { invert: job.invert, cast: job.cast });
+            summary = `${round.duration.toFixed(1)}s · ${castFor(job.cast)[round.survivor].key.toUpperCase()} survives · ${round.fuse.toFixed(1)}s fuse`;
           } else if (job.mode === "month") {
             // Nothing is searched: the round is played once and the target is
             // read off it, so the length is exact by construction.
@@ -395,8 +399,8 @@ export default function HomePage() {
             total = round.durationInFrames;
             onStage("sound");
             audio = await renderMonthsAudio(round).catch(() => null);
-            reel = monthsReel(round, { invert: job.invert });
-            summary = `${round.duration.toFixed(1)}s · ${MONTHS[round.winner].label} held ${round.target.toFixed(1)}s`;
+            reel = monthsReel(round, { invert: job.invert, cast: job.cast });
+            summary = `${round.duration.toFixed(1)}s · ${castFor(job.cast)[round.winner].key.toUpperCase()} held ${round.target.toFixed(1)}s`;
           } else {
             // Nothing to play out: the cloud is built once and every frame is
             // the same points at a different angle. No soundtrack either — the
@@ -539,6 +543,27 @@ export default function HomePage() {
             Roll
           </button>
         </div>
+
+        {(mode === "month" || mode === "potato") && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
+            {(["months", "zodiac", "countries"] as const).map((choice) => (
+              <button
+                key={choice}
+                type="button"
+                onClick={() => setCast(choice)}
+                disabled={busy}
+                className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                  cast === choice
+                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                }`}
+              >
+                {CAST_LABEL[choice]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {mode === "shaper" && (
           <div className="mt-3 flex flex-col gap-3">
@@ -840,7 +865,7 @@ export default function HomePage() {
                       count: density,
                     }
                   : mode === "month" || mode === "potato"
-                    ? { mode, seed, invert }
+                    ? { mode, seed, invert, cast }
                     : {
                         mode,
                         seed,

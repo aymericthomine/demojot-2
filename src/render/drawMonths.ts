@@ -13,8 +13,9 @@
  * fills.
  */
 
+import { drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
-import { BALL, MONTHS, ZONE, type MonthFrame } from '../sim/months';
+import { BALL, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
 export interface MonthsLook {
@@ -26,6 +27,10 @@ export interface MonthsLook {
   target: number;
   /** The month the ending belongs to. */
   winner: number;
+  /** Who is playing: months, star signs or countries. */
+  cast: readonly Member[];
+  /** How much of a disc that cast's writing takes. */
+  fit: number;
 }
 
 /**
@@ -115,7 +120,7 @@ export function drawMonthsFrame(
   frame: MonthFrame,
   look: MonthsLook,
 ): void {
-  const { width, height, invert = false, target, winner } = look;
+  const { width, height, invert = false, target, winner, cast, fit } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -141,7 +146,7 @@ export function drawMonthsFrame(
   // takes their colour, which is the only thing in the picture that says the
   // clock is running.
   const holder = frame.holder;
-  const glow = holder >= 0 ? MONTHS[holder].color : null;
+  const glow = holder >= 0 ? cast[holder].color : null;
   ctx.beginPath();
   ctx.arc(cx, cy, radius * ZONE, 0, Math.PI * 2);
   ctx.fillStyle = glow ? withAlpha(glow, 0.22) : ink('#15161c', invert);
@@ -160,12 +165,19 @@ export function drawMonthsFrame(
   // its colour. Kept on, it also lands under the winner's own ball whenever the
   // ball happens to finish near the centre, and a name half-hidden behind the
   // thing it names reads as a fault rather than as a flourish.
-  if (glow && frame.reveal < 1) {
+  if (glow && frame.reveal < 1 && cast[holder].flag) {
+    // A cast that draws puts its picture here instead of its name, at the size
+    // the name would have taken and behind everything for the same reason.
+    ctx.save();
+    ctx.globalAlpha = 0.55 * (1 - frame.reveal);
+    drawMember(ctx, cast[holder], cx, cy, radius * ZONE * LABEL_FIT);
+    ctx.restore();
+  } else if (glow && frame.reveal < 1) {
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = withAlpha(glow, 0.85 * (1 - frame.reveal));
-    const label = MONTHS[holder].label;
+    const label = cast[holder].label;
     let size = Math.round(radius * 0.3);
     ctx.font = `700 ${size}px system-ui, sans-serif`;
     const room = radius * ZONE * 2 * LABEL_FIT;
@@ -183,7 +195,7 @@ export function drawMonthsFrame(
   const reveal = frame.reveal;
 
   for (let i = 0; i < frame.balls.length; i += 1) {
-    const month = MONTHS[i];
+    const member = cast[i];
     const lost = i === winner ? 0 : reveal;
     const x = cx + frame.balls[i].x * radius;
     const y = cy + frame.balls[i].y * radius;
@@ -226,26 +238,38 @@ export function drawMonthsFrame(
       ctx.lineCap = 'butt';
     }
 
-    const fill = drained(month.color, lost);
+    const fill = drained(member.color, lost);
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
     ctx.fillStyle = fill;
     ctx.fill();
     ctx.lineWidth = disc * OUTLINE;
-    ctx.strokeStyle = ink('#101216', invert);
+    // A flag with black in it on a black ground needs a rim that is neither:
+    // Germany's top third *is* the ground, and with a near-black outline the
+    // disc came out as a half circle of red and gold floating in nothing.
+    ctx.strokeStyle = ink(member.flag ? '#585d69' : '#101216', invert);
     ctx.stroke();
 
-    ctx.save();
-    ctx.font = `700 ${Math.round(disc * 0.62)}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    // Whichever of black and white can be read on the colour actually under it
-    // — which is why it is asked of the drained fill and not of the month's own
-    // colour. The four pale months carry black writing while the game is on,
-    // and a pale month that goes out ends up on a dark grey where black would
-    // disappear; asking the fill answers both without a special case.
-    ctx.fillStyle = drained(textOn(fill), lost * 0.62);
-    ctx.fillText(month.label, x, y);
-    ctx.restore();
+    if (member.flag) {
+      // The flag goes inside the outline, not over it, so the disc keeps the
+      // edge that separates it from the ground and from anything behind it.
+      ctx.save();
+      ctx.globalAlpha = 1 - lost * 0.72;
+      drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.font = `700 ${Math.round(disc * fit)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      // Whichever of black and white can be read on the colour actually under
+      // it — which is why it is asked of the drained fill and not of the
+      // member's own colour. The pale ones carry black writing while the game
+      // is on, and a pale one that goes out ends up on a dark grey where black
+      // would disappear; asking the fill answers both without a special case.
+      ctx.fillStyle = drained(textOn(fill), lost * 0.62);
+      ctx.fillText(member.label, x, y);
+      ctx.restore();
+    }
   }
 }

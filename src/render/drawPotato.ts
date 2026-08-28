@@ -13,8 +13,9 @@
  * second and a half, which is the reference's own tell.
  */
 
+import { drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
-import { BALL, MONTHS } from '../sim/months';
+import { BALL } from '../sim/months';
 import type { PotatoFrame } from '../sim/potato';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
@@ -25,6 +26,10 @@ export interface PotatoLook {
   invert?: boolean;
   /** The month left standing, lit through the ending. */
   survivor: number;
+  /** Who is playing: months, star signs or countries. */
+  cast: readonly Member[];
+  /** How much of a disc that cast's writing takes. */
+  fit: number;
 }
 
 /** The dark line drawn around a month that is still in, in ball radii. */
@@ -78,7 +83,7 @@ export function drawPotatoFrame(
   frame: PotatoFrame,
   look: PotatoLook,
 ): void {
-  const { width, height, invert = false, survivor } = look;
+  const { width, height, invert = false, survivor, cast, fit } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -112,7 +117,7 @@ export function drawPotatoFrame(
   }
 
   for (let i = 0; i < frame.balls.length; i += 1) {
-    const month = MONTHS[i];
+    const member = cast[i];
     const here = frame.balls[i];
     const x = cx + here.x * radius;
     const y = cy + here.y * radius;
@@ -122,18 +127,20 @@ export function drawPotatoFrame(
       // that its outer edge is exactly the surface everybody bounces off, which
       // is the only way the picture and the physics agree about where a wall is.
       ctx.beginPath();
-      ctx.strokeStyle = ink(dim(month.color, SPENT), invert);
+      ctx.strokeStyle = ink(dim(member.color, SPENT), invert);
       ctx.lineWidth = ball * WALL_WIDTH;
       ctx.arc(x, y, ball * (1 - WALL_WIDTH / 2), 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.save();
-      ctx.font = `700 ${Math.round(ball * 0.62)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = ink(dim(month.color, SPENT), invert);
-      ctx.fillText(month.label, x, y);
-      ctx.restore();
+      if (!member.flag) {
+        ctx.save();
+        ctx.font = `700 ${Math.round(ball * fit)}px system-ui, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = ink(dim(member.color, SPENT), invert);
+        ctx.fillText(member.label, x, y);
+        ctx.restore();
+      }
       continue;
     }
 
@@ -151,18 +158,25 @@ export function drawPotatoFrame(
 
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
-    ctx.fillStyle = month.color;
+    ctx.fillStyle = member.color;
     ctx.fill();
     ctx.lineWidth = disc * OUTLINE;
-    ctx.strokeStyle = ink('#101216', invert);
+    // A flag with black in it on a black ground needs a rim that is neither:
+    // Germany's top third *is* the ground, and with a near-black outline the
+    // disc came out as a half circle of red and gold floating in nothing.
+    ctx.strokeStyle = ink(member.flag ? '#585d69' : '#101216', invert);
     ctx.stroke();
 
-    ctx.save();
-    ctx.font = `700 ${Math.round(disc * 0.62)}px system-ui, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = textOn(month.color);
-    ctx.fillText(month.label, x, y);
-    ctx.restore();
+    if (member.flag) {
+      drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
+    } else {
+      ctx.save();
+      ctx.font = `700 ${Math.round(disc * fit)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = textOn(member.color);
+      ctx.fillText(member.label, x, y);
+      ctx.restore();
+    }
   }
 }

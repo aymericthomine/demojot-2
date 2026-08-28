@@ -503,6 +503,41 @@ eight hundred, which was enough to hang the page before a single frame was drawn
 A knock now needs 0.08 seconds of quiet behind it, and the list comes back to
 about 270.
 
+## Who is playing
+
+Month and Hot potato are games about twelve things going round a ring, and
+neither cares what the twelve *are*: the simulations count to twelve, and the
+painters ask for a colour and something to put on the disc. So the cast is a
+**dress rather than a mode** — the same seed plays the same round whichever cast
+is wearing it, and there are three to pick from instead of six copies of two
+games.
+
+- **Months** — the twelve, in the colours sampled off the reference.
+- **Zodiac** — the twelve signs, in the colours sampled off theirs. They come out
+  duller than the months' and that is the source's own choice, not a dimmed
+  screenshot: white in that frame is 255 and its ground is 0. The glyphs carry
+  U+FE0E behind them, because without it these twelve are emoji by default — the
+  standard gives them emoji presentation — and would arrive as colour pictures on
+  the very phones this is made for.
+- **Countries** — twelve flags, **drawn rather than typed**. The obvious way is
+  the regional-indicator emoji and it is wrong twice over: it is a smiley by
+  another name, and half the platforms that matter refuse to draw it, so a video
+  made on Windows would come out spelling `DE` where Germany should be.
+
+The flags are read at eighty pixels across, which is the whole brief. What has to
+survive is the *arrangement* — which way the bands run, where the charge sits,
+what two colours meet — not the fine detail of an emblem, so Mexico's eagle,
+Spain's arms and the fifty stars are drawn as the marks they read as at that
+size. Everything that carries recognition at a glance is exact.
+
+Two things the drawing had to be told. A flag with black in it needs a rim that
+is neither black nor the ground: Germany's top third *is* the ground, and with
+the discs' usual near-black outline it came out as a half circle of red and gold
+floating in nothing. And the crescent on Algeria's flag is a red disc with a
+white one laid over it rather than a hole cut out of one — cutting wants
+`destination-out`, and the canvas the encoder paints into is opaque, so there is
+nothing behind the hole to reveal.
+
 ## Measured against the reference, not guessed
 
 Every number that decides how it *feels* was taken off the reference videos frame

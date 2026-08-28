@@ -9,12 +9,13 @@
  */
 
 import type { Reel } from './encodeVideo';
+import { CAST_FIT, castFor, type CastName } from '../render/cast';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPotatoFrame } from '../render/drawPotato';
 import { drawShapeFrame } from '../render/drawShape';
 import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import { drawFrame, type BallFace } from '../render/drawFrame';
-import { MONTHS, type MonthsRound } from '../sim/months';
+import type { MonthsRound } from '../sim/months';
 import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
@@ -22,6 +23,8 @@ import { FPS, HEIGHT, WIDTH } from '../sim/style';
 export interface Dress {
   /** White ground and complementary colours instead of the usual black. */
   invert?: boolean;
+  /** Who the twelve balls are, where the mode has a cast to dress. */
+  cast?: CastName;
 }
 
 export interface BattleDress extends Dress {
@@ -111,9 +114,11 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `month-${round.seed}-${MONTHS[round.winner].label.toLowerCase()}-${Math.round(
+    name: `month-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
       round.duration,
-    )}s${dress.invert ? '-white' : ''}`,
+    )}s${dress.cast && dress.cast !== 'months' ? `-${dress.cast}` : ''}${
+      dress.invert ? '-white' : ''
+    }`,
     paint(ctx, index) {
       drawMonthsFrame(ctx, round.frames[index], {
         width: WIDTH,
@@ -121,6 +126,8 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
         invert: dress.invert,
         target: round.target,
         winner: round.winner,
+        cast: castFor(dress.cast),
+        fit: CAST_FIT[dress.cast ?? 'months'],
       });
       release(round.frames, index);
     },
@@ -132,15 +139,19 @@ export function potatoReel(round: PotatoRound, dress: Dress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `potato-${round.seed}-${MONTHS[round.survivor].label.toLowerCase()}-${Math.round(
+    name: `potato-${round.seed}-${castFor(dress.cast)[round.survivor].key}-${Math.round(
       round.duration,
-    )}s${dress.invert ? '-white' : ''}`,
+    )}s${dress.cast && dress.cast !== 'months' ? `-${dress.cast}` : ''}${
+      dress.invert ? '-white' : ''
+    }`,
     paint(ctx, index) {
       drawPotatoFrame(ctx, round.frames[index], {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
         survivor: round.survivor,
+        cast: castFor(dress.cast),
+        fit: CAST_FIT[dress.cast ?? 'months'],
       });
       release(round.frames, index);
     },
