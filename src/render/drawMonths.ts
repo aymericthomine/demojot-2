@@ -13,7 +13,7 @@
  * fills.
  */
 
-import { drawMember, type Member } from './cast';
+import { drawLabel, drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
@@ -31,6 +31,8 @@ export interface MonthsLook {
   cast: readonly Member[];
   /** How much of a disc that cast's writing takes. */
   fit: number;
+  /** How much that cast's writing is thickened. */
+  weight: number;
 }
 
 /**
@@ -120,7 +122,7 @@ export function drawMonthsFrame(
   frame: MonthFrame,
   look: MonthsLook,
 ): void {
-  const { width, height, invert = false, target, winner, cast, fit } = look;
+  const { width, height, invert = false, target, winner, cast, fit, weight } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -173,21 +175,15 @@ export function drawMonthsFrame(
     drawMember(ctx, cast[holder], cx, cy, radius * ZONE * LABEL_FIT);
     ctx.restore();
   } else if (glow && frame.reveal < 1) {
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = withAlpha(glow, 0.85 * (1 - frame.reveal));
     const label = cast[holder].label;
     let size = Math.round(radius * 0.3);
+    ctx.save();
     ctx.font = `700 ${size}px system-ui, sans-serif`;
     const room = radius * ZONE * 2 * LABEL_FIT;
     const wide = ctx.measureText(label).width;
-    if (wide > room) {
-      size = Math.max(8, Math.floor((size * room) / wide));
-      ctx.font = `700 ${size}px system-ui, sans-serif`;
-    }
-    ctx.fillText(label, cx, cy);
     ctx.restore();
+    if (wide > room) size = Math.max(8, Math.floor((size * room) / wide));
+    drawLabel(ctx, label, cx, cy, size, withAlpha(glow, 0.85 * (1 - frame.reveal)), weight);
   }
 
   // The ending: every month but one loses its colour, so the last thing the
@@ -258,18 +254,20 @@ export function drawMonthsFrame(
       drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
       ctx.restore();
     } else {
-      ctx.save();
-      ctx.font = `700 ${Math.round(disc * fit)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
       // Whichever of black and white can be read on the colour actually under
       // it — which is why it is asked of the drained fill and not of the
       // member's own colour. The pale ones carry black writing while the game
       // is on, and a pale one that goes out ends up on a dark grey where black
       // would disappear; asking the fill answers both without a special case.
-      ctx.fillStyle = drained(textOn(fill), lost * 0.62);
-      ctx.fillText(member.label, x, y);
-      ctx.restore();
+      drawLabel(
+        ctx,
+        member.label,
+        x,
+        y,
+        disc * fit,
+        drained(textOn(fill), lost * 0.62),
+        weight,
+      );
     }
   }
 }

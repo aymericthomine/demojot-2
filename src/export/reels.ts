@@ -9,7 +9,7 @@
  */
 
 import type { Reel } from './encodeVideo';
-import { CAST_FIT, castFor, type CastName } from '../render/cast';
+import { CAST_FIT, CAST_WEIGHT, castFor, type CastName } from '../render/cast';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPotatoFrame } from '../render/drawPotato';
 import { drawShapeFrame } from '../render/drawShape';
@@ -128,6 +128,7 @@ export function monthsReel(round: MonthsRound, dress: Dress = {}): Reel {
         winner: round.winner,
         cast: castFor(dress.cast),
         fit: CAST_FIT[dress.cast ?? 'months'],
+        weight: CAST_WEIGHT[dress.cast ?? 'months'],
       });
       release(round.frames, index);
     },
@@ -152,6 +153,7 @@ export function potatoReel(round: PotatoRound, dress: Dress = {}): Reel {
         survivor: round.survivor,
         cast: castFor(dress.cast),
         fit: CAST_FIT[dress.cast ?? 'months'],
+        weight: CAST_WEIGHT[dress.cast ?? 'months'],
       });
       release(round.frames, index);
     },

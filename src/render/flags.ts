@@ -87,38 +87,40 @@ function star(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: numbe
 }
 
 /**
- * The maple leaf, as eleven points about a stem.
+ * The maple leaf, as a half outline mirrored about the stem.
  *
- * Half of it, mirrored — the leaf is symmetric and writing it once keeps the two
- * sides from drifting. The points are the real leaf's, rounded to hundredths:
- * what carries it at this size is the deep notch either side of the crown and
- * the three lobes, not the exact curve between them.
+ * What makes it read as a maple leaf and not as a star is the *depth of the
+ * notches*: three lobes separated by cuts that come most of the way back to the
+ * middle, with a pair of small serrations either side of the crown. A first
+ * version with shallow notches and evenly spread points came out as an asterisk,
+ * which is the failure this list is shaped to avoid.
+ *
+ * Right half only, from the crown down to the stem, x out and y up.
  */
 const LEAF: readonly (readonly [number, number])[] = [
-  [0, 1],
-  [0.1, 0.58],
-  [0.42, 0.64],
-  [0.33, 0.46],
-  [0.78, 0.22],
-  [0.66, 0.12],
-  [0.88, -0.1],
-  [0.44, -0.04],
-  [0.38, -0.16],
-  [0.16, -0.1],
-  [0.24, -0.66],
-  [0.08, -0.62],
-  [0.08, -0.85],
+  [0.0, 1.0],
+  [0.16, 0.42],
+  [0.34, 0.48],
+  [0.27, 0.3],
+  [0.58, 0.36],
+  [0.5, 0.2],
+  [0.86, 0.09],
+  [0.66, -0.04],
+  [0.72, -0.16],
+  [0.34, -0.12],
+  [0.4, -0.54],
+  [0.15, -0.48],
+  [0.15, -0.88],
 ];
 
 function leaf(ctx: CanvasRenderingContext2D, size: number): void {
   ctx.beginPath();
-  LEAF.forEach(([x, y], i) => {
-    if (i === 0) ctx.moveTo(0, -size);
-    else ctx.lineTo(x * size, -y * size);
-  });
-  for (let i = LEAF.length - 1; i >= 0; i -= 1) {
-    const [x, y] = LEAF[i];
-    ctx.lineTo(-x * size, -y * size);
+  ctx.moveTo(0, -size);
+  for (let i = 1; i < LEAF.length; i += 1) {
+    ctx.lineTo(LEAF[i][0] * size, -LEAF[i][1] * size);
+  }
+  for (let i = LEAF.length - 1; i >= 1; i -= 1) {
+    ctx.lineTo(-LEAF[i][0] * size, -LEAF[i][1] * size);
   }
   ctx.closePath();
   ctx.fill();
@@ -153,12 +155,23 @@ export const FLAGS: Record<FlagName, Painter> = {
 
   mx: (ctx, r) => {
     bands(['#006847', '#ffffff', '#ce1126'], true)(ctx, r);
-    // The eagle is four pixels wide at this size; what reads is that Mexico's
-    // white band carries something dark in the middle, so that is what is drawn.
-    ctx.fillStyle = '#7d5b3a';
+    // The eagle, and only the eagle. The emblem is a bird on a cactus over a
+    // wreath and at a dozen pixels none of that survives — a first try with the
+    // wreath under it read as a mouth, and the whole mark as a face. What reads
+    // as a bird at any size is a body between two wings, so that is all there
+    // is, in the flat manner the rest of the set is drawn in.
+    ctx.fillStyle = '#5c4a2a';
     ctx.beginPath();
-    ctx.ellipse(0, 0, r * 0.2, r * 0.26, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, r * 0.02, r * 0.055, r * 0.16, 0, 0, Math.PI * 2);
     ctx.fill();
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * r * 0.03, -r * 0.09);
+      ctx.quadraticCurveTo(side * r * 0.2, -r * 0.28, side * r * 0.32, -r * 0.17);
+      ctx.quadraticCurveTo(side * r * 0.19, -r * 0.11, side * r * 0.05, r * 0.02);
+      ctx.closePath();
+      ctx.fill();
+    }
   },
 
   in: (ctx, r) => {
@@ -235,13 +248,22 @@ export const FLAGS: Record<FlagName, Painter> = {
     ctx.fill();
     ctx.fillStyle = '#002776';
     ctx.beginPath();
-    ctx.arc(0, 0, r * 0.36, 0, Math.PI * 2);
+    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = Math.max(1, r * 0.09);
+    // The band crosses the globe rather than arching over it. Drawn as a wide
+    // arc clipped to the globe, which is what it is on the flag: a curve whose
+    // centre is far below, cutting the disc on a gentle rise. Unclipped it came
+    // out as a hoop floating above the blue, joined to nothing.
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(0, r * 0.5, r * 0.55, -Math.PI * 0.82, -Math.PI * 0.18);
+    ctx.arc(0, 0, r * 0.38, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = r * 0.13;
+    ctx.beginPath();
+    ctx.arc(0, r * 0.86, r * 0.82, Math.PI * 1.08, Math.PI * 1.92);
     ctx.stroke();
+    ctx.restore();
   },
 
   gb: (ctx, r) => {

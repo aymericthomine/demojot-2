@@ -513,7 +513,13 @@ is wearing it, and there are three to pick from instead of six copies of two
 games.
 
 - **Months** — the twelve, in the colours sampled off the reference.
-- **Zodiac** — the twelve signs, in the colours sampled off theirs. They come out
+- **Zodiac** — the twelve signs, in the colours sampled off theirs. Writing is
+  centred on its *ink* rather than on its line, and thickened by stroking it in
+  its own colour: where a glyph sits inside its em is the font's business, so
+  `textBaseline = 'middle'` put the signs visibly low and off to one side, each
+  by a different amount — twelve balls printed carelessly. And the symbol faces
+  a machine has do not carry a bold, so asking for weight 700 returns the same
+  hairline; stroking thickens it whatever font drew it. They come out
   duller than the months' and that is the source's own choice, not a dimmed
   screenshot: white in that frame is 255 and its ground is 0. The glyphs carry
   U+FE0E behind them, because without it these twelve are emoji by default — the
@@ -530,13 +536,24 @@ what two colours meet — not the fine detail of an emblem, so Mexico's eagle,
 Spain's arms and the fifty stars are drawn as the marks they read as at that
 size. Everything that carries recognition at a glance is exact.
 
-Two things the drawing had to be told. A flag with black in it needs a rim that
-is neither black nor the ground: Germany's top third *is* the ground, and with
-the discs' usual near-black outline it came out as a half circle of red and gold
-floating in nothing. And the crescent on Algeria's flag is a red disc with a
-white one laid over it rather than a hole cut out of one — cutting wants
-`destination-out`, and the canvas the encoder paints into is opaque, so there is
-nothing behind the hole to reveal.
+Four things the drawing had to be told, all of them found by rendering it large
+and looking. A flag with black in it needs a rim that is neither black nor the
+ground: Germany's top third *is* the ground, and with the discs' usual near-black
+outline it came out as a half circle of red and gold floating in nothing. The
+crescent on Algeria's flag is a red disc with a white one laid over it rather
+than a hole cut out of one — cutting wants `destination-out`, and the canvas the
+encoder paints into is opaque, so there is nothing behind the hole to reveal.
+Brazil's band crosses the globe and is clipped to it; drawn unclipped it was a
+hoop floating above the blue, joined to nothing. And what makes a maple leaf read
+as a leaf rather than as an asterisk is the *depth of the notches* — three lobes
+separated by cuts that come most of the way back to the middle, not points spread
+evenly around a centre.
+
+Mexico is the one that had to be argued down. The emblem is an eagle on a cactus
+over a wreath, and at a dozen pixels none of that survives: drawn as an ellipse
+it was a brown egg, and drawn with a wreath under it the arc read as a mouth and
+the whole mark as a face. What reads as a bird at any size is a body between two
+wings, so that is all there is.
 
 ## Measured against the reference, not guessed
 

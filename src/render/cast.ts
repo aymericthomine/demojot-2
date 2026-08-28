@@ -50,6 +50,58 @@ export const CAST_FIT: Record<CastName, number> = {
 };
 
 /**
+ * How much the writing is thickened, as a fraction of its size.
+ *
+ * The star signs come from whatever symbol face the machine has, and those faces
+ * have no bold — asking for weight 700 gets the same hairline back. So the glyph
+ * is stroked in its own colour as well as filled, which thickens it whatever
+ * font drew it. The months are set in a real typeface that does have a bold and
+ * want none of this.
+ */
+export const CAST_WEIGHT: Record<CastName, number> = {
+  months: 0,
+  zodiac: 0.055,
+  countries: 0,
+};
+
+/**
+ * Writing centred on its ink rather than on its line.
+ *
+ * `textBaseline = 'middle'` centres the em box, and where a glyph sits inside
+ * its own em is the font's business, not the disc's: the star signs came out
+ * visibly low and off to one side, each by a different amount, which reads as
+ * twelve balls printed carelessly. Measuring the ink and centring *that* puts
+ * every one of them in the middle of its disc whatever face drew it.
+ */
+export function drawLabel(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  color: string,
+  weight = 0,
+): void {
+  if (!text) return;
+  ctx.save();
+  ctx.font = `700 ${Math.round(size)}px system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  const ink = ctx.measureText(text);
+  const dx = (ink.actualBoundingBoxLeft - ink.actualBoundingBoxRight) / 2;
+  const dy = (ink.actualBoundingBoxAscent - ink.actualBoundingBoxDescent) / 2;
+  if (weight > 0) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = size * weight;
+    ctx.lineJoin = 'round';
+    ctx.strokeText(text, x + dx, y + dy);
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(text, x + dx, y + dy);
+  ctx.restore();
+}
+
+/**
  * The star signs, with the colours read off the reference frame.
  *
  * Sampled the same way the months were — the median of an annulus inside each

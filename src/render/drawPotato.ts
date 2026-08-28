@@ -13,7 +13,7 @@
  * second and a half, which is the reference's own tell.
  */
 
-import { drawMember, type Member } from './cast';
+import { drawLabel, drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL } from '../sim/months';
 import type { PotatoFrame } from '../sim/potato';
@@ -30,6 +30,8 @@ export interface PotatoLook {
   cast: readonly Member[];
   /** How much of a disc that cast's writing takes. */
   fit: number;
+  /** How much that cast's writing is thickened. */
+  weight: number;
 }
 
 /** The dark line drawn around a month that is still in, in ball radii. */
@@ -83,7 +85,7 @@ export function drawPotatoFrame(
   frame: PotatoFrame,
   look: PotatoLook,
 ): void {
-  const { width, height, invert = false, survivor, cast, fit } = look;
+  const { width, height, invert = false, survivor, cast, fit, weight } = look;
   const radius = width * ARENA;
   const cx = width / 2;
   const cy = height / 2;
@@ -133,13 +135,7 @@ export function drawPotatoFrame(
       ctx.stroke();
 
       if (!member.flag) {
-        ctx.save();
-        ctx.font = `700 ${Math.round(ball * fit)}px system-ui, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = ink(dim(member.color, SPENT), invert);
-        ctx.fillText(member.label, x, y);
-        ctx.restore();
+        drawLabel(ctx, member.label, x, y, ball * fit, ink(dim(member.color, SPENT), invert), weight);
       }
       continue;
     }
@@ -170,13 +166,7 @@ export function drawPotatoFrame(
     if (member.flag) {
       drawMember(ctx, member, x, y, disc * (1 - OUTLINE / 2));
     } else {
-      ctx.save();
-      ctx.font = `700 ${Math.round(disc * fit)}px system-ui, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = textOn(member.color);
-      ctx.fillText(member.label, x, y);
-      ctx.restore();
+      drawLabel(ctx, member.label, x, y, disc * fit, textOn(member.color), weight);
     }
   }
 }
