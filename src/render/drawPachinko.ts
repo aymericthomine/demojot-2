@@ -20,6 +20,7 @@
 
 import { drawLabel, drawMember, type Member } from './cast';
 import { ink, textOn } from './ink';
+import { ARENA } from '../sim/style';
 import {
   BALL,
   COLS,
@@ -50,30 +51,46 @@ export interface PachinkoLook {
 }
 
 /**
- * Where everything goes, as fractions of the frame.
+ * Where everything goes, in units of the field's width.
  *
- * Measured off the reference at its own size and scaled: a 576-wide frame with
- * a field 468 across starting 333 down. The frame here is 1080 by 1920 and the
- * reference is 576 by 1024 — the same 9:16 — so every number is the reference's
- * own, divided by its frame rather than by ours.
+ * The proportions are the reference's, measured off its own frame — 468 across,
+ * discs 38 through, two rows 63 apart — and then divided by the width of its
+ * field rather than by the width of its picture. Which is what makes the whole
+ * thing one drawing that can be set at any size: only the field's width is
+ * decided in pixels, and every part of the column is a multiple of it.
  */
-const FIELD_W = 0.8125;
-const FIELD_TOP = 0.3252;
+const DISC = 0.0406;
+const ROW_STEP = 0.1346;
+const SCORE_DROP = 0.0699;
+const COL_STEP = 0.1518;
+const HEAD_GAP = 0.1133;
+const BOARD_HIGH = LAND_AT + SLOT_DEPTH;
+const BAR_GAP = 0.044;
+const BAR_HIGH = 0.0171;
 
-/** The two rows of the scoreboard, and where a total sits under its disc. */
-const ROW_ONE = 0.2119;
-const ROW_TWO = 0.2734;
-const SCORE_DROP = 0.0254;
-const DISC = 0.033;
-const COL_STEP = 0.1233;
+/** Type sizes, in field widths as well. */
+const SCORE_SIZE = 0.0385;
+const SLOT_SIZE = 0.0418;
 
-/** The bar under the board: how far along the playing time has got. */
-const BAR_TOP = 0.791;
-const BAR_HIGH = 0.0078;
+/**
+ * The whole column, top of the discs to the bottom of the bar.
+ *
+ * Stated as a sum rather than measured, so that setting the board to a height
+ * is a division and not a hunt through six fractions that all have to move
+ * together.
+ */
+const BLOCK = DISC + ROW_STEP + HEAD_GAP + BOARD_HIGH + BAR_GAP + BAR_HIGH;
 
-/** Type sizes, as fractions of the frame width. */
-const SCORE_SIZE = 0.0313;
-const SLOT_SIZE = 0.034;
+/**
+ * And the height it is set to: the arena the other modes are played in.
+ *
+ * Not a look chosen for this mode — a mode that arrives on the same page at
+ * half again the size of the ones next to it reads as a different site rather
+ * than as another game. The ring in Month and Hot potato is the frame's width
+ * times twice its radius, so this column is that tall and centred on the same
+ * middle, and the field's width falls out of the division.
+ */
+const SPAN = ARENA * 2;
 
 const FIELD = '#08090c';
 const EDGE = '#3a3d47';
@@ -128,9 +145,12 @@ export function drawPachinkoFrame(
   look: PachinkoLook,
 ): void {
   const { width, height, invert = false, winner, cast, fit, weight } = look;
-  const field = width * FIELD_W;
+  const field = (width * SPAN) / BLOCK;
   const left = (width - field) / 2;
-  const top = height * FIELD_TOP;
+  const head = (height - BLOCK * field) / 2;
+  const rowOne = head + DISC * field;
+  const rowTwo = rowOne + ROW_STEP * field;
+  const top = rowTwo + HEAD_GAP * field;
   // The simulation's units are field widths, so this pair is the whole mapping.
   const at = (x: number) => left + x * field;
   const on = (y: number) => top + y * field;
@@ -147,12 +167,11 @@ export function drawPachinkoFrame(
   // The scoreboard. Two rows of six in the cast's own order, which is the order
   // anybody reading months expects and the only one that lets the eye find a
   // month without hunting.
-  const disc = width * DISC;
+  const disc = DISC * field;
   for (let i = 0; i < cast.length; i += 1) {
     const member = cast[i];
-    const row = i < 6 ? ROW_ONE : ROW_TWO;
-    const cx = width / 2 + ((i % 6) - 2.5) * width * COL_STEP;
-    const cy = height * row;
+    const cx = width / 2 + ((i % 6) - 2.5) * COL_STEP * field;
+    const cy = i < 6 ? rowOne : rowTwo;
     const lost = reveal > 0 && i !== winner ? reveal : 0;
     // The winner grows a little once it is decided, so the eye lands on it
     // rather than reading twelve totals to find the biggest.
@@ -202,8 +221,8 @@ export function drawPachinkoFrame(
       ctx,
       String(frame.score[i]),
       cx,
-      cy + height * SCORE_DROP + disc * 0.35,
-      width * SCORE_SIZE,
+      cy + SCORE_DROP * field,
+      SCORE_SIZE * field,
       ink(drained('#ffffff', lost * 0.72), invert),
     );
   }
@@ -243,14 +262,14 @@ export function drawPachinkoFrame(
       ctx.fillRect(x, mouth, cell, boardEnd - mouth);
     }
     ctx.strokeStyle = ink('#000000', invert);
-    ctx.lineWidth = Math.max(1, width * 0.0028);
+    ctx.lineWidth = Math.max(1, field * 0.0034);
     ctx.strokeRect(x, mouth, cell, boardEnd - mouth);
     write(
       ctx,
       multiplying ? `x${SLOT_MULTIPLY[s]}` : `+${SLOT_VALUE[s]}`,
       x + cell / 2,
       (mouth + boardEnd) / 2,
-      width * SLOT_SIZE,
+      SLOT_SIZE * field,
       ink(multiplying ? GOLD : '#ffffff', invert),
     );
   }
@@ -301,15 +320,15 @@ export function drawPachinkoFrame(
   // The outline last, and outside the clip: a stroke laid on the boundary of
   // its own clip comes out half the width it was asked for.
   ctx.strokeStyle = ink(EDGE, invert);
-  ctx.lineWidth = Math.max(1, width * 0.0028);
+  ctx.lineWidth = Math.max(1, field * 0.0034);
   ctx.strokeRect(left, boardTop, field, boardEnd - boardTop);
   ctx.restore();
 
   // The bar: how much playing time is left, and gold once there is none — which
   // is the only warning the last wave gets, and all it needs, because the slots
   // change to multipliers in the same instant.
-  const barTop = height * BAR_TOP;
-  const barHigh = height * BAR_HIGH;
+  const barTop = boardEnd + BAR_GAP * field;
+  const barHigh = BAR_HIGH * field;
   ctx.fillStyle = ink(TRACK, invert);
   ctx.fillRect(left, barTop, field, barHigh);
   ctx.fillStyle = ink(frame.phase === 'play' ? BAR : GOLD, invert);

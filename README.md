@@ -557,6 +557,14 @@ the simulation in units of the field's width and the painter multiplies by
 however wide it draws the field, so the picture cannot disagree with the physics
 about where a peg is.
 
+**It is exactly as tall as the ring the other modes are played in.** Every part
+of the column — the two rows of the scoreboard, the gap, the board, the bar — is
+a multiple of the field's width, so the whole thing has one height written as a
+sum, and the field's width is that height divided by it. Set to the arena's
+diameter it comes out at 976 pixels against the ring's 978, on the same centre.
+A mode that arrived on the same page half again the size of the ones next to it
+would read as a different site rather than as another game.
+
 ## Who is playing
 
 Month, Hot potato and Pachinko are games about twelve things — two of them
