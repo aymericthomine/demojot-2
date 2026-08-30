@@ -11,11 +11,13 @@
 import type { Reel } from './encodeVideo';
 import { CAST_FIT, CAST_WEIGHT, castFor, type CastName } from '../render/cast';
 import { drawMonthsFrame } from '../render/drawMonths';
+import { drawPachinkoFrame } from '../render/drawPachinko';
 import { drawPotatoFrame } from '../render/drawPotato';
 import { drawShapeFrame } from '../render/drawShape';
 import { buildCloud, rampFor, recipeSlug, LOOP_SECONDS, type ShaperSetup } from '../sim/shaper';
 import { drawFrame, type BallFace } from '../render/drawFrame';
 import type { MonthsRound } from '../sim/months';
+import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { FPS, HEIGHT, WIDTH } from '../sim/style';
@@ -151,6 +153,31 @@ export function potatoReel(round: PotatoRound, dress: Dress = {}): Reel {
         height: HEIGHT,
         invert: dress.invert,
         survivor: round.survivor,
+        cast: castFor(dress.cast),
+        fit: CAST_FIT[dress.cast ?? 'months'],
+        weight: CAST_WEIGHT[dress.cast ?? 'months'],
+      });
+      release(round.frames, index);
+    },
+  };
+}
+
+/** Pachinko, painted from its own frames. */
+export function pachinkoReel(round: PachinkoRound, dress: Dress = {}): Reel {
+  return {
+    durationInFrames: round.durationInFrames,
+    duration: round.duration,
+    name: `pachinko-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
+      round.duration,
+    )}s${dress.cast && dress.cast !== 'months' ? `-${dress.cast}` : ''}${
+      dress.invert ? '-white' : ''
+    }`,
+    paint(ctx, index) {
+      drawPachinkoFrame(ctx, round.frames[index], {
+        width: WIDTH,
+        height: HEIGHT,
+        invert: dress.invert,
+        winner: round.winner,
         cast: castFor(dress.cast),
         fit: CAST_FIT[dress.cast ?? 'months'],
         weight: CAST_WEIGHT[dress.cast ?? 'months'],

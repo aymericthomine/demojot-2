@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   renderMonthsAudio,
+  renderPachinkoAudio,
   renderPotatoAudio,
   renderRoundAudio,
 } from "../audio/render";
@@ -32,10 +33,12 @@ import {
 import {
   battleReel,
   monthsReel,
+  pachinkoReel,
   potatoReel,
   shaperReel,
 } from "../export/reels";
 import { generateMonths } from "../sim/months";
+import { generatePachinko } from "../sim/pachinko";
 import { generatePotato } from "../sim/potato";
 import { CAST_LABEL, castFor, type CastName } from "../render/cast";
 import { loadFlags } from "../render/flags";
@@ -80,7 +83,7 @@ import type { BallFace } from "../render/drawFrame";
  * the fight is a fixed set of threads changing hands, the drop is fruit piling
  * up and merging. Adding the second did not touch the first.
  */
-type Mode = "battle" | "beast" | "shaper" | "month" | "potato";
+type Mode = "battle" | "beast" | "shaper" | "month" | "potato" | "pachinko";
 
 /**
  * What the fixed mode is fixed to.
@@ -167,7 +170,8 @@ type Job =
       count: Density;
     }
   | { mode: "month"; seed: number; invert: boolean; cast: CastName }
-  | { mode: "potato"; seed: number; invert: boolean; cast: CastName };
+  | { mode: "potato"; seed: number; invert: boolean; cast: CastName }
+  | { mode: "pachinko"; seed: number; invert: boolean; cast: CastName };
 
 type Stage =
   | { kind: "idle" }
@@ -352,7 +356,8 @@ export default function HomePage() {
           if (
             job.mode !== "shaper" &&
             job.mode !== "month" &&
-            job.mode !== "potato"
+            job.mode !== "potato" &&
+            job.mode !== "pachinko"
           ) {
             const round = generateRound(
               job.seed,
@@ -396,6 +401,17 @@ export default function HomePage() {
             audio = await renderPotatoAudio(round).catch(() => null);
             reel = potatoReel(round, { invert: job.invert, cast: job.cast });
             summary = `${round.duration.toFixed(1)}s · ${castFor(job.cast)[round.survivor].key.toUpperCase()} survives · ${round.fuse.toFixed(1)}s fuse`;
+          } else if (job.mode === "pachinko") {
+            // Nothing is searched here either: the seed sets how long balls
+            // keep being dropped for, and the last wave and the ending take as
+            // long as they take.
+            const round = generatePachinko(job.seed);
+            total = round.durationInFrames;
+            if (job.cast === "countries") await loadFlags();
+            onStage("sound");
+            audio = await renderPachinkoAudio(round).catch(() => null);
+            reel = pachinkoReel(round, { invert: job.invert, cast: job.cast });
+            summary = `${round.duration.toFixed(1)}s · ${castFor(job.cast)[round.winner].key.toUpperCase()} on ${round.best} · ${round.waves} waves`;
           } else if (job.mode === "month") {
             // Nothing is searched: the round is played once and the target is
             // read off it, so the length is exact by construction.
@@ -481,7 +497,9 @@ export default function HomePage() {
                   ? "Month"
                   : mode === "potato"
                     ? "Hot Potato"
-                    : "MrBeast"}
+                    : mode === "pachinko"
+                      ? "Pachinko"
+                      : "MrBeast"}
         </h1>
         <p className="mt-1.5 text-sm leading-relaxed text-[#8b90a0]">
           {mode === "battle"
@@ -492,13 +510,15 @@ export default function HomePage() {
                   ? "Hold the centre. Twelve balls, one a month, loose in the ring; while exactly one of them is in the zone in the middle, that month banks the seconds. Two at once and nobody scores. Every ball wears a ring of what it has banked, and the video ends the moment one of those rings closes."
                   : mode === "potato"
                     ? "One month is holding a fuse, and touching another month hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last month still in survives."
-                    : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
+                    : mode === "pachinko"
+                      ? "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds."
+                      : "The same fight, with nothing left to set: seven balls, five threads each, and the one opening that never turns or recolours, so every video starts on the same picture. Roll a seed and go — they run a minute to a minute and twenty."}
         </p>
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
         <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {(["battle", "beast", "shaper", "month", "potato"] as const).map(
+          {(["battle", "beast", "shaper", "month", "potato", "pachinko"] as const).map(
             (choice) => (
               <button
                 key={choice}
@@ -519,7 +539,9 @@ export default function HomePage() {
                         ? "Shaper"
                         : choice === "month"
                           ? "Month"
-                          : "Hot potato"}
+                          : choice === "potato"
+                            ? "Hot potato"
+                            : "Pachinko"}
               </button>
             ),
           )}
@@ -549,7 +571,7 @@ export default function HomePage() {
           </button>
         </div>
 
-        {(mode === "month" || mode === "potato") && (
+        {(mode === "month" || mode === "potato" || mode === "pachinko") && (
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
             <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
             {(["months", "zodiac", "countries"] as const).map((choice) => (
@@ -869,7 +891,9 @@ export default function HomePage() {
                       palette,
                       count: density,
                     }
-                  : mode === "month" || mode === "potato"
+                  : mode === "month" ||
+                      mode === "potato" ||
+                      mode === "pachinko"
                     ? { mode, seed, invert, cast }
                     : {
                         mode,
@@ -900,7 +924,9 @@ export default function HomePage() {
                   ? "Playing the round…"
                   : mode === "potato"
                     ? "Passing it round…"
-                    : "Fighting…"
+                    : mode === "pachinko"
+                      ? "Dropping them…"
+                      : "Fighting…"
             : stage.kind === "encoding"
               ? "Encoding…"
               : "Generate the video"}

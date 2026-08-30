@@ -1,6 +1,6 @@
 # Ball Battle
 
-Four generators for vertical 9:16 videos, in one page. They share the seed, the
+Five generators for vertical 9:16 videos, in one page. They share the seed, the
 clock and the encoder, and nothing else.
 
 **Ball battle** — balls in a ring fight over a fixed set of threads pinned to the
@@ -16,6 +16,10 @@ the moment one of the rings closes.
 **Hot potato** — the same twelve, passing a fuse. Whoever is holding it when the
 fuse runs out is out, and stops dead where it fell to become a wall everybody
 else bounces off. Last month still in survives.
+
+**Pachinko** — the same twelve dropped down a field of pegs into seven slots,
+over and over. A slot is worth what is written on it; where a ball lands is
+added to whoever it belongs to, and the last wave lands on multipliers instead.
 
 All of them are computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
@@ -503,10 +507,61 @@ eight hundred, which was enough to hang the page before a single frame was drawn
 A knock now needs 0.08 seconds of quiet behind it, and the list comes back to
 about 270.
 
+## Pachinko
+
+Twelve balls down eleven staggered rows of pegs into seven slots — twenty-five
+at the edges, two in the middle — and where a ball lands is added to whoever it
+belongs to. Nobody is eliminated and nothing is held: the whole mode is a
+scoreboard filling up, which is why the scoreboard and not the field is the top
+third of the picture.
+
+**They fall in waves.** All twelve are released a beat apart and the next wave
+waits until the board is empty. That is the reference's own cadence and it is
+the only one that keeps the mode legible: a continuous dribble of balls is a
+screensaver, whereas a wave has a beginning, a middle where six are in the air
+at once, and an end where the last one is still rattling and you are watching
+only it. Measured off the reference: waves of about five seconds with a beat of
+empty board between them, which comes out at eight or nine waves a video.
+
+**The middle is cheap and the edges are rich**, and nothing had to be weighted
+for that — a ball falling through eleven staggered rows lands near the middle
+far more often than at an edge. Measured over forty seeds: 8 / 8 / 17 / 32 / 19
+/ 10 / 6 per cent across the seven, which is seven and a half points a landing
+and a twenty-five as an event rather than as a regular income.
+
+**A ball cannot balance on a peg.** A ball arriving dead on a peg's crown
+bounces straight up, comes straight back down, and the two of them can trade the
+same tenth of a second for four seconds while the rest of the wave has long
+since landed. A real ball rolls off the dome it is sitting on; this is that, as
+a floor on the sideways speed a peg sends a ball away with, on the side it was
+already leaning. Before it, the worst hang measured was 12.8 seconds and the
+video ran to 87; after it the worst fall is 6.0 and the longest video 73.3.
+
+**The last wave multiplies.** The slots change to ×3 ×2 ×2 ×1 ×2 ×2 ×3 for one
+final drop and the bar under the board turns gold — the only two things that
+say the ending has started, which is all it needs. It is deliberately violent: a
+minute of scoring can be turned over in four seconds, and that is what makes the
+four seconds worth watching. The leader still has the best of it, since five of
+the seven slots multiply by two or three.
+
+**The length is held to the floor by waiting.** The seed sets how long balls
+keep being dropped for; the last wave and the ending take as long as they take,
+and the winner is then held until the video has cleared a minute. Over a hundred
+and twenty seeds: 60.0 to 73.3 seconds, none under the minute and none over the
+ceiling.
+
+Balls do not collide with each other — two dozen ball-to-ball contacts a second
+in a field this tight reads as mush rather than as physics, and the reference's
+own balls pass through one another. The pegs are the game. The geometry lives in
+the simulation in units of the field's width and the painter multiplies by
+however wide it draws the field, so the picture cannot disagree with the physics
+about where a peg is.
+
 ## Who is playing
 
-Month and Hot potato are games about twelve things going round a ring, and
-neither cares what the twelve *are*: the simulations count to twelve, and the
+Month, Hot potato and Pachinko are games about twelve things — two of them
+around a ring, one of them falling down a board — and none of them cares what
+the twelve *are*: the simulations count to twelve, and the
 painters ask for a colour and something to put on the disc. So the cast is a
 **dress rather than a mode** — the same seed plays the same round whichever cast
 is wearing it, and there are three to pick from instead of six copies of two
@@ -654,6 +709,8 @@ Nothing is borrowed, so nothing can get a video muted or demonetised.
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |
 | `src/sim/months.ts` | Hold the centre: twelve balls, one zone, and the banked seconds. |
 | `src/render/drawMonths.ts` | One frame of it: arena, zone, balls, progress rings. |
+| `src/sim/pachinko.ts` | The peg field, the waves, the slots and the multiplying last drop. |
+| `src/render/drawPachinko.ts` | One frame of it: scoreboard, field, slots, bar. |
 | `src/sim/shaper.ts` | The point clouds, the palettes, and the rules of the illusion. |
 | `src/render/drawShape.ts` | One turn of a cloud, orthographic and unshaded. |
 | `src/app/page.tsx` | One button: fight, encode, save. |

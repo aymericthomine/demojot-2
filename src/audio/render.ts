@@ -23,6 +23,7 @@
  */
 
 import type { MonthsRound } from '../sim/months';
+import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
 import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
@@ -215,3 +216,40 @@ export function renderPotatoAudio(round: PotatoRound): Promise<AudioBuffer> {
   return renderHits(round.duration, list, sprite);
 }
 
+/**
+ * Pachinko's sound.
+ *
+ * A pachinko machine is a rattle, and the rattle is the point: every peg a ball
+ * touches is the same tick as everywhere else on the site, unthinned, which runs
+ * to a dozen and a half a second at the height of a wave. Quieter than the other
+ * modes for exactly that reason — at the fight's level a wave of twelve would be
+ * a wall rather than a rattle.
+ *
+ * The octave is kept for landings, and a landing worth twenty-five — or a
+ * multiplier on the last wave — gets three of them, because those are the only
+ * moments in the mode that change who is winning.
+ */
+export function renderPachinkoAudio(round: PachinkoRound): Promise<AudioBuffer> {
+  const list: Hit[] = [];
+  for (const event of round.events) {
+    switch (event.kind) {
+      case 'peg':
+        list.push({ t: event.t, slot: TICK, gain: 0.45 });
+        break;
+      case 'land':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.7 });
+        break;
+      case 'rich':
+        [0, 0.09, 0.18].forEach((offset) =>
+          list.push({ t: event.t + offset, slot: OCTAVE, gain: 0.85 }),
+        );
+        break;
+      case 'win':
+        [0, 0.12, 0.24].forEach((offset, i) =>
+          list.push({ t: event.t + offset, slot: i === 2 ? OCTAVE : TICK, gain: 0.95 }),
+        );
+        break;
+    }
+  }
+  return renderHits(round.duration, list, sprite);
+}
