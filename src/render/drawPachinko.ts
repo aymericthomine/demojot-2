@@ -18,7 +18,7 @@
  * twelve totals that go up.
  */
 
-import { drawLabel, drawMember, draws, type Member } from './cast';
+import { drawLabel, drawMember, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { ARENA } from '../sim/style';
 import {
@@ -199,10 +199,7 @@ export function drawPachinkoFrame(
     ctx.fill();
 
     if (draws(member)) {
-      ctx.save();
-      ctx.globalAlpha = 1 - lost * 0.72;
-      drawMember(ctx, member, cx, cy, size);
-      ctx.restore();
+      drawMemberFaded(ctx, member, cx, cy, size, 1 - lost * 0.72);
     } else {
       drawLabel(ctx, member.label, cx, cy, size * fit, drained(textOn(fill), lost * 0.62), weight);
     }

@@ -205,29 +205,28 @@ const cricket: Paint = (ctx, x, y, r) => {
 };
 
 const rugby: Paint = (ctx, x, y, r) => {
-  // The one that is not round. It keeps a ground of its own rather than an oval
-  // floating on grey, and the oval fills the disc corner to corner.
-  disc(ctx, x, y, r, '#14361f');
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(-0.5);
-  ctx.beginPath();
-  ctx.ellipse(0, 0, r * 0.98, r * 0.6, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#8a5a2b';
-  ctx.fill();
+  // The leather takes the whole disc, like every other ball here. It had a dark
+  // green ground under an oval for a while — the shape is what makes a rugby
+  // ball a rugby ball — but a ball on a pitch inside a cast of plain balls reads
+  // as a different kind of picture, so the shape gives way and the lacing does
+  // the identifying.
+  disc(ctx, x, y, r, '#8a5a2b');
+  // The lacing and nothing else. Panel seams were drawn in a darker brown as
+  // well and taken off again: brown on brown at this size is not a seam, it is
+  // a smudge, and the white is what says rugby ball on its own.
   ctx.strokeStyle = '#f0e3d0';
-  ctx.lineWidth = r * 0.07;
+  ctx.lineWidth = r * 0.08;
   ctx.beginPath();
-  ctx.moveTo(-r * 0.3, 0);
-  ctx.lineTo(r * 0.3, 0);
+  ctx.moveTo(x - r * 0.36, y);
+  ctx.lineTo(x + r * 0.36, y);
   ctx.stroke();
   for (let i = -2; i <= 2; i += 1) {
+    const along = (i / 6.5) * r;
     ctx.beginPath();
-    ctx.moveTo((i / 7) * r, -r * 0.15);
-    ctx.lineTo((i / 7) * r, r * 0.15);
+    ctx.moveTo(x + along, y - r * 0.17);
+    ctx.lineTo(x + along, y + r * 0.17);
     ctx.stroke();
   }
-  ctx.restore();
 };
 
 const billiard: Paint = (ctx, x, y, r) => {

@@ -309,7 +309,7 @@ the flags were asked not to have.
 
 - **Sport** — twelve balls, painted rather than photographed: a football's
   pentagons, a basketball's seams, a baseball's stitching, an eight ball, a
-  rugby ball that is the one thing in the cast that is not round. Read "sport"
+  rugby ball's lacing on plain leather. Read "sport"
   as the equipment and not as the clubs — a football is a pattern and a crest is
   a trademark, and a cast of twelve crests could not be posted without somebody's
   permission. It is also the cast this project was always going to have: every
@@ -317,7 +317,22 @@ the flags were asked not to have.
 
   They are drawn at the size they are read at — forty pixels in a scoreboard,
   thirty-five falling through Pachinko — so each one carries the few markings
-  that survive there and nothing that would turn to mud. The first attempt drew
+  that survive there and nothing that would turn to mud. The rugby ball started
+  as an oval on a dark pitch, which is what makes a rugby ball a rugby ball and
+  also what made it the one picture in the cast that was a scene rather than a
+  ball; the leather now fills the disc like every other, and the lacing does the
+  identifying on its own. Its panel seams went the same way — brown on brown at
+  this size is a smudge, not a seam.
+
+  **A faded picture goes down as one layer.** A painted ball is a ground with
+  markings that cross, and drawn straight onto the frame with the alpha turned
+  down, every pass composites separately: a crossing comes out denser than the
+  strokes that made it, and the ball arrives with a ghost of its own drawing on
+  top of it. Measured on a basketball at 55 per cent, which is how the holder's
+  picture is written across Month's zone: the two straight seams read (72,39,14)
+  and (47,27,10) — the same seam, two densities — where painting it whole on a
+  plate and compositing once gives (14,9,3) everywhere. The same fix, and the
+  same reason, as the star signs. The first attempt drew
   every seam from pole to pole, which put its two ends together and made a lens:
   the tennis ball, the baseball and the volleyball came out as one ball in three
   colours. A seam is now an arc bulging towards the near side and running off the

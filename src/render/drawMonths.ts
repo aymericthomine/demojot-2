@@ -13,7 +13,7 @@
  * fills.
  */
 
-import { drawLabel, drawMember, draws, type Member } from './cast';
+import { drawLabel, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
@@ -170,10 +170,14 @@ export function drawMonthsFrame(
   if (glow && frame.reveal < 1 && draws(cast[holder])) {
     // A cast that draws puts its picture here instead of its name, at the size
     // the name would have taken and behind everything for the same reason.
-    ctx.save();
-    ctx.globalAlpha = 0.55 * (1 - frame.reveal);
-    drawMember(ctx, cast[holder], cx, cy, radius * ZONE * LABEL_FIT);
-    ctx.restore();
+    drawMemberFaded(
+      ctx,
+      cast[holder],
+      cx,
+      cy,
+      radius * ZONE * LABEL_FIT,
+      0.55 * (1 - frame.reveal),
+    );
   } else if (glow && frame.reveal < 1) {
     const label = cast[holder].label;
     let size = Math.round(radius * 0.3);
@@ -267,10 +271,7 @@ export function drawMonthsFrame(
       // the fill showed round the edge as a ring in the member's colour — gold
       // round Spain, green round Mexico — which reads as a picture mounted in a
       // coloured surround rather than as a flag.
-      ctx.save();
-      ctx.globalAlpha = 1 - lost * 0.72;
-      drawMember(ctx, member, x, y, disc);
-      ctx.restore();
+      drawMemberFaded(ctx, member, x, y, disc, 1 - lost * 0.72);
     } else {
       // Whichever of black and white can be read on the colour actually under
       // it — which is why it is asked of the drained fill and not of the

@@ -13,7 +13,7 @@
  * second and a half, which is the reference's own tell.
  */
 
-import { drawLabel, drawMember, draws, type Member } from './cast';
+import { drawLabel, drawMember, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL } from '../sim/months';
 import type { PotatoFrame } from '../sim/potato';
@@ -142,10 +142,7 @@ export function drawPotatoFrame(
         // coloured ring and nothing else — and several of the twelve share a
         // colour, so eleven walls would end up telling you nothing about who
         // used to be there, which is the whole point of leaving them on.
-        ctx.save();
-        ctx.globalAlpha = SPENT;
-        drawMember(ctx, member, x, y, ball * (1 - WALL_WIDTH));
-        ctx.restore();
+        drawMemberFaded(ctx, member, x, y, ball * (1 - WALL_WIDTH), SPENT);
       } else {
         drawLabel(ctx, member.label, x, y, ball * fit, ink(dim(member.color, SPENT), invert), weight);
       }

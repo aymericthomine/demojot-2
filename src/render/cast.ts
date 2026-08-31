@@ -397,3 +397,51 @@ export function drawMember(
   else if (member.ball) drawBall(ctx, member.ball, x, y, radius);
   ctx.restore();
 }
+
+/** A scratch plate for a picture that has to go down see-through, in one piece. */
+let plate: OffscreenCanvas | null = null;
+
+/**
+ * The same member, faded — as one layer rather than as a stack of them.
+ *
+ * A painted ball is a ground with markings on it, and the markings cross: a
+ * basketball's seams meet its two lines, a volleyball's panels overlap. Drawn
+ * straight onto the frame with the alpha turned down, every one of those passes
+ * composites separately, so a crossing comes out denser than the strokes that
+ * made it and the ball arrives with a ghost of its own drawing on top of it. It
+ * showed worst on the holder's picture in Month, which is written across the
+ * zone at a little over half.
+ *
+ * So the picture is painted at full strength on a plate of its own, where the
+ * passes may overlap as much as they like, and the plate is composited once at
+ * the alpha asked for. The same fix, and the same reason, as the star signs.
+ */
+export function drawMemberFaded(
+  ctx: CanvasRenderingContext2D,
+  member: Member,
+  x: number,
+  y: number,
+  radius: number,
+  alpha: number,
+): void {
+  if (!draws(member) || alpha <= 0) return;
+  const span = Math.ceil(radius * 2) + 2;
+  if (alpha >= 1 || typeof OffscreenCanvas === 'undefined' || span <= 0) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    drawMember(ctx, member, x, y, radius);
+    ctx.restore();
+    return;
+  }
+  if (!plate || plate.width < span || plate.height < span) plate = new OffscreenCanvas(span, span);
+  // The two context types differ only in what their `canvas` is; everything
+  // these painters touch is on both.
+  const paint = plate.getContext('2d') as unknown as CanvasRenderingContext2D | null;
+  if (!paint) return;
+  paint.clearRect(0, 0, plate.width, plate.height);
+  drawMember(paint, member, span / 2, span / 2, radius);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(plate, 0, 0, span, span, x - span / 2, y - span / 2, span, span);
+  ctx.restore();
+}
