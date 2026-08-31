@@ -16,7 +16,7 @@ over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
 Who the twelve *are* is a separate choice — months, star signs, countries,
-sports or food — and the same seed plays the same round whichever of them is
+sports or fruit — and the same seed plays the same round whichever of them is
 wearing it.
 
 All of it is computed frame by frame in the browser: no footage, no rendering
@@ -341,23 +341,25 @@ the flags were asked not to have.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
-- **Food** — twelve dishes: pizza, burger, sushi, tacos, ramen, pasta, curry,
-  dumplings, fried chicken, burrito, kebab, chips. A list of dishes rather than
-  of round things, which is what makes it harder than the balls: the games put
-  discs on a board, so each is drawn as the view of itself that *is* a disc — a
-  pizza and a bowl of ramen from above, a maki roll and a burrito from the cut
-  end, a burger and a kebab side on.
+- **Fruit** — strawberry, orange, watermelon, kiwi, banana, apple, grape,
+  pineapple, lemon, cherry, blueberry, mango. The cast this project should have
+  had first: the games put discs on a board, and half of these already *are*
+  discs — an orange, a watermelon and a kiwi are circles the moment they are
+  cut, and an apple, a cherry and a blueberry are circles without being cut at
+  all. The two that are not, the banana and the bunch of grapes, are drawn on a
+  ground of their own colour so the picture still fills the disc rather than
+  floating on it.
 
-  The country each comes from is not drawn. A flag inside a forty-pixel disc
-  that already has a dish in it is two pictures fighting, and the dish is the
-  one being named. Food is also brown and orange more often than not, so several
-  of the twelve colours sit close together — the same trade the countries make,
-  and it costs nothing, because no member is ever identified by its colour alone.
+  Fruit runs to reds and yellows, so several of the twelve colours sit close
+  together — the watermelon is named by its rind rather than its middle purely
+  to put one more green in the set. That is the same trade the countries make,
+  and it costs nothing: no member is ever identified by its colour alone.
 
-  Two of them were redrawn once they were seen next to the rest. The taco had a
-  darker band across the top and read as a bun with a burger already in the cast,
-  so the shell is now gold above the filling as well as below it; and it had an
-  arc under the filling to say "shell", which at this size is a smiling face.
+  It replaced a cast of twelve dishes, which replaced a cast of twelve round
+  foods. What survived all three is the rule: a member has to be a picture that
+  is already a circle, or it needs a scene drawn round it — and a scene inside a
+  forty-pixel disc is the mistake the rugby ball made before it gave up its
+  pitch.
 
 ## The sound
 
@@ -388,7 +390,7 @@ demonetise a video that uses it. Nothing else in this project has that exposure.
 | `src/render/cast.ts` | Who the twelve are, and how a member is put on a disc. |
 | `src/render/flags.ts`, `flagData.ts` | The twelve flags, as pictures. |
 | `src/render/balls.ts` | The twelve sports, as paintings. |
-| `src/render/foods.ts` | The twelve foods, likewise. |
+| `src/render/fruits.ts` | The twelve fruits, likewise. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/reels.ts` | A played round, as something the encoder will take. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |

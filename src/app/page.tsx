@@ -350,7 +350,7 @@ export default function HomePage() {
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
-          {(["months", "zodiac", "countries", "sport", "food"] as const).map(
+          {(["months", "zodiac", "countries", "sport", "fruit"] as const).map(
             (choice) => (
               <button
                 key={choice}

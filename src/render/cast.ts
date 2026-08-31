@@ -16,10 +16,10 @@
 
 import { drawBall, type BallName } from './balls';
 import { drawFlag, type FlagName } from './flags';
-import { drawFood, type FoodName } from './foods';
+import { drawFruit, type FruitName } from './fruits';
 import { MONTHS } from '../sim/months';
 
-export type CastName = 'months' | 'zodiac' | 'countries' | 'sport' | 'food';
+export type CastName = 'months' | 'zodiac' | 'countries' | 'sport' | 'fruit';
 
 export interface Member {
   /** For file names: lower case, no spaces. */
@@ -36,8 +36,8 @@ export interface Member {
   flag?: FlagName;
   /** Or draw this ball on it. Casts either write or draw, never both. */
   ball?: BallName;
-  /** Or this plate of food. */
-  food?: FoodName;
+  /** Or this fruit. */
+  fruit?: FruitName;
 }
 
 /**
@@ -49,7 +49,7 @@ export interface Member {
  * and only its antialiased edge would show that colour as a hairline.
  */
 export const draws = (member: Member): boolean =>
-  member.flag !== undefined || member.ball !== undefined || member.food !== undefined;
+  member.flag !== undefined || member.ball !== undefined || member.fruit !== undefined;
 
 /**
  * How much of a disc the label is set at, per cast.
@@ -65,7 +65,7 @@ export const CAST_FIT: Record<CastName, number> = {
   zodiac: 1.05,
   countries: 0.62,
   sport: 0.62,
-  food: 0.62,
+  fruit: 0.62,
 };
 
 /**
@@ -82,7 +82,7 @@ export const CAST_WEIGHT: Record<CastName, number> = {
   zodiac: 0.055,
   countries: 0,
   sport: 0,
-  food: 0,
+  fruit: 0,
 };
 
 /**
@@ -174,36 +174,34 @@ export const SPORT: readonly Member[] = [
 ];
 
 /**
- * Twelve dishes, one from each of the places that exported one.
+ * Twelve fruits.
  *
- * A list of dishes rather than of round things, which is what makes it harder
- * than the sport cast: the games put discs on a board, so each of these is
- * drawn as the view of itself that *is* a disc — a pizza and a bowl of ramen
- * from above, a maki roll from the cut end, a burger and a kebab side on. Where
- * the country each comes from went is nowhere: a flag inside a forty-pixel disc
- * that already has a dish in it is two pictures fighting, and the dish is the
- * one being named.
+ * The cast this project should have had first: the games put discs on a board,
+ * and half of these already *are* discs — an orange, a watermelon and a kiwi
+ * are circles the moment they are cut, and an apple, a cherry and a blueberry
+ * are circles without being cut at all.
  *
  * The colour on each is the one that stands for it where a single colour is all
  * there is room for — the ring it leaves when it goes out of Hot potato, the
- * zone it is holding in Month. Food is brown and orange more often than not, so
- * several of these sit close together; that is the same trade the countries
- * make, and it costs nothing, because no member is ever identified by its
- * colour alone — it wears its own picture.
+ * zone it is holding in Month. Fruit runs to reds and yellows, so several sit
+ * close together; the watermelon is named by its rind rather than its middle
+ * purely to put one more green in the twelve. That is the same trade the
+ * countries make, and it costs nothing: no member is ever identified by its
+ * colour alone, it wears its own picture.
  */
-export const FOOD: readonly Member[] = [
-  { key: 'pizza', label: '', color: '#d94f2b', food: 'pizza' },
-  { key: 'burger', label: '', color: '#a9723a', food: 'burger' },
-  { key: 'sushi', label: '', color: '#e8734a', food: 'sushi' },
-  { key: 'tacos', label: '', color: '#f2b33d', food: 'tacos' },
-  { key: 'ramen', label: '', color: '#c96a2e', food: 'ramen' },
-  { key: 'pasta', label: '', color: '#f2d489', food: 'pasta' },
-  { key: 'curry', label: '', color: '#c4551f', food: 'curry' },
-  { key: 'dumpling', label: '', color: '#e2d5b8', food: 'dumpling' },
-  { key: 'chicken', label: '', color: '#d9a441', food: 'chicken' },
-  { key: 'burrito', label: '', color: '#e0c08a', food: 'burrito' },
-  { key: 'kebab', label: '', color: '#8a4a2a', food: 'kebab' },
-  { key: 'fries', label: '', color: '#e63946', food: 'fries' },
+export const FRUIT: readonly Member[] = [
+  { key: 'strawberry', label: '', color: '#e0324b', fruit: 'strawberry' },
+  { key: 'orange', label: '', color: '#f59a1e', fruit: 'orange' },
+  { key: 'watermelon', label: '', color: '#3f9c4a', fruit: 'watermelon' },
+  { key: 'kiwi', label: '', color: '#a8c94a', fruit: 'kiwi' },
+  { key: 'banana', label: '', color: '#f2c94c', fruit: 'banana' },
+  { key: 'apple', label: '', color: '#d42b2b', fruit: 'apple' },
+  { key: 'grape', label: '', color: '#7b4bc9', fruit: 'grape' },
+  { key: 'pineapple', label: '', color: '#e0a02a', fruit: 'pineapple' },
+  { key: 'lemon', label: '', color: '#f4e04d', fruit: 'lemon' },
+  { key: 'cherry', label: '', color: '#a80f2c', fruit: 'cherry' },
+  { key: 'blueberry', label: '', color: '#5f70d6', fruit: 'blueberry' },
+  { key: 'mango', label: '', color: '#f2801f', fruit: 'mango' },
 ];
 
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({
@@ -217,7 +215,7 @@ export const CASTS: Record<CastName, readonly Member[]> = {
   zodiac: ZODIAC,
   countries: COUNTRIES,
   sport: SPORT,
-  food: FOOD,
+  fruit: FRUIT,
 };
 
 export const CAST_LABEL: Record<CastName, string> = {
@@ -225,7 +223,7 @@ export const CAST_LABEL: Record<CastName, string> = {
   zodiac: 'Zodiac',
   countries: 'Countries',
   sport: 'Sport',
-  food: 'Food',
+  fruit: 'Fruit',
 };
 
 /** Every cast is twelve, because the games are. */
@@ -435,7 +433,7 @@ export function drawMember(
   ctx.clip();
   if (member.flag) drawFlag(ctx, member.flag, x, y, radius);
   else if (member.ball) drawBall(ctx, member.ball, x, y, radius);
-  else if (member.food) drawFood(ctx, member.food, x, y, radius);
+  else if (member.fruit) drawFruit(ctx, member.fruit, x, y, radius);
   ctx.restore();
 }
 
