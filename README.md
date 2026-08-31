@@ -341,9 +341,10 @@ the flags were asked not to have.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
-- **Fruit** — orange, lemon, apple, banana, strawberry, watermelon, kiwi,
-  pineapple, grape, peach, avocado, coconut. The ones a viewer names without
-  thinking, and every one of them **sliced**.
+- **Fruit** — avocado, kiwi, coconut, apple, orange, strawberry, watermelon,
+  melon, lemon, dragon fruit, guava, pineapple. Every one of them **sliced**.
+  Eleven of the twelve were asked for by name; the pineapple makes up the
+  number, because the games count to twelve and not to eleven.
 
   One rule and one view: each member is a cut face filling its disc edge to
   edge — skin at the rim, flesh inside it, and whatever the middle holds. That

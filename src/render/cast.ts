@@ -190,18 +190,18 @@ export const SPORT: readonly Member[] = [
  * colour alone, it wears its own picture.
  */
 export const FRUIT: readonly Member[] = [
-  { key: 'orange', label: '', color: '#f59a1e', fruit: 'orange' },
-  { key: 'lemon', label: '', color: '#f4e04d', fruit: 'lemon' },
+  { key: 'avocado', label: '', color: '#5f8f34', fruit: 'avocado' },
+  { key: 'kiwi', label: '', color: '#a8c94a', fruit: 'kiwi' },
+  { key: 'coconut', label: '', color: '#8a6a45', fruit: 'coconut' },
   { key: 'apple', label: '', color: '#d42b2b', fruit: 'apple' },
-  { key: 'banana', label: '', color: '#e8d98a', fruit: 'banana' },
+  { key: 'orange', label: '', color: '#f59a1e', fruit: 'orange' },
   { key: 'strawberry', label: '', color: '#e0324b', fruit: 'strawberry' },
   { key: 'watermelon', label: '', color: '#3f9c4a', fruit: 'watermelon' },
-  { key: 'kiwi', label: '', color: '#a8c94a', fruit: 'kiwi' },
+  { key: 'melon', label: '', color: '#f2a04a', fruit: 'melon' },
+  { key: 'lemon', label: '', color: '#f4e04d', fruit: 'lemon' },
+  { key: 'dragonfruit', label: '', color: '#e8449b', fruit: 'dragonfruit' },
+  { key: 'guava', label: '', color: '#e8677f', fruit: 'guava' },
   { key: 'pineapple', label: '', color: '#f2c94c', fruit: 'pineapple' },
-  { key: 'grape', label: '', color: '#7b4bc9', fruit: 'grape' },
-  { key: 'peach', label: '', color: '#f2915a', fruit: 'peach' },
-  { key: 'avocado', label: '', color: '#5f8f34', fruit: 'avocado' },
-  { key: 'coconut', label: '', color: '#8a6a45', fruit: 'coconut' },
 ];
 
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({

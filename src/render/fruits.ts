@@ -8,10 +8,11 @@
  * the reference sheets do: a slice is flat, has no background, and reads at any
  * size because it is made of rings.
  *
- * The twelve are the ones a viewer names without thinking — orange, lemon,
- * apple, banana, strawberry, watermelon, kiwi, pineapple, grape, peach, avocado,
- * coconut. Every one of them is a fruit somebody has actually seen cut in half,
- * which is what stops the drawing being a guess.
+ * The twelve were asked for: avocado, kiwi, coconut, apple, orange, strawberry,
+ * watermelon, melon, lemon, dragon fruit, guava — eleven — and the pineapple
+ * makes up the number, since the games count to twelve and not to eleven. Every
+ * one of them is a fruit somebody has actually seen cut in half, which is what
+ * stops the drawing being a guess.
  *
  * They are read at about forty pixels across in a Pachinko scoreboard and
  * thirty-five falling through its field, so each carries the two or three marks
@@ -20,18 +21,18 @@
  */
 
 export type FruitName =
-  | 'orange'
-  | 'lemon'
+  | 'avocado'
+  | 'kiwi'
+  | 'coconut'
   | 'apple'
-  | 'banana'
+  | 'orange'
   | 'strawberry'
   | 'watermelon'
-  | 'kiwi'
-  | 'pineapple'
-  | 'grape'
-  | 'peach'
-  | 'avocado'
-  | 'coconut';
+  | 'melon'
+  | 'lemon'
+  | 'dragonfruit'
+  | 'guava'
+  | 'pineapple';
 
 type Paint = (ctx: CanvasRenderingContext2D, x: number, y: number, r: number) => void;
 
@@ -131,26 +132,6 @@ const apple: Paint = (ctx, x, y, r) => {
   scatter(ctx, x, y, r, ring(5, 0.3, 0.1), '#5a3a1a');
 };
 
-const banana: Paint = (ctx, x, y, r) => {
-  // Cut across: a pale disc with a three-part core, which is what names it. A
-  // whole banana is a crescent lying in a circle, and that is a picture of a
-  // banana rather than a banana.
-  disc(ctx, x, y, r, '#e8d98a');
-  disc(ctx, x, y, r * 0.88, '#f9edb2');
-  ctx.strokeStyle = '#dcc776';
-  ctx.lineWidth = r * 0.11;
-  ctx.lineCap = 'round';
-  for (let i = 0; i < 3; i += 1) {
-    const angle = -Math.PI / 2 + (i / 3) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + Math.cos(angle) * r * 0.42, y + Math.sin(angle) * r * 0.42);
-    ctx.stroke();
-  }
-  ctx.lineCap = 'butt';
-  scatter(ctx, x, y, r, ring(3, 0.2, 0.05), '#8a7434');
-};
-
 const strawberry: Paint = (ctx, x, y, r) => {
   // The cut face, not the skin: a red rim, pale flesh, a white core, and the
   // fine streaks that run out of it.
@@ -229,41 +210,6 @@ const pineapple: Paint = (ctx, x, y, r) => {
   disc(ctx, x, y, r * 0.28, '#f9e6a8');
 };
 
-const grape: Paint = (ctx, x, y, r) => {
-  // One grape, cut. A bunch is seven circles inside a circle, which at this
-  // size is a smudge with a stem on it.
-  disc(ctx, x, y, r, '#7b4bc9');
-  disc(ctx, x, y, r * 0.8, '#e3d6f4');
-  scatter(
-    ctx,
-    x,
-    y,
-    r,
-    [
-      [-0.17, -0.09, 0.13],
-      [0.19, 0.15, 0.13],
-    ],
-    '#6a4a8a',
-  );
-};
-
-const peach: Paint = (ctx, x, y, r) => {
-  // Skin, flesh, the red that runs round the stone, and the stone.
-  disc(ctx, x, y, r, '#f2915a');
-  disc(ctx, x, y, r * 0.88, '#fbd8ac');
-  disc(ctx, x, y, r * 0.46, '#e0603c');
-  disc(ctx, x, y, r * 0.34, '#a0522d');
-  ctx.strokeStyle = '#7c3d1f';
-  ctx.lineWidth = r * 0.04;
-  for (let i = 0; i < 5; i += 1) {
-    const angle = -0.9 + i * 0.45;
-    ctx.beginPath();
-    ctx.moveTo(x + Math.cos(angle) * r * 0.08, y + Math.sin(angle) * r * 0.08);
-    ctx.lineTo(x + Math.cos(angle) * r * 0.3, y + Math.sin(angle) * r * 0.3);
-    ctx.stroke();
-  }
-};
-
 const avocado: Paint = (ctx, x, y, r) => {
   disc(ctx, x, y, r, '#3f6b2b');
   disc(ctx, x, y, r * 0.88, '#cfe07a');
@@ -279,19 +225,77 @@ const coconut: Paint = (ctx, x, y, r) => {
   disc(ctx, x, y, r * 0.4, '#e6dfcb');
 };
 
+const melon: Paint = (ctx, x, y, r) => {
+  // A cantaloupe half: netted rind, orange flesh, and the seeds in the hollow
+  // it is scooped from — which is the only thing separating it from a peach.
+  disc(ctx, x, y, r, '#8fa04a');
+  disc(ctx, x, y, r * 0.9, '#cfd98a');
+  disc(ctx, x, y, r * 0.8, '#f2a04a');
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(-0.3);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, r * 0.42, r * 0.3, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#e8853a';
+  ctx.fill();
+  ctx.restore();
+  scatter(
+    ctx,
+    x,
+    y,
+    r,
+    [
+      [-0.2, -0.08, 0.075],
+      [0.0, -0.14, 0.075],
+      [0.2, -0.04, 0.075],
+      [-0.12, 0.1, 0.075],
+      [0.1, 0.12, 0.075],
+    ],
+    '#f7e3b8',
+  );
+};
+
+const dragonfruit: Paint = (ctx, x, y, r) => {
+  // White flesh, seeds all through it rather than gathered in the middle, and a
+  // rind that is the brightest thing in the cast.
+  disc(ctx, x, y, r, '#e8449b');
+  disc(ctx, x, y, r * 0.86, '#f8f4f2');
+  const seeds: [number, number, number][] = [];
+  for (let row = -2; row <= 2; row += 1) {
+    for (let col = -2; col <= 2; col += 1) {
+      const dx = (col + (row % 2 ? 0.5 : 0)) * 0.32;
+      const dy = row * 0.3;
+      if (dx * dx + dy * dy > 0.56) continue;
+      seeds.push([dx, dy, 0.055]);
+    }
+  }
+  scatter(ctx, x, y, r, seeds, '#2b2b30');
+};
+
+const guava: Paint = (ctx, x, y, r) => {
+  // Green skin, pink flesh, and the seeds packed into a ring in the middle,
+  // which is how a guava is told from a dragon fruit at this size.
+  disc(ctx, x, y, r, '#7fae3a');
+  disc(ctx, x, y, r * 0.88, '#f2e6c4');
+  disc(ctx, x, y, r * 0.76, '#e8677f');
+  disc(ctx, x, y, r * 0.42, '#f2a3ae');
+  scatter(ctx, x, y, r, ring(7, 0.24, 0.07), '#c98a4a');
+  scatter(ctx, x, y, r, [[0, 0, 0.07]], '#c98a4a');
+};
+
 const PAINT: Record<FruitName, Paint> = {
-  orange,
-  lemon,
+  avocado,
+  kiwi,
+  coconut,
   apple,
-  banana,
+  orange,
   strawberry,
   watermelon,
-  kiwi,
+  melon,
+  lemon,
+  dragonfruit,
+  guava,
   pineapple,
-  grape,
-  peach,
-  avocado,
-  coconut,
 };
 
 /** Paint one, filling a disc the caller has clipped. */
