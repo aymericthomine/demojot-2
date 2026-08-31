@@ -341,18 +341,23 @@ the flags were asked not to have.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
-- **Food** — twelve things to eat, painted the same way. The cast had to be
-  round before it was anything else, since every mode here puts a disc on a
-  board: so they are the foods that already *are* discs — a pizza from above, a
-  maki roll from the end, a slice of orange, an avocado halved, a doughnut with
-  a hole in it. A hot dog would have needed a plate drawn round it, which is the
-  mistake the rugby ball made before it gave up its pitch.
+- **Food** — twelve dishes: pizza, burger, sushi, tacos, ramen, pasta, curry,
+  dumplings, fried chicken, burrito, kebab, chips. A list of dishes rather than
+  of round things, which is what makes it harder than the balls: the games put
+  discs on a board, so each is drawn as the view of itself that *is* a disc — a
+  pizza and a bowl of ramen from above, a maki roll and a burrito from the cut
+  end, a burger and a kebab side on.
 
-  Two of them are named by a colour that is not their own ground: the roll by
-  its rice and the coffee by its crema. A member's colour is what stands for it
-  where a single colour is all there is room for — the ring it leaves when it
-  goes out of Hot potato, the zone it is holding in Month — and a near-white
-  dimmed to a third of itself is a ring nobody sees.
+  The country each comes from is not drawn. A flag inside a forty-pixel disc
+  that already has a dish in it is two pictures fighting, and the dish is the
+  one being named. Food is also brown and orange more often than not, so several
+  of the twelve colours sit close together — the same trade the countries make,
+  and it costs nothing, because no member is ever identified by its colour alone.
+
+  Two of them were redrawn once they were seen next to the rest. The taco had a
+  darker band across the top and read as a bun with a burger already in the cast,
+  so the shell is now gold above the filling as well as below it; and it had an
+  arc under the filling to say "shell", which at this size is a smiling face.
 
 ## The sound
 

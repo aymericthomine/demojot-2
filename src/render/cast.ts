@@ -174,34 +174,36 @@ export const SPORT: readonly Member[] = [
 ];
 
 /**
- * Twelve things to eat, and every one of them already a circle.
+ * Twelve dishes, one from each of the places that exported one.
  *
- * That is the whole of why these twelve and not twelve others: the games put
- * discs on a board, so a cast of food has to be food that is round when it is
- * cut or seen from above — a pizza, a maki roll, a slice of orange, an avocado
- * halved. A hot dog would have needed a plate drawn round it, which is the
- * mistake the rugby ball made before it gave up its pitch.
+ * A list of dishes rather than of round things, which is what makes it harder
+ * than the sport cast: the games put discs on a board, so each of these is
+ * drawn as the view of itself that *is* a disc — a pizza and a bowl of ramen
+ * from above, a maki roll from the cut end, a burger and a kebab side on. Where
+ * the country each comes from went is nowhere: a flag inside a forty-pixel disc
+ * that already has a dish in it is two pictures fighting, and the dish is the
+ * one being named.
  *
  * The colour on each is the one that stands for it where a single colour is all
- * there is room for, so it is the one a viewer would name: the doughnut's
- * icing, the egg's yolk, the avocado's flesh. Two of them are pale enough to
- * want a colour that is not their own ground — the roll is named by its rice
- * and the coffee by its crema — because a ring dimmed to a third of a near
- * white is a ring nobody sees.
+ * there is room for — the ring it leaves when it goes out of Hot potato, the
+ * zone it is holding in Month. Food is brown and orange more often than not, so
+ * several of these sit close together; that is the same trade the countries
+ * make, and it costs nothing, because no member is ever identified by its
+ * colour alone — it wears its own picture.
  */
 export const FOOD: readonly Member[] = [
   { key: 'pizza', label: '', color: '#d94f2b', food: 'pizza' },
-  { key: 'burger', label: '', color: '#c98a3f', food: 'burger' },
-  { key: 'donut', label: '', color: '#f06fa8', food: 'donut' },
+  { key: 'burger', label: '', color: '#a9723a', food: 'burger' },
   { key: 'sushi', label: '', color: '#e8734a', food: 'sushi' },
-  { key: 'egg', label: '', color: '#f7c948', food: 'egg' },
-  { key: 'orange', label: '', color: '#f59a1e', food: 'orange' },
-  { key: 'watermelon', label: '', color: '#e14b5a', food: 'watermelon' },
-  { key: 'avocado', label: '', color: '#a9cf5a', food: 'avocado' },
-  { key: 'cookie', label: '', color: '#c99a5b', food: 'cookie' },
-  { key: 'blueberry', label: '', color: '#5f70d6', food: 'blueberry' },
-  { key: 'cheese', label: '', color: '#e8b93a', food: 'cheese' },
-  { key: 'coffee', label: '', color: '#b98a4e', food: 'coffee' },
+  { key: 'tacos', label: '', color: '#f2b33d', food: 'tacos' },
+  { key: 'ramen', label: '', color: '#c96a2e', food: 'ramen' },
+  { key: 'pasta', label: '', color: '#f2d489', food: 'pasta' },
+  { key: 'curry', label: '', color: '#c4551f', food: 'curry' },
+  { key: 'dumpling', label: '', color: '#e2d5b8', food: 'dumpling' },
+  { key: 'chicken', label: '', color: '#d9a441', food: 'chicken' },
+  { key: 'burrito', label: '', color: '#e0c08a', food: 'burrito' },
+  { key: 'kebab', label: '', color: '#8a4a2a', food: 'kebab' },
+  { key: 'fries', label: '', color: '#e63946', food: 'fries' },
 ];
 
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({
