@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  renderFusionAudio,
   renderMonthsAudio,
   renderPachinkoAudio,
   renderPotatoAudio,
@@ -29,7 +30,13 @@ import {
   type EncodeStage,
   type Reel,
 } from "../export/encodeVideo";
-import { monthsReel, pachinkoReel, potatoReel } from "../export/reels";
+import {
+  fusionReel,
+  monthsReel,
+  pachinkoReel,
+  potatoReel,
+} from "../export/reels";
+import { generateFusion } from "../sim/fusion";
 import { generateMonths } from "../sim/months";
 import { generatePachinko } from "../sim/pachinko";
 import { generatePotato } from "../sim/potato";
@@ -38,32 +45,35 @@ import { loadFlags } from "../render/flags";
 import { FPS, HEIGHT, WIDTH } from "../sim/style";
 
 /**
- * The three games.
+ * The four games.
  *
  * They share the twelve, the seed, the clock, the sound and the encoder, and
  * nothing else: one is about holding a place, one about not holding a thing,
- * and one about where a ball lands.
+ * one about where a ball lands, and one about taking everybody else's.
  */
-type Mode = "month" | "potato" | "pachinko";
+type Mode = "month" | "potato" | "pachinko" | "fusion";
 
-const MODES: readonly Mode[] = ["month", "potato", "pachinko"];
+const MODES: readonly Mode[] = ["month", "potato", "pachinko", "fusion"];
 
 const MODE_NAME: Record<Mode, string> = {
   month: "Month",
   potato: "Hot Potato",
   pachinko: "Pachinko",
+  fusion: "Fusion War",
 };
 
 const MODE_BUTTON: Record<Mode, string> = {
   month: "Month",
   potato: "Hot potato",
   pachinko: "Pachinko",
+  fusion: "Fusion war",
 };
 
 const MODE_BUSY: Record<Mode, string> = {
   month: "Playing the round…",
   potato: "Passing it round…",
   pachinko: "Dropping them…",
+  fusion: "Fighting it out…",
 };
 
 const MODE_ABOUT: Record<Mode, string> = {
@@ -73,6 +83,8 @@ const MODE_ABOUT: Record<Mode, string> = {
     "One of the twelve is holding a fuse, and touching another hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last one still in survives.",
   pachinko:
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
+  fusion:
+    "Twelve sides, three balls each, one ring. Two balls of the same side fuse into a heavier one; two balls of different sides fight, and the heavier eats the lighter and takes its weight. Nothing is created and nothing is destroyed — the whole video is the same thirty-six changing hands — and a ball that gets too heavy splits in two, so a side that is winning spreads instead of swelling.",
 };
 
 /** Everything a press of the button needs. */
@@ -236,7 +248,7 @@ export default function HomePage() {
             audio = await renderPotatoAudio(round).catch(() => null);
             reel = potatoReel(round, dress);
             summary = `${round.duration.toFixed(1)}s · ${who[round.survivor].key.toUpperCase()} survives · ${round.fuse.toFixed(1)}s fuse`;
-          } else {
+          } else if (job.mode === "pachinko") {
             // The seed sets how long balls keep being dropped for; the last
             // wave and the ending take as long as they take.
             const round = generatePachinko(job.seed);
@@ -245,6 +257,16 @@ export default function HomePage() {
             audio = await renderPachinkoAudio(round).catch(() => null);
             reel = pachinkoReel(round, dress);
             summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} on ${round.best} · ${round.waves} waves`;
+          } else {
+            // Nothing is searched here either: the war takes as long as it
+            // takes, and what follows it is the winner alone in the ring until
+            // the minute has been cleared.
+            const round = generateFusion(job.seed);
+            total = round.durationInFrames;
+            onStage("sound");
+            audio = await renderFusionAudio(round).catch(() => null);
+            reel = fusionReel(round, dress);
+            summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} ${round.swept ? `swept the ring` : `held ${round.best.toFixed(0)} of 36`}`;
           }
 
           const result = await encodeVideo({
@@ -306,7 +328,7 @@ export default function HomePage() {
       </header>
 
       <div className="rounded-2xl border border-[#23262f] bg-[#101218] p-4">
-        <div className="mb-3 grid grid-cols-3 gap-2">
+        <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {MODES.map((choice) => (
             <button
               key={choice}

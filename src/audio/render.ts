@@ -22,6 +22,7 @@
  * that uses it. Nothing else in the project has that exposure.
  */
 
+import type { FusionRound } from '../sim/fusion';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
@@ -212,6 +213,46 @@ export function renderPachinkoAudio(round: PachinkoRound): Promise<AudioBuffer> 
       case 'rich':
         [0, 0.09, 0.18].forEach((offset) =>
           list.push({ t: event.t + offset, slot: OCTAVE, gain: 0.85 }),
+        );
+        break;
+      case 'win':
+        [0, 0.12, 0.24].forEach((offset, i) =>
+          list.push({ t: event.t + offset, slot: i === 2 ? OCTAVE : TICK, gain: 0.95 }),
+        );
+        break;
+    }
+  }
+  return renderHits(round.duration, list, sprite);
+}
+
+/**
+ * Fusion war's sound.
+ *
+ * The tick for a bounce, off the wall or off somebody the ball could not eat.
+ * The octave is kept for the three things that change the game — a fusion, a
+ * ball eaten, a side going out — and going out gets three of them, because
+ * eleven times in a video it is the only moment worth a beat of its own.
+ *
+ * Splits make no sound. A split is the game's own bookkeeping rather than
+ * something that happened to anybody, and it fires as often as a fusion, so
+ * sounding it would double the rattle for nothing.
+ */
+export function renderFusionAudio(round: FusionRound): Promise<AudioBuffer> {
+  const list: Hit[] = [];
+  for (const event of round.events) {
+    switch (event.kind) {
+      case 'wall':
+        list.push({ t: event.t, slot: TICK, gain: 0.6 });
+        break;
+      case 'fuse':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.7 });
+        break;
+      case 'eat':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.85 });
+        break;
+      case 'out':
+        [0, 0.09, 0.18].forEach((offset) =>
+          list.push({ t: event.t + offset, slot: OCTAVE, gain: 0.9 }),
         );
         break;
       case 'win':
