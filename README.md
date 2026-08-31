@@ -15,10 +15,9 @@ else bounces off. Last one still in survives.
 over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
-**Fusion war** — twelve sides, three balls each, one ring. Two balls of the same
-side fuse into a heavier one; two of different sides fight, and the heavier eats
-the lighter and takes its weight. A ball that gets too heavy splits in two, so a
-side that is winning spreads instead of swelling.
+**Line war** — twelve balls in one ring, and every straight run any of them makes
+stays on the board as a line in its own colour. Cut through somebody else's line
+and you take one of their lives, and the line goes with it.
 
 Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
@@ -226,58 +225,49 @@ sum, and the field's width is that height divided by it. Set to the arena's
 diameter it comes out at 976 pixels against the ring's 978, on the same centre.
 A mode that arrived on the same page half again the size of the ones next to it
 would read as a different site rather than as another game.
-## Fusion war
+## Line war
 
-Twelve sides, three balls apiece, and two rules that between them are the whole
-game. **Two balls of the same side fuse** into one carrying both their masses,
-and size is the square root of mass, so a side that gathers itself up gets
-bigger rather than more numerous. **Two balls of different sides fight**, and
-the heavier eats the lighter and takes its weight. Nothing is created and
-nothing is destroyed: the ring holds thirty-six at the first frame and
-thirty-six at the last, and the video is that mass changing hands.
+Twelve balls loose in the ring. Every straight run any of them makes — bounce to
+bounce — stays on the board as a line in its own colour, so the board is a record
+of where everybody has been, and it is also the game: **cut through somebody
+else's line and you take one of their lives.** The line you cut goes with it.
 
-Three things had to be added before it was a game rather than a demonstration,
-and each of them came from a measurement.
+Nothing is written down. A ball's radius is the square root of what its side is
+holding, so a side that is winning is a big ball with the ring full of its
+colour, a side that is losing is a small one with hardly a line to its name, and
+a side on nothing is gone — its remaining lines vanish with it, which is what
+makes the ring get quieter as the field thins rather than louder.
 
-**A ball that reaches six splits in half.** Without a limit the winner is
-whoever fuses first and the ring ends up holding two boulders that circle each
-other. With it, a side that is winning spreads.
+**A ball cuts with its width, not with its centre**, and that is the rule that
+finishes the war. Three rays are tested, one down the middle and one along each
+flank, so a side that is ahead sweeps a wider swath, takes more lines on every
+run, and gets wider still. Without that feedback lives are a symmetric walk
+between twelve sides: measured over forty seeds, not one round was ever swept
+inside the ceiling.
 
-**A new ball is left alone for half a second.** A split hands back two balls of
-the same side touching each other, so they fused, hit the limit, split again,
-and spent the entire video doing it: a hundred and thirty-six thousand fusions
-and as many splits in one round, against fourteen fights, because every ball in
-the ring was too busy to meet anybody.
+**A cut is worth more as the clock runs** — one life at the start, and towards
+the end a share of whatever the side being cut still has. A flat one leaves the
+survivors holding ten and twenty apiece with no way through; taking a share
+scales with whoever got fat, and puts the collapse where it belongs.
 
-**A ball must be a quarter again as heavy to eat another** — and that advantage
-falls away as the clock runs. Both halves of that rule are measured. Without the
-margin, every opening meeting is a tie between two balls of mass one, ties go to
-whoever was travelling into the other, and the snowball leaves three sides at
-ten seconds and one at thirty. With a *fixed* margin the mode deadlocks the
-other way: splitting caps every ball at half the limit, the survivors all end up
-the same weight, and four sides sat frozen at nine balls from the tenth second
-to the seventy-eighth. So the margin closes as the ceiling comes into sight —
-the ring starts fair and ends decisive, and a stand-off cannot outlive the
-video.
+**A ball is barred from cutting for a second and a half after it does.** Without
+the pause a single crossing empties a side — the ball is over the line for
+several substeps and each of them is another intersection with the same piece of
+work — and, just as important, the pause is what lets the board build up. With
+it, lines outlive their cutting: a dozen on the board at the first second, three
+score by the fifteenth, two hundred by the fiftieth. That accumulation is the
+mode. Nothing else in this project has a memory.
 
-Measured over sixty seeds with all three in place: every round is swept by one
-side, the sweep lands between the thirty-seventh and the sixty-sixth second,
-and the video runs 60.0 to 77.3 seconds. Twelve sides go down to four in about
-seven, which is the opening being bloody rather than a fault.
-
-Everything travels at the same speed whatever it weighs — a game rule and not
-physics. Momentum would leave a heavy ball drifting while the light ones dart
-about, and the mode would be over before it read as a fight. Mass decides who
-eats whom; speed is the same for everyone.
-
-The ending gathers the winner up: its balls run to the middle and are replaced
-by the one ball their mass adds up to. A mode about fusing ends by fusing, and
-the last frame is a single disc whose size is exactly what that side finished
-holding.
+**Most rounds end on the whistle rather than on a sweep**, and that is reported
+rather than hidden: the seed picks the whistle between sixty and seventy-eight
+seconds, the war runs the whole way, and whoever holds the most when it stops
+takes it. The ring *can* be swept — about one round in ten is — and a sweep is
+held to the floor rather than cut short, so a side that wins early keeps drawing
+until the minute has been cleared.
 
 ## Who is playing
 
-Month, Hot potato, Pachinko and Fusion war are games about twelve things —
+Month, Hot potato, Pachinko and Line war are games about twelve things —
 three of them around a ring, one falling down a board — and none of them cares
 what the twelve *are*: the simulations count to twelve, and the painters ask for a
 colour and something to put on the disc. So the cast is a **dress rather than a
@@ -448,8 +438,8 @@ demonetise a video that uses it. Nothing else in this project has that exposure.
 | `src/render/drawMonths.ts` | One frame of it: arena, zone, balls, progress rings. |
 | `src/sim/potato.ts` | The fuse, who is holding it, and the walls the out ones leave. |
 | `src/render/drawPotato.ts` | One frame of it: discs, rings, the holder's band, the fuse. |
-| `src/sim/fusion.ts` | Twelve sides, fusion, eating, splitting, and the margin that closes. |
-| `src/render/drawFusion.ts` | One frame of it: the ring, the balls, the gathering. |
+| `src/sim/line.ts` | The lines, the cutting, and the lives that move with them. |
+| `src/render/drawLine.ts` | One frame of it: the board, the balls, the ending. |
 | `src/sim/pachinko.ts` | The peg field, the waves, the slots and the multiplying last drop. |
 | `src/render/drawPachinko.ts` | One frame of it: scoreboard, field, slots, bar. |
 | `src/render/cast.ts` | Who the twelve are, and how a member is put on a disc. |

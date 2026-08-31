@@ -22,7 +22,7 @@
  * that uses it. Nothing else in the project has that exposure.
  */
 
-import type { FusionRound } from '../sim/fusion';
+import type { LineRound } from '../sim/line';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
@@ -226,29 +226,21 @@ export function renderPachinkoAudio(round: PachinkoRound): Promise<AudioBuffer> 
 }
 
 /**
- * Fusion war's sound.
+ * Line war's sound.
  *
- * The tick for a bounce, off the wall or off somebody the ball could not eat.
- * The octave is kept for the three things that change the game — a fusion, a
- * ball eaten, a side going out — and going out gets three of them, because
- * eleven times in a video it is the only moment worth a beat of its own.
- *
- * Splits make no sound. A split is the game's own bookkeeping rather than
- * something that happened to anybody, and it fires as often as a fusion, so
- * sounding it would double the rattle for nothing.
+ * The tick for a bounce off the wall, which is also the moment a line is
+ * finished and laid down. The octave is kept for a cut — the only thing in the
+ * mode that changes the standings — and a side going out gets three of them.
  */
-export function renderFusionAudio(round: FusionRound): Promise<AudioBuffer> {
+export function renderLineAudio(round: LineRound): Promise<AudioBuffer> {
   const list: Hit[] = [];
   for (const event of round.events) {
     switch (event.kind) {
       case 'wall':
-        list.push({ t: event.t, slot: TICK, gain: 0.6 });
+        list.push({ t: event.t, slot: TICK, gain: 0.55 });
         break;
-      case 'fuse':
-        list.push({ t: event.t, slot: OCTAVE, gain: 0.7 });
-        break;
-      case 'eat':
-        list.push({ t: event.t, slot: OCTAVE, gain: 0.85 });
+      case 'cut':
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.8 });
         break;
       case 'out':
         [0, 0.09, 0.18].forEach((offset) =>

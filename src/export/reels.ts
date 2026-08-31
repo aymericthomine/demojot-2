@@ -10,11 +10,11 @@
 
 import type { Reel } from './encodeVideo';
 import { CAST_FIT, CAST_WEIGHT, castFor, type CastName } from '../render/cast';
-import { drawFusionFrame } from '../render/drawFusion';
+import { drawLineFrame } from '../render/drawLine';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPachinkoFrame } from '../render/drawPachinko';
 import { drawPotatoFrame } from '../render/drawPotato';
-import type { FusionRound } from '../sim/fusion';
+import type { LineRound } from '../sim/line';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
@@ -108,26 +108,30 @@ export function pachinkoReel(round: PachinkoRound, dress: Dress = {}): Reel {
   };
 }
 
-/** Fusion war, painted from its own frames. */
-export function fusionReel(round: FusionRound, dress: Dress = {}): Reel {
+/** Line war, painted from its own frames. */
+export function lineReel(round: LineRound, dress: Dress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `fusion-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
+    name: `line-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
       round.duration,
     )}s${dress.cast && dress.cast !== 'months' ? `-${dress.cast}` : ''}${
       dress.invert ? '-white' : ''
     }`,
     paint(ctx, index) {
-      drawFusionFrame(ctx, round.frames[index], {
+      drawLineFrame(ctx, round.frames[index], {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
+        trails: round.trails,
+        at: index,
         winner: round.winner,
         cast: castFor(dress.cast),
         fit: CAST_FIT[dress.cast ?? 'months'],
         weight: CAST_WEIGHT[dress.cast ?? 'months'],
       });
+      // The frames go as they are painted, but the trails are the board and are
+      // needed until the last one.
       release(round.frames, index);
     },
   };
