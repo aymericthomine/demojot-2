@@ -174,12 +174,12 @@ export const SPORT: readonly Member[] = [
 ];
 
 /**
- * Twelve fruits.
+ * Twelve fruits, all of them sliced.
  *
- * The cast this project should have had first: the games put discs on a board,
- * and half of these already *are* discs — an orange, a watermelon and a kiwi
- * are circles the moment they are cut, and an apple, a cherry and a blueberry
- * are circles without being cut at all.
+ * The ones a viewer names without thinking, in the one view that makes twelve
+ * different fruits into twelve circles: the cut face. Skin at the rim, flesh
+ * inside it, and whatever the middle holds — segments, a seed ring, a stone, a
+ * core.
  *
  * The colour on each is the one that stands for it where a single colour is all
  * there is room for — the ring it leaves when it goes out of Hot potato, the
@@ -190,18 +190,18 @@ export const SPORT: readonly Member[] = [
  * colour alone, it wears its own picture.
  */
 export const FRUIT: readonly Member[] = [
-  { key: 'strawberry', label: '', color: '#e0324b', fruit: 'strawberry' },
   { key: 'orange', label: '', color: '#f59a1e', fruit: 'orange' },
+  { key: 'lemon', label: '', color: '#f4e04d', fruit: 'lemon' },
+  { key: 'apple', label: '', color: '#d42b2b', fruit: 'apple' },
+  { key: 'banana', label: '', color: '#e8d98a', fruit: 'banana' },
+  { key: 'strawberry', label: '', color: '#e0324b', fruit: 'strawberry' },
   { key: 'watermelon', label: '', color: '#3f9c4a', fruit: 'watermelon' },
   { key: 'kiwi', label: '', color: '#a8c94a', fruit: 'kiwi' },
-  { key: 'banana', label: '', color: '#f2c94c', fruit: 'banana' },
-  { key: 'apple', label: '', color: '#d42b2b', fruit: 'apple' },
+  { key: 'pineapple', label: '', color: '#f2c94c', fruit: 'pineapple' },
   { key: 'grape', label: '', color: '#7b4bc9', fruit: 'grape' },
-  { key: 'pineapple', label: '', color: '#e0a02a', fruit: 'pineapple' },
-  { key: 'lemon', label: '', color: '#f4e04d', fruit: 'lemon' },
-  { key: 'cherry', label: '', color: '#a80f2c', fruit: 'cherry' },
-  { key: 'blueberry', label: '', color: '#5f70d6', fruit: 'blueberry' },
-  { key: 'mango', label: '', color: '#f2801f', fruit: 'mango' },
+  { key: 'peach', label: '', color: '#f2915a', fruit: 'peach' },
+  { key: 'avocado', label: '', color: '#5f8f34', fruit: 'avocado' },
+  { key: 'coconut', label: '', color: '#8a6a45', fruit: 'coconut' },
 ];
 
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({

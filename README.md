@@ -341,23 +341,28 @@ the flags were asked not to have.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
-- **Fruit** — strawberry, orange, watermelon, kiwi, banana, apple, grape,
-  pineapple, lemon, cherry, blueberry, mango.
+- **Fruit** — orange, lemon, apple, banana, strawberry, watermelon, kiwi,
+  pineapple, grape, peach, avocado, coconut. The ones a viewer names without
+  thinking, and every one of them **sliced**.
 
-  **The disc is the fruit**, not a circle with a picture of a fruit in it. Half
-  of them are cut open — an orange, a watermelon, a kiwi, an apple through its
-  core — and the rest are a piece of the fruit's own surface: a strawberry's
-  pips, a pineapple's lattice, the crown at the eye of a blueberry. Nothing sits
-  on a ground, because a small object floating in the middle of a disc reads as
-  an icon somebody mounted there, and at forty pixels an icon is a smudge while
-  a field of colour is still a colour.
+  One rule and one view: each member is a cut face filling its disc edge to
+  edge — skin at the rim, flesh inside it, and whatever the middle holds. That
+  is the only view under which twelve different fruits are twelve circles rather
+  than twelve pictures of things that happen to be round, and it is what the
+  reference sheets do: a slice is flat, has no background, and reads at any size
+  because it is made of rings.
 
-  The first set broke that rule five times. It had a bunch of grapes, two
-  cherries on a stem, a banana lying across its circle, and an apple and a
-  strawberry wearing leaves; they are now a cut grape, a cut cherry, a slice of
-  banana, an apple through its core and a field of strawberry skin. The
-  pineapple lost its crown and kept its lattice, which was the half of it that
-  filled the disc.
+  It took three goes to get there, and the two wrong ones are worth keeping in
+  mind. A cast of dishes needed a plate drawn round half of it. A cast of whole
+  fruit put a bunch of grapes, two cherries on a stem and a banana lying across
+  their circles — a small object floating in the middle of a disc reads as an
+  icon somebody mounted there, and at forty pixels an icon is a smudge while a
+  field of colour is still a colour.
+
+  The citrus segments are drawn as wedges with the pith showing between them
+  rather than as white lines over the flesh: a line between two segments is one
+  pixel at this size and disappears, whereas a gap between two filled wedges is
+  the pith behind them and cannot.
 
   Fruit runs to reds and yellows, so several of the twelve colours sit close
   together — the watermelon is named by its rind rather than its middle purely
