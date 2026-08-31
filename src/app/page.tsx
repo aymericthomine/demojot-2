@@ -8,7 +8,7 @@
  * a minute later, so the button plays the round, paints every frame straight
  * into the encoder and hands over the finished MP4.
  *
- * Three games and four casts, and the two are independent: the seed plays the
+ * Three games and five casts, and the two are independent: the seed plays the
  * same round whichever cast is wearing it, so what is picked here is a dress
  * rather than a mode. A seed is the video.
  */
@@ -350,7 +350,7 @@ export default function HomePage() {
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
           <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
-          {(["months", "zodiac", "countries", "sport"] as const).map(
+          {(["months", "zodiac", "countries", "sport", "food"] as const).map(
             (choice) => (
               <button
                 key={choice}

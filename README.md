@@ -15,8 +15,9 @@ else bounces off. Last one still in survives.
 over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
-Who the twelve *are* is a separate choice — months, star signs, countries or
-sports — and the same seed plays the same round whichever of them is wearing it.
+Who the twelve *are* is a separate choice — months, star signs, countries,
+sports or food — and the same seed plays the same round whichever of them is
+wearing it.
 
 All of it is computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
@@ -227,7 +228,7 @@ around a ring, one of them falling down a board — and none of them cares what
 the twelve *are*: the simulations count to twelve, and the painters ask for a
 colour and something to put on the disc. So the cast is a **dress rather than a
 mode** — the same seed plays the same round whichever cast is wearing it, and
-there are four to pick from instead of twelve copies of three games.
+there are five to pick from instead of fifteen copies of three games.
 
 - **Months** — the twelve, in the colours sampled off the reference.
 - **Zodiac** — the twelve signs, in the colours sampled off theirs, thickened by
@@ -340,6 +341,19 @@ the flags were asked not to have.
 
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
+- **Food** — twelve things to eat, painted the same way. The cast had to be
+  round before it was anything else, since every mode here puts a disc on a
+  board: so they are the foods that already *are* discs — a pizza from above, a
+  maki roll from the end, a slice of orange, an avocado halved, a doughnut with
+  a hole in it. A hot dog would have needed a plate drawn round it, which is the
+  mistake the rugby ball made before it gave up its pitch.
+
+  Two of them are named by a colour that is not their own ground: the roll by
+  its rice and the coffee by its crema. A member's colour is what stands for it
+  where a single colour is all there is room for — the ring it leaves when it
+  goes out of Hot potato, the zone it is holding in Month — and a near-white
+  dimmed to a third of itself is a ring nobody sees.
+
 ## The sound
 
 One recording — a short tick and the same tick an octave up — placed at every
@@ -369,6 +383,7 @@ demonetise a video that uses it. Nothing else in this project has that exposure.
 | `src/render/cast.ts` | Who the twelve are, and how a member is put on a disc. |
 | `src/render/flags.ts`, `flagData.ts` | The twelve flags, as pictures. |
 | `src/render/balls.ts` | The twelve sports, as paintings. |
+| `src/render/foods.ts` | The twelve foods, likewise. |
 | `src/audio/render.ts` | The event list, offline, into an `AudioBuffer`. |
 | `src/export/reels.ts` | A played round, as something the encoder will take. |
 | `src/export/encodeVideo.ts` | Frames plus soundtrack into an MP4, via WebCodecs. |

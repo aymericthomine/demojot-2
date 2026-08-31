@@ -16,9 +16,10 @@
 
 import { drawBall, type BallName } from './balls';
 import { drawFlag, type FlagName } from './flags';
+import { drawFood, type FoodName } from './foods';
 import { MONTHS } from '../sim/months';
 
-export type CastName = 'months' | 'zodiac' | 'countries' | 'sport';
+export type CastName = 'months' | 'zodiac' | 'countries' | 'sport' | 'food';
 
 export interface Member {
   /** For file names: lower case, no spaces. */
@@ -35,6 +36,8 @@ export interface Member {
   flag?: FlagName;
   /** Or draw this ball on it. Casts either write or draw, never both. */
   ball?: BallName;
+  /** Or this plate of food. */
+  food?: FoodName;
 }
 
 /**
@@ -46,7 +49,7 @@ export interface Member {
  * and only its antialiased edge would show that colour as a hairline.
  */
 export const draws = (member: Member): boolean =>
-  member.flag !== undefined || member.ball !== undefined;
+  member.flag !== undefined || member.ball !== undefined || member.food !== undefined;
 
 /**
  * How much of a disc the label is set at, per cast.
@@ -62,6 +65,7 @@ export const CAST_FIT: Record<CastName, number> = {
   zodiac: 1.05,
   countries: 0.62,
   sport: 0.62,
+  food: 0.62,
 };
 
 /**
@@ -78,6 +82,7 @@ export const CAST_WEIGHT: Record<CastName, number> = {
   zodiac: 0.055,
   countries: 0,
   sport: 0,
+  food: 0,
 };
 
 /**
@@ -168,6 +173,37 @@ export const SPORT: readonly Member[] = [
   { key: 'waterpolo', label: '', color: '#f2d02c', ball: 'waterpolo' },
 ];
 
+/**
+ * Twelve things to eat, and every one of them already a circle.
+ *
+ * That is the whole of why these twelve and not twelve others: the games put
+ * discs on a board, so a cast of food has to be food that is round when it is
+ * cut or seen from above — a pizza, a maki roll, a slice of orange, an avocado
+ * halved. A hot dog would have needed a plate drawn round it, which is the
+ * mistake the rugby ball made before it gave up its pitch.
+ *
+ * The colour on each is the one that stands for it where a single colour is all
+ * there is room for, so it is the one a viewer would name: the doughnut's
+ * icing, the egg's yolk, the avocado's flesh. Two of them are pale enough to
+ * want a colour that is not their own ground — the roll is named by its rice
+ * and the coffee by its crema — because a ring dimmed to a third of a near
+ * white is a ring nobody sees.
+ */
+export const FOOD: readonly Member[] = [
+  { key: 'pizza', label: '', color: '#d94f2b', food: 'pizza' },
+  { key: 'burger', label: '', color: '#c98a3f', food: 'burger' },
+  { key: 'donut', label: '', color: '#f06fa8', food: 'donut' },
+  { key: 'sushi', label: '', color: '#e8734a', food: 'sushi' },
+  { key: 'egg', label: '', color: '#f7c948', food: 'egg' },
+  { key: 'orange', label: '', color: '#f59a1e', food: 'orange' },
+  { key: 'watermelon', label: '', color: '#e14b5a', food: 'watermelon' },
+  { key: 'avocado', label: '', color: '#a9cf5a', food: 'avocado' },
+  { key: 'cookie', label: '', color: '#c99a5b', food: 'cookie' },
+  { key: 'blueberry', label: '', color: '#5f70d6', food: 'blueberry' },
+  { key: 'cheese', label: '', color: '#e8b93a', food: 'cheese' },
+  { key: 'coffee', label: '', color: '#b98a4e', food: 'coffee' },
+];
+
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({
   key: m.label.toLowerCase(),
   label: m.label,
@@ -179,6 +215,7 @@ export const CASTS: Record<CastName, readonly Member[]> = {
   zodiac: ZODIAC,
   countries: COUNTRIES,
   sport: SPORT,
+  food: FOOD,
 };
 
 export const CAST_LABEL: Record<CastName, string> = {
@@ -186,6 +223,7 @@ export const CAST_LABEL: Record<CastName, string> = {
   zodiac: 'Zodiac',
   countries: 'Countries',
   sport: 'Sport',
+  food: 'Food',
 };
 
 /** Every cast is twelve, because the games are. */
@@ -395,6 +433,7 @@ export function drawMember(
   ctx.clip();
   if (member.flag) drawFlag(ctx, member.flag, x, y, radius);
   else if (member.ball) drawBall(ctx, member.ball, x, y, radius);
+  else if (member.food) drawFood(ctx, member.food, x, y, radius);
   ctx.restore();
 }
 
