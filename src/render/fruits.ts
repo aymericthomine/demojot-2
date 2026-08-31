@@ -256,20 +256,28 @@ const melon: Paint = (ctx, x, y, r) => {
 };
 
 const dragonfruit: Paint = (ctx, x, y, r) => {
-  // White flesh, seeds all through it rather than gathered in the middle, and a
-  // rind that is the brightest thing in the cast.
+  // White flesh, a magenta rind thick enough to be the thing you see first, and
+  // seeds through the whole of it rather than gathered anywhere. They are small
+  // leaning almonds and not dots: a round seed at this size is a full stop, and
+  // a page of full stops reads as a texture instead of as seeds.
   disc(ctx, x, y, r, '#e8449b');
-  disc(ctx, x, y, r * 0.86, '#f8f4f2');
-  const seeds: [number, number, number][] = [];
-  for (let row = -2; row <= 2; row += 1) {
-    for (let col = -2; col <= 2; col += 1) {
-      const dx = (col + (row % 2 ? 0.5 : 0)) * 0.32;
-      const dy = row * 0.3;
-      if (dx * dx + dy * dy > 0.56) continue;
-      seeds.push([dx, dy, 0.055]);
+  disc(ctx, x, y, r * 0.82, '#faf6f5');
+  ctx.fillStyle = '#1f1f24';
+  for (let row = -3; row <= 3; row += 1) {
+    for (let col = -3; col <= 3; col += 1) {
+      const sway = ((row * 7 + col * 13) % 5) / 5 - 0.5;
+      const dx = (col + (row % 2 ? 0.5 : 0)) * 0.23 + sway * 0.08;
+      const dy = row * 0.22 + sway * 0.07;
+      if (dx * dx + dy * dy > 0.5) continue;
+      ctx.save();
+      ctx.translate(x + dx * r, y + dy * r);
+      ctx.rotate(sway * 2.4);
+      ctx.beginPath();
+      ctx.ellipse(0, 0, r * 0.055, r * 0.032, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     }
   }
-  scatter(ctx, x, y, r, seeds, '#2b2b30');
 };
 
 const guava: Paint = (ctx, x, y, r) => {
