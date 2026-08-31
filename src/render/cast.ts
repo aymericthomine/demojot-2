@@ -14,10 +14,11 @@
  * painter from `flags.ts` and no text at all.
  */
 
+import { drawBall, type BallName } from './balls';
 import { drawFlag, type FlagName } from './flags';
 import { MONTHS } from '../sim/months';
 
-export type CastName = 'months' | 'zodiac' | 'countries';
+export type CastName = 'months' | 'zodiac' | 'countries' | 'sport';
 
 export interface Member {
   /** For file names: lower case, no spaces. */
@@ -32,7 +33,20 @@ export interface Member {
   color: string;
   /** Draw this flag on the disc instead of writing the label. */
   flag?: FlagName;
+  /** Or draw this ball on it. Casts either write or draw, never both. */
+  ball?: BallName;
 }
+
+/**
+ * Whether this member is a picture rather than a word.
+ *
+ * Asked all over the painters, because a member that draws wants none of what a
+ * member that writes wants: no rim, no label, and the disc under it filled with
+ * a neutral rather than with its own colour, since the picture covers the disc
+ * and only its antialiased edge would show that colour as a hairline.
+ */
+export const draws = (member: Member): boolean =>
+  member.flag !== undefined || member.ball !== undefined;
 
 /**
  * How much of a disc the label is set at, per cast.
@@ -47,6 +61,7 @@ export const CAST_FIT: Record<CastName, number> = {
   months: 0.62,
   zodiac: 1.05,
   countries: 0.62,
+  sport: 0.62,
 };
 
 /**
@@ -62,6 +77,7 @@ export const CAST_WEIGHT: Record<CastName, number> = {
   months: 0,
   zodiac: 0.055,
   countries: 0,
+  sport: 0,
 };
 
 /**
@@ -119,6 +135,39 @@ export const COUNTRIES: readonly Member[] = [
   { key: 'mx', label: '', color: '#01643e', flag: 'mx' },
 ];
 
+/**
+ * Twelve sports, as the twelve balls they are played with.
+ *
+ * Read "sport" as the equipment and not as the clubs: a football is a pattern
+ * and a crest is a trademark, and a cast of twelve crests is a cast that cannot
+ * be posted without somebody's permission. It is also the cast this project was
+ * always going to have — every mode here is balls in a box, and these are the
+ * balls.
+ *
+ * The colour on each is the one that stands for it where a single colour is all
+ * there is room for: the zone a sport is holding in Month, the ring it leaves
+ * when it goes out of Hot potato. Two of them are near enough white that they
+ * would collide, so volleyball is given its blue and golf its grey — neither is
+ * ever identified by that colour alone, it wears its own ball. The eight ball
+ * is given a slate rather than its own black for the same kind of reason: the
+ * ring an out ball leaves in Hot potato is that colour dimmed, and black dimmed
+ * on a black ground is nothing at all.
+ */
+export const SPORT: readonly Member[] = [
+  { key: 'soccer', label: '', color: '#f2f2f2', ball: 'soccer' },
+  { key: 'basket', label: '', color: '#e8762c', ball: 'basket' },
+  { key: 'tennis', label: '', color: '#c9e83a', ball: 'tennis' },
+  { key: 'volley', label: '', color: '#2f6ff0', ball: 'volley' },
+  { key: 'baseball', label: '', color: '#c8ced8', ball: 'baseball' },
+  { key: 'cricket', label: '', color: '#a01f2b', ball: 'cricket' },
+  { key: 'rugby', label: '', color: '#8a5a2b', ball: 'rugby' },
+  { key: '8ball', label: '', color: '#59627a', ball: 'billiard' },
+  { key: 'bowling', label: '', color: '#5d34a0', ball: 'bowling' },
+  { key: 'golf', label: '', color: '#9aa4b0', ball: 'golf' },
+  { key: 'pingpong', label: '', color: '#ff8a1f', ball: 'pingpong' },
+  { key: 'waterpolo', label: '', color: '#f2d02c', ball: 'waterpolo' },
+];
+
 const AS_MONTHS: readonly Member[] = MONTHS.map((m) => ({
   key: m.label.toLowerCase(),
   label: m.label,
@@ -129,12 +178,14 @@ export const CASTS: Record<CastName, readonly Member[]> = {
   months: AS_MONTHS,
   zodiac: ZODIAC,
   countries: COUNTRIES,
+  sport: SPORT,
 };
 
 export const CAST_LABEL: Record<CastName, string> = {
   months: 'Months',
   zodiac: 'Zodiac',
   countries: 'Countries',
+  sport: 'Sport',
 };
 
 /** Every cast is twelve, because the games are. */
@@ -324,9 +375,11 @@ export function drawLabel(
 /**
  * Put a cast member on a disc already drawn at `x, y`.
  *
- * A flag is clipped to the disc as well as carrying its own round edge: the
- * picture's corners are transparent, and the clip is what stops a half pixel of
- * its antialiased rim from standing outside the disc it is filling.
+ * Everything is clipped to the disc, whether it is a picture or a painting: a
+ * flag carries its own round edge but its antialiased rim would otherwise stand
+ * half a pixel outside the disc, and a ball is painted from shapes that run past
+ * the edge on purpose — a football's outer pentagons, a rugby ball's points —
+ * and the clip is what turns them into the ball rather than into a mess.
  */
 export function drawMember(
   ctx: CanvasRenderingContext2D,
@@ -335,11 +388,12 @@ export function drawMember(
   y: number,
   radius: number,
 ): void {
-  if (!member.flag) return;
+  if (!draws(member)) return;
   ctx.save();
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.clip();
-  drawFlag(ctx, member.flag, x, y, radius);
+  if (member.flag) drawFlag(ctx, member.flag, x, y, radius);
+  else if (member.ball) drawBall(ctx, member.ball, x, y, radius);
   ctx.restore();
 }

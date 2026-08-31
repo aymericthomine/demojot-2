@@ -13,7 +13,7 @@
  * second and a half, which is the reference's own tell.
  */
 
-import { drawLabel, drawMember, type Member } from './cast';
+import { drawLabel, drawMember, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL } from '../sim/months';
 import type { PotatoFrame } from '../sim/potato';
@@ -137,7 +137,7 @@ export function drawPotatoFrame(
       ctx.arc(x, y, ball * (1 - WALL_WIDTH / 2), 0, Math.PI * 2);
       ctx.stroke();
 
-      if (member.flag) {
+      if (draws(member)) {
         // A wall keeps its flag, faintly. Without it an out country is a
         // coloured ring and nothing else — and several of the twelve share a
         // colour, so eleven walls would end up telling you nothing about who
@@ -173,19 +173,19 @@ export function drawPotatoFrame(
     // border in that colour round every flag.
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
-    ctx.fillStyle = member.flag ? UNDER : member.color;
+    ctx.fillStyle = draws(member) ? UNDER : member.color;
     ctx.fill();
     // No rim on a flag. A flag is already a finished picture with its own edge,
     // and a line round it reads as a badge somebody mounted it in. The cost is
     // Germany, whose top third is the ground it sits on and now runs into it —
     // which is what the flag looks like, and was asked for.
-    if (!member.flag) {
+    if (!draws(member)) {
       ctx.lineWidth = disc * OUTLINE;
       ctx.strokeStyle = ink('#101216', invert);
       ctx.stroke();
     }
 
-    if (member.flag) {
+    if (draws(member)) {
       // Out to the full radius: drawn inside it the fill shows round the edge
       // as a ring in the member's colour, which reads as a mount rather than as
       // a flag.

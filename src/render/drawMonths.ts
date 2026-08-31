@@ -13,7 +13,7 @@
  * fills.
  */
 
-import { drawLabel, drawMember, type Member } from './cast';
+import { drawLabel, drawMember, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
 import { BALL, ZONE, type MonthFrame } from '../sim/months';
 import { ARENA, RIM_WIDTH } from '../sim/style';
@@ -167,7 +167,7 @@ export function drawMonthsFrame(
   // its colour. Kept on, it also lands under the winner's own ball whenever the
   // ball happens to finish near the centre, and a name half-hidden behind the
   // thing it names reads as a fault rather than as a flourish.
-  if (glow && frame.reveal < 1 && cast[holder].flag) {
+  if (glow && frame.reveal < 1 && draws(cast[holder])) {
     // A cast that draws puts its picture here instead of its name, at the size
     // the name would have taken and behind everything for the same reason.
     ctx.save();
@@ -247,7 +247,7 @@ export function drawMonthsFrame(
     // blue on Russia, red on Japan, yellow on Germany — which is a border, and
     // borders are the one thing the flags were asked not to have. On the grey
     // the months drain to, the same blend disappears into the track outside it.
-    const fill = member.flag ? SPENT : drained(member.color, lost);
+    const fill = draws(member) ? SPENT : drained(member.color, lost);
     ctx.beginPath();
     ctx.arc(x, y, disc, 0, Math.PI * 2);
     ctx.fillStyle = fill;
@@ -256,13 +256,13 @@ export function drawMonthsFrame(
     // and a line round it reads as a badge somebody mounted it in. The cost is
     // Germany, whose top third is the ground it sits on and now runs into it —
     // which is what the flag looks like, and was asked for.
-    if (!member.flag) {
+    if (!draws(member)) {
       ctx.lineWidth = disc * OUTLINE;
       ctx.strokeStyle = ink('#101216', invert);
       ctx.stroke();
     }
 
-    if (member.flag) {
+    if (draws(member)) {
       // The flag *is* the disc, out to its full radius. Drawn a little inside it
       // the fill showed round the edge as a ring in the member's colour — gold
       // round Spain, green round Mexico — which reads as a picture mounted in a

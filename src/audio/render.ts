@@ -25,7 +25,6 @@
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
-import type { Round } from '../sim/simulate';
 import { SLOT, SPRITE } from './hits';
 
 const SAMPLE_RATE = 48000;
@@ -118,35 +117,6 @@ async function renderHits(
   }
 
   return ctx.startRendering();
-}
-
-export function renderRoundAudio(round: Round): Promise<AudioBuffer> {
-  const list: Hit[] = [];
-  for (const event of round.events) {
-    switch (event.kind) {
-      // The wall, rope changing hands, two balls meeting: all the same noise,
-      // all unthinned. Anything else would not be this video's sound.
-      case 'wall':
-      case 'take':
-      case 'break':
-      case 'clash':
-        list.push({ t: event.t, slot: TICK, gain: 0.8 });
-        break;
-      case 'death':
-        list.push({ t: event.t, slot: OCTAVE, gain: 0.9 });
-        break;
-      case 'win':
-        [0, 0.12, 0.24].forEach((offset, i) =>
-          list.push({
-            t: event.t + offset,
-            slot: i === 2 ? OCTAVE : TICK,
-            gain: 0.85,
-          }),
-        );
-        break;
-    }
-  }
-  return renderHits(round.duration, list, sprite);
 }
 
 /**

@@ -40,11 +40,30 @@
  */
 
 import { createRng } from './random';
-import { LONGEST, lengthFor, SHORTEST } from './simulate';
 import { FPS } from './style';
 
 /** Physics substeps per rendered frame. */
 const SUBSTEPS = 4;
+
+/**
+ * The minute to eighty seconds a round is aimed at.
+ *
+ * These lived with the ball fight, which shared the policy and has since been
+ * taken out of the site; they are this mode's own now. The floor is what a video
+ * has to clear to be worth posting and the ceiling is where a viewer leaves,
+ * and the seed picks a length between them — a mode whose videos are all the
+ * same length to the frame is a mode whose videos a duplicate detector can pair
+ * up.
+ */
+export const SHORTEST = 60;
+export const LONGEST = 80;
+
+/** The length this seed asks for. From the seed alone, never from the play. */
+export const lengthFor = (seed: number): number => {
+  const seconds = createRng(seed ^ 0x7feb352d).range(SHORTEST, LONGEST);
+  // Whole frames, so the video is an exact number of them.
+  return Math.round(seconds * FPS) / FPS;
+};
 
 /**
  * The cast, in calendar order, with the colours sampled off the reference.
