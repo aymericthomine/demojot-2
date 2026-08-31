@@ -342,24 +342,27 @@ the flags were asked not to have.
 **They are somebody else's artwork.** That is worth knowing rather than
 discovering; the drawn set they replaced owed nothing to anyone.
 - **Fruit** — strawberry, orange, watermelon, kiwi, banana, apple, grape,
-  pineapple, lemon, cherry, blueberry, mango. The cast this project should have
-  had first: the games put discs on a board, and half of these already *are*
-  discs — an orange, a watermelon and a kiwi are circles the moment they are
-  cut, and an apple, a cherry and a blueberry are circles without being cut at
-  all. The two that are not, the banana and the bunch of grapes, are drawn on a
-  ground of their own colour so the picture still fills the disc rather than
-  floating on it.
+  pineapple, lemon, cherry, blueberry, mango.
+
+  **The disc is the fruit**, not a circle with a picture of a fruit in it. Half
+  of them are cut open — an orange, a watermelon, a kiwi, an apple through its
+  core — and the rest are a piece of the fruit's own surface: a strawberry's
+  pips, a pineapple's lattice, the crown at the eye of a blueberry. Nothing sits
+  on a ground, because a small object floating in the middle of a disc reads as
+  an icon somebody mounted there, and at forty pixels an icon is a smudge while
+  a field of colour is still a colour.
+
+  The first set broke that rule five times. It had a bunch of grapes, two
+  cherries on a stem, a banana lying across its circle, and an apple and a
+  strawberry wearing leaves; they are now a cut grape, a cut cherry, a slice of
+  banana, an apple through its core and a field of strawberry skin. The
+  pineapple lost its crown and kept its lattice, which was the half of it that
+  filled the disc.
 
   Fruit runs to reds and yellows, so several of the twelve colours sit close
   together — the watermelon is named by its rind rather than its middle purely
   to put one more green in the set. That is the same trade the countries make,
   and it costs nothing: no member is ever identified by its colour alone.
-
-  It replaced a cast of twelve dishes, which replaced a cast of twelve round
-  foods. What survived all three is the rule: a member has to be a picture that
-  is already a circle, or it needs a scene drawn round it — and a scene inside a
-  forty-pixel disc is the mistake the rugby ball made before it gave up its
-  pitch.
 
 ## The sound
 
