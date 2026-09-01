@@ -225,48 +225,55 @@ sum, and the field's width is that height divided by it. Set to the arena's
 diameter it comes out at 976 pixels against the ring's 978, on the same centre.
 A mode that arrived on the same page half again the size of the ones next to it
 would read as a different site rather than as another game.
+
 ## Line war
 
-Twelve balls loose in the ring. Every straight run any of them makes — bounce to
-bounce — stays on the board as a line in its own colour, and **the number of
-lines a side has on the board is its score**, counted along the top. That is the
-whole of it: drawing is scoring, and there is one way to take a point off
-somebody, which is to cut it. Crossing a line belonging to another side destroys
-that line; the cutter gains nothing by it, since it gains by drawing.
+Twelve balls in the ring, and sixty threads pinned to it — five a side. Every
+thread runs from its own fixed point on the rim to the ball that owns it, so a
+side wears a fan that swings as its ball moves, and there is one rule:
 
-The counter is the mode rather than a decoration — it is what both reference
-videos put along the top, and it is the only writing anywhere in this project. A
-board of four hundred lines does not say who is second at a glance.
+> **Run through somebody else's thread and it comes away with you.**
 
-**How long a ball must wait between cuts is the dial the whole thing turns on.**
-A ball lays down about eight lines every ten seconds, one per bounce, and eleven
-enemies on a short leash take them away faster than that. At a one-second pause
-the board never grew at all: every side was cut back to nothing within two
-seconds and nine of the twelve were out before the first second was over. At
-three and a half the arithmetic turns over — a side draws faster than the other
-eleven can cut it — and the board thickens the way the reference's does: fifty
-lines on it at the first second, a hundred by the tenth, two hundred by the
-thirtieth, four hundred and fifty by the sixtieth.
+A thread that changes hands keeps its pin and swaps its owner. Nothing is
+created and nothing is destroyed: the sixty threads the ring opens with are the
+sixty it closes with, and the video is those sixty changing hands. **The counter
+along the top is the count of threads** — laid out the way Pachinko's is, two
+rows of six, a disc with its number under it — and it is what decides the round,
+because a video whose numbers say one side is winning and whose winner is
+another side is a broken video. Time spent holding is kept underneath as the
+tie-break, so two sides level on twelve are separated by which held its twelve
+for longer rather than by which comes first in the cast.
 
-Two more things come from that same first second. Each side is dealt **a small
-fan at its station**, because a ball draws its first line only when it first
-reaches the wall, and a rule that says *nothing on the board means out* takes
-most of the cast before anybody has drawn anything. And **nobody may be knocked
-out for the first twelve seconds** for the same reason.
+**A ball takes every thread it ran through, not the first one found.** That is
+the difference between this and a rule about single lines: a ball crossing a fan
+takes the fan, which is what the reference does and what makes the counter jump
+by eight rather than tick by one.
 
-**A ball cuts the line it reached first**, not the first one the search happened
-to find. That sounds like a tie-break and is really a bias: the search walked
-the sides in order, so whenever two lines were in the way the lowest-numbered
-side lost one — and over thirty seeds the first six members of the cast never
-won a single round. Measuring the distance along the ball's own path instead
-puts the wins back where they belong: over a hundred and twenty seeds, between
-six and fifteen for every one of the twelve.
+**A ball has to be clear of a pin before it can take the thread on it.** Every
+thread ends at the rim, so a ball bouncing along the wall sits inside the thin
+end of every fan pinned near it and harvests the neighbourhood on every substep.
+It must be a sixth of the ring's radius away from the pin.
+
+**A side stripped of everything is out — but not straight away, and not early.**
+This is the dial the mode turns on, and both ends of it are wrong. With no delay
+at all, six of the twelve were gone by the eighth second and the ring played out
+the remaining minute with half a cast. With four seconds of grace, nobody was
+ever knocked out in sixty seeds: a stripped ball only has to cross one enemy
+thread to be back in it, and four seconds is plenty. At **a second and a half,
+and nothing before the twentieth second**, the ring keeps all twelve through the
+first third and thins to about eight by the end — four knockouts, spread over
+the half of the round where they mean something.
 
 **Rounds end on the whistle**, which the seed picks between sixty and
-seventy-eight seconds; whoever holds the most lines then takes it. Being wiped
-out ends it early and has never once happened in a hundred and twenty seeds —
-the rule is kept because the day the dials move it is the difference between a
-game and a deadlock.
+seventy-eight seconds. Over two hundred seeds the twelve won between ten and
+twenty-five rounds each, which is the check that matters: an earlier version of
+this mode searched for lines in index order and the first six of the cast never
+won once.
+
+This replaced a version where the lines were the balls' own trails and the score
+was how many were still on the board. It was a different game from the
+reference's and it did not work — the board either filled with felt or was cut
+back to nothing in the first two seconds, depending on one dial.
 
 ## Who is playing
 

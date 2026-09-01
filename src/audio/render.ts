@@ -228,18 +228,23 @@ export function renderPachinkoAudio(round: PachinkoRound): Promise<AudioBuffer> 
 /**
  * Line war's sound.
  *
- * The tick for a bounce off the wall, which is also the moment a line is
- * finished and laid down. The octave is kept for a cut — the only thing in the
- * mode that changes the standings — and a side going out gets three of them.
+ * The tick for a bounce off the wall, and the octave for a thread changing
+ * hands — the only thing in the mode that changes the standings. A ball running
+ * through a fan takes a dozen threads in one substep, so takes are held to one
+ * note every tenth of a second: without that, the busy middle of a round is a
+ * thousand octaves and the mode has no sound at all, only noise.
  */
 export function renderLineAudio(round: LineRound): Promise<AudioBuffer> {
   const list: Hit[] = [];
+  let lastTake = -99;
   for (const event of round.events) {
     switch (event.kind) {
       case 'wall':
         list.push({ t: event.t, slot: TICK, gain: 0.55 });
         break;
-      case 'cut':
+      case 'take':
+        if (event.t - lastTake < 0.1) break;
+        lastTake = event.t;
         list.push({ t: event.t, slot: OCTAVE, gain: 0.8 });
         break;
       case 'out':

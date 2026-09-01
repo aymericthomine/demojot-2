@@ -123,15 +123,11 @@ export function lineReel(round: LineRound, dress: Dress = {}): Reel {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,
-        trails: round.trails,
-        at: index,
         winner: round.winner,
         cast: castFor(dress.cast),
         fit: CAST_FIT[dress.cast ?? 'months'],
         weight: CAST_WEIGHT[dress.cast ?? 'months'],
       });
-      // The frames go as they are painted, but the trails are the board and are
-      // needed until the last one.
       release(round.frames, index);
     },
   };

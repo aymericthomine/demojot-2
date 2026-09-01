@@ -2,25 +2,24 @@
  * One frame of Line war.
  *
  * Two bands: the counter along the top, and the ring underneath it. The counter
- * is the mode — the number of lines a side holds is its score, and a board of
- * two hundred lines does not say who is second at a glance — so it is the one
- * place in this project where numbers are written down, and it is laid out the
- * way Pachinko's scoreboard is: two rows of six, each a disc with its total
- * under it.
+ * is laid out the way Pachinko's scoreboard is — two rows of six, each a disc
+ * with its total under it — because that is the design the rest of the site
+ * already uses for a mode where twelve sides carry a running number.
  *
  * Everything is a multiple of the ring's diameter, and the whole column is set
  * to the height of the arena the other modes are played in. A mode that arrives
  * on the same page half again the size of the ones next to it reads as a
  * different site rather than as another game.
  *
- * Lines go under the balls and are drawn as hairlines. They are the board
- * rather than the subject: at four times this width the ring came out as a
- * plate of spaghetti with the balls lost in it.
+ * The board is the sixty threads: each runs from its own fixed pin on the rim
+ * to whichever ball holds it now, so a side reads as a fan and losing threads
+ * reads as a fan being thinned. Threads go under the balls and are drawn thin —
+ * they are what the balls are playing on, not the subject.
  */
 
 import { drawLabel, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
-import type { LineFrame, Trail } from '../sim/line';
+import { pinAt, type LineFrame } from '../sim/line';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
 export interface LineLook {
@@ -28,10 +27,6 @@ export interface LineLook {
   height: number;
   /** White ground, every colour its complement. */
   invert?: boolean;
-  /** Every line ever drawn, with the frames it is on the board for. */
-  trails: readonly Trail[];
-  /** Which frame this is, so the board can be asked what it held then. */
-  at: number;
   /** The side holding the ring at the end. */
   winner: number;
   /** Who is playing. */
@@ -56,8 +51,8 @@ const BLOCK = DISC + ROW_STEP + SCORE_DROP + HEAD_GAP + 1;
 /** And the height it is set to: the arena the other modes are played in. */
 const SPAN = ARENA * 2;
 
-/** How wide a line is drawn, as a fraction of the ring's radius. */
-const THREAD = 0.009;
+/** How wide a thread is drawn, as a fraction of the ring's radius. */
+const THREAD = 0.011;
 
 /** The dark line round a ball that carries writing rather than a picture. */
 const OUTLINE = 0.09;
@@ -108,7 +103,7 @@ export function drawLineFrame(
   frame: LineFrame,
   look: LineLook,
 ): void {
-  const { width, height, invert = false, trails, at, winner, cast, fit, weight } = look;
+  const { width, height, invert = false, winner, cast, fit, weight } = look;
   const across = (width * SPAN) / BLOCK;
   const radius = across / 2;
   const cx = width / 2;
@@ -124,16 +119,24 @@ export function drawLineFrame(
   ctx.fillRect(0, 0, width, height);
 
   const reveal = frame.reveal;
-  const most = Math.max(...frame.held);
+
+  // How many threads each side is holding: the score, and what says who is
+  // still in.
+  const held = new Array<number>(cast.length).fill(0);
+  for (const who of frame.threads) held[who] += 1;
+  const most = Math.max(...held);
+
+  // Where each side's ball is, so a thread knows the end it is being pulled by.
+  const ballOf = new Array<{ x: number; y: number } | undefined>(cast.length);
+  for (const ball of frame.balls) ballOf[ball.who] = ball;
 
   // The counter.
   const disc = DISC * across;
   for (let i = 0; i < cast.length; i += 1) {
     const member = cast[i];
-    const held = frame.held[i];
     // A side on nothing is out, and reads as out whether the video has ended or
     // not: the disc goes grey and the number with it.
-    const lost = held === 0 ? 0.8 : reveal > 0 && i !== winner ? reveal : 0;
+    const lost = held[i] === 0 ? 0.8 : reveal > 0 && i !== winner ? reveal : 0;
     const size = i === winner ? disc * (1 + 0.16 * reveal) : disc;
     const x = cx + ((i % 6) - 2.5) * COL_STEP * across;
     const y = i < 6 ? rowOne : rowTwo;
@@ -150,7 +153,7 @@ export function drawLineFrame(
     }
     // The leader wears a white ring, which is the one thing twelve numbers
     // cannot say at a glance.
-    if (held === most && most > 0) {
+    if (held[i] === most && most > 0) {
       ctx.beginPath();
       ctx.strokeStyle = ink(drained('#ffffff', lost), invert);
       ctx.lineWidth = size * 0.12;
@@ -159,7 +162,7 @@ export function drawLineFrame(
     }
     write(
       ctx,
-      String(held),
+      String(held[i]),
       x,
       y + SCORE_DROP * across,
       SCORE_SIZE * across,
@@ -174,20 +177,20 @@ export function drawLineFrame(
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.stroke();
 
-  // The board. Every line the round drew is in one list with the frames it was
-  // on the board for, so a frame is a filter rather than a snapshot — two
-  // hundred lines held per frame would be a hundred thousand copies of the same
-  // line over a video.
+  // The board: sixty threads, pin to owner.
   ctx.lineCap = 'round';
   ctx.lineWidth = radius * THREAD;
-  for (const line of trails) {
-    if (line.from > at || at >= line.to) continue;
-    const lost = reveal > 0 && line.who !== winner ? reveal : 0;
+  for (let pin = 0; pin < frame.threads.length; pin += 1) {
+    const who = frame.threads[pin];
+    const ball = ballOf[who];
+    if (!ball) continue;
+    const lost = reveal > 0 && who !== winner ? reveal : 0;
     if (lost >= 1) continue;
+    const foot = pinAt(pin);
     ctx.beginPath();
-    ctx.strokeStyle = withAlpha(cast[line.who].color, 0.75 * (1 - lost));
-    ctx.moveTo(cx + line.x1 * radius, cy + line.y1 * radius);
-    ctx.lineTo(cx + line.x2 * radius, cy + line.y2 * radius);
+    ctx.strokeStyle = withAlpha(cast[who].color, 0.8 * (1 - lost));
+    ctx.moveTo(cx + foot.x * radius, cy + foot.y * radius);
+    ctx.lineTo(cx + ball.x * radius, cy + ball.y * radius);
     ctx.stroke();
   }
   ctx.lineCap = 'butt';
