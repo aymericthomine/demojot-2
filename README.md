@@ -16,8 +16,8 @@ over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
 **Line war** — twelve balls in one ring, and every straight run any of them makes
-stays on the board as a line in its own colour. Cut through somebody else's line
-and you take one of their lives, and the line goes with it.
+stays on the board as a line in its own colour. The number of lines a side holds
+is its score, counted along the top; crossing somebody else's line destroys it.
 
 Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
@@ -228,42 +228,45 @@ would read as a different site rather than as another game.
 ## Line war
 
 Twelve balls loose in the ring. Every straight run any of them makes — bounce to
-bounce — stays on the board as a line in its own colour, so the board is a record
-of where everybody has been, and it is also the game: **cut through somebody
-else's line and you take one of their lives.** The line you cut goes with it.
+bounce — stays on the board as a line in its own colour, and **the number of
+lines a side has on the board is its score**, counted along the top. That is the
+whole of it: drawing is scoring, and there is one way to take a point off
+somebody, which is to cut it. Crossing a line belonging to another side destroys
+that line; the cutter gains nothing by it, since it gains by drawing.
 
-Nothing is written down. A ball's radius is the square root of what its side is
-holding, so a side that is winning is a big ball with the ring full of its
-colour, a side that is losing is a small one with hardly a line to its name, and
-a side on nothing is gone — its remaining lines vanish with it, which is what
-makes the ring get quieter as the field thins rather than louder.
+The counter is the mode rather than a decoration — it is what both reference
+videos put along the top, and it is the only writing anywhere in this project. A
+board of four hundred lines does not say who is second at a glance.
 
-**A ball cuts with its width, not with its centre**, and that is the rule that
-finishes the war. Three rays are tested, one down the middle and one along each
-flank, so a side that is ahead sweeps a wider swath, takes more lines on every
-run, and gets wider still. Without that feedback lives are a symmetric walk
-between twelve sides: measured over forty seeds, not one round was ever swept
-inside the ceiling.
+**How long a ball must wait between cuts is the dial the whole thing turns on.**
+A ball lays down about eight lines every ten seconds, one per bounce, and eleven
+enemies on a short leash take them away faster than that. At a one-second pause
+the board never grew at all: every side was cut back to nothing within two
+seconds and nine of the twelve were out before the first second was over. At
+three and a half the arithmetic turns over — a side draws faster than the other
+eleven can cut it — and the board thickens the way the reference's does: fifty
+lines on it at the first second, a hundred by the tenth, two hundred by the
+thirtieth, four hundred and fifty by the sixtieth.
 
-**A cut is worth more as the clock runs** — one life at the start, and towards
-the end a share of whatever the side being cut still has. A flat one leaves the
-survivors holding ten and twenty apiece with no way through; taking a share
-scales with whoever got fat, and puts the collapse where it belongs.
+Two more things come from that same first second. Each side is dealt **a small
+fan at its station**, because a ball draws its first line only when it first
+reaches the wall, and a rule that says *nothing on the board means out* takes
+most of the cast before anybody has drawn anything. And **nobody may be knocked
+out for the first twelve seconds** for the same reason.
 
-**A ball is barred from cutting for a second and a half after it does.** Without
-the pause a single crossing empties a side — the ball is over the line for
-several substeps and each of them is another intersection with the same piece of
-work — and, just as important, the pause is what lets the board build up. With
-it, lines outlive their cutting: a dozen on the board at the first second, three
-score by the fifteenth, two hundred by the fiftieth. That accumulation is the
-mode. Nothing else in this project has a memory.
+**A ball cuts the line it reached first**, not the first one the search happened
+to find. That sounds like a tie-break and is really a bias: the search walked
+the sides in order, so whenever two lines were in the way the lowest-numbered
+side lost one — and over thirty seeds the first six members of the cast never
+won a single round. Measuring the distance along the ball's own path instead
+puts the wins back where they belong: over a hundred and twenty seeds, between
+six and fifteen for every one of the twelve.
 
-**Most rounds end on the whistle rather than on a sweep**, and that is reported
-rather than hidden: the seed picks the whistle between sixty and seventy-eight
-seconds, the war runs the whole way, and whoever holds the most when it stops
-takes it. The ring *can* be swept — about one round in ten is — and a sweep is
-held to the floor rather than cut short, so a side that wins early keeps drawing
-until the minute has been cleared.
+**Rounds end on the whistle**, which the seed picks between sixty and
+seventy-eight seconds; whoever holds the most lines then takes it. Being wiped
+out ends it early and has never once happened in a hundred and twenty seeds —
+the rule is kept because the day the dials move it is the difference between a
+game and a deadlock.
 
 ## Who is playing
 
@@ -438,8 +441,8 @@ demonetise a video that uses it. Nothing else in this project has that exposure.
 | `src/render/drawMonths.ts` | One frame of it: arena, zone, balls, progress rings. |
 | `src/sim/potato.ts` | The fuse, who is holding it, and the walls the out ones leave. |
 | `src/render/drawPotato.ts` | One frame of it: discs, rings, the holder's band, the fuse. |
-| `src/sim/line.ts` | The lines, the cutting, and the lives that move with them. |
-| `src/render/drawLine.ts` | One frame of it: the board, the balls, the ending. |
+| `src/sim/line.ts` | The lines, the cutting, and the counter that follows from them. |
+| `src/render/drawLine.ts` | One frame of it: the counter, the board, the balls. |
 | `src/sim/pachinko.ts` | The peg field, the waves, the slots and the multiplying last drop. |
 | `src/render/drawPachinko.ts` | One frame of it: scoreboard, field, slots, bar. |
 | `src/render/cast.ts` | Who the twelve are, and how a member is put on a disc. |
