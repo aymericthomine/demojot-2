@@ -83,7 +83,7 @@ const MODE_ABOUT: Record<Mode, string> = {
     "One of the twelve is holding a fuse, and touching another hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last one still in survives.",
   pachinko:
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
-  line: "Twelve balls in the ring, and sixty threads pinned to it — five a side, each running from its own point on the rim to the ball that owns it. Run through somebody else's thread and it comes away with you, pin and all, so a side reads as a fan that thickens or thins. A thread is worth a point a second to whoever is holding it, which rewards keeping a fan rather than grabbing one; a side stripped of every last one leaves the ring.",
+  line: "Twelve balls in the ring, and sixty threads pinned to it — five a side, each running from its own point on the rim to the ball that owns it. Touch somebody else's thread and it comes away with you, pin and all. A ball can only hold twelve, and a full one breaks the rope instead of taking it, which is what empties the ring towards a winner. No threads means out, and the last one left holds everything there is.",
 };
 
 /** Everything a press of the button needs. */
@@ -264,7 +264,7 @@ export default function HomePage() {
             onStage("sound");
             audio = await renderLineAudio(round).catch(() => null);
             reel = lineReel(round, dress);
-            summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} on ${round.best} · ${round.held} threads${round.swept ? " · swept" : ""}`;
+            summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} ${round.swept ? "took the ring" : `led on ${round.held}`}`;
           }
 
           const result = await encodeVideo({
