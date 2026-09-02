@@ -15,7 +15,7 @@ else bounces off. Last one still in survives.
 over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
-**Keep the wires** — a hundred and twenty wires pinned to the rim, ten a side,
+**Keep the wires** — a hundred and eighty wires pinned to the rim, fifteen a side,
 each running to the ball that owns it. Run through a wire and it comes away with
 you; because a ball takes what it touches, no two wires ever overlap. A side
 holding none is out.
