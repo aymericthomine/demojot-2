@@ -16,7 +16,7 @@
 
 import { drawLabel, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
-import { EMPTY, pinAt, type LineFrame } from '../sim/line';
+import { pinAt, type LineFrame } from '../sim/line';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
 export interface LineLook {
@@ -82,7 +82,6 @@ export function drawLineFrame(
   ctx.lineWidth = radius * THREAD;
   for (let pin = 0; pin < frame.threads.length; pin += 1) {
     const who = frame.threads[pin];
-    if (who === EMPTY) continue;
     const ball = ballOf[who];
     if (!ball) continue;
     const lost = reveal > 0 && who !== winner ? reveal : 0;

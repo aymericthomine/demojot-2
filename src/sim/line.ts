@@ -1,36 +1,34 @@
 /**
  * Line war.
  *
- * The old Ball battle's rules, played by the twelve. Three of them, and they are
- * the whole game:
+ * Threads are pinned to the rim — the pins never move — and each one runs from
+ * its pin to the ball that owns it, so every side wears a fan. One rule does all
+ * the work:
  *
- * 1. **The pins never move.** The rim is divided into sixty fixed points, five
- *    a side, set before the first frame. Every pin holds a thread that runs from
- *    it to the ball that owns it, so each side wears a fan that swings as its
- *    ball travels.
- * 2. **Touch a thread and it comes away with you.** The pin stays exactly where
- *    it was and the inner end swings across to the ball that took it. Rope does
- *    not push back — a ball is never turned by it — so a ball crossing a fan
- *    takes every thread it passed through, and a good run pays.
- * 3. **Threads are life.** A side holding none is out, and the only way back is
- *    to take somebody else's, which a side with no ball in the ring cannot do.
+ * > **Rope is solid.** A ball cannot pass through a thread that is not its own.
+ * > It catches on it, the thread comes away with it — new hub, new colour, same
+ * > pin — and the ball rebounds off where the thread was lying.
  *
- * Balls also shove each other apart, which wrecks the plans of both and keeps a
- * duel from settling into a rhythm.
+ * Everything else falls out of that. A ball is penned inside the wedge its own
+ * arc opens onto, so its threads can never reach across somebody else's fan:
+ * **no two threads ever overlap**, and that is a consequence of the physics
+ * rather than something repaired afterwards. Arcs stay whole for the same
+ * reason — the only rope within reach is the rope at the edge of your own
+ * territory — so a wedge grows one pin at a time, from the outside in.
  *
- * **A full ball breaks rope instead of taking it**, and that pin stays empty for
- * the rest of the round. This is the one rule that is not obvious and the reason
- * a round ever ends: transfer alone conserves, and a conserving economy has no
- * drift towards a winner — the last two would trade the same threads back and
- * forth for ever. Breaking is what makes the fight one-way.
+ * Territory changing hands only ever happens at a border, which is enforced as
+ * well as implied: the pin that moves is the end of the victim's arc that the
+ * taker's own arc is already up against. Run through the rope of a side that is
+ * not your neighbour and you are turned by it and nothing else.
  *
- * The fight runs until one side holds every thread left in the ring. Its own
- * length is no use as a video's, though — see the whistle below — so a round
- * that settles early keeps playing, the winner running the ring on its own.
+ * **Threads are life.** A side whose wedge is taken down to nothing is out. Its
+ * threads are not freed, because somebody already owns them, and the round ends
+ * with one side holding every thread in the ring.
  *
- * This replaced a version that scored the threads on a counter along the top and
- * ran to a whistle. It was a different game — a side could be stripped bare and
- * still be in it — and the counter was doing the work the picture should do.
+ * This replaced a version where rope was not solid: a ball ran clean through a
+ * fan, took whatever it passed, and the fans crossed each other into a plate of
+ * spaghetti. Slowing the cutting down made that bearable; it did not make it the
+ * reference's picture, and the picture is the point.
  */
 
 import { MONTHS } from './months';
@@ -40,14 +38,20 @@ import { FPS } from './style';
 /**
  * Physics substeps per rendered frame.
  *
- * A thread is caught by testing where the ball *is*, so a ball that moves
- * further than its own reach in one substep steps clean over rope without
- * taking it. Four is comfortably inside that at this speed.
+ * Rope is caught by testing where the ball *is*, so a ball that moves further
+ * than its own reach in one substep steps clean over a thread. Four is
+ * comfortably inside that at this speed.
  */
-const SUBSTEPS = 4;
+const SUBSTEPS = 8;
 
-/** How fast a ball travels, in arena radii a second — measured off the reference. */
-const SPEED = 0.85;
+/**
+ * How fast a ball travels, in arena radii a second.
+ *
+ * The reference runs at 0.85 and this is a shade quicker, because with twelve
+ * wedges rather than the reference's eight there is more border to work and less
+ * of a video to work it in.
+ */
+const SPEED = 1.1;
 
 /** A ball's radius, in arena radii. */
 const BALL = 0.05;
@@ -55,41 +59,18 @@ const BALL = 0.05;
 /** How wide a thread is, which is the rest of a ball's reach for one. */
 const THREAD_WIDTH = 0.0062;
 
-/** Threads each side opens with, and therefore the pins on the rim. */
+/**
+ * Threads each side opens with, and therefore the pins on the rim.
+ *
+ * It does not change how wide a wedge is — that is always a twelfth of the ring
+ * — only how many lines it is drawn with and how finely a border moves. The
+ * reference deals its eight about ten each; five is the number the twelve have
+ * been drawn with since the mode was built, and at twelve sides a coarser border
+ * is what keeps the fight moving.
+ */
 const EACH = 5;
 export const SIDES = MONTHS.length;
 export const ANCHORS = SIDES * EACH;
-
-/**
- * Most rope one ball can hold.
- *
- * This is the dial that says how full the ring looks, because everything above
- * the limit is destroyed rather than passed on. At nine — the old game's rung,
- * nearly twice what a ball opens with — the fight is decisive and the board is
- * bare: half the seeds are won outright, but by the twenty-fifth second only
- * fourteen threads are left and the rest of the video is two balls on a nearly
- * empty ring. At eighteen the board stays full and nothing is ever settled.
- *
- * Twelve keeps forty threads on the ring at the tenth second and sixteen at the
- * fifty-fifth, which is the reference's density, and the side that wins is
- * holding about two thirds of what is left — dominant enough to read without a
- * number under it.
- */
-const HOLD_LIMIT = Math.round(EACH * 2.4);
-
-/** A pin whose thread has been broken. It stays empty for the rest of the round. */
-export const EMPTY = -1;
-
-/**
- * How long a ball must clear a thread before it can take another.
- *
- * Without it a ball that runs the length of a fan takes the whole fan in one
- * substep, and a side is not stripped so much as deleted: twelve went to four in
- * the first five seconds and the video spent its remaining minute on a winner
- * that had already won. A cut costs time, so a fan is taken thread by thread and
- * the side it belongs to has a chance to be somewhere else.
- */
-const TAKE_EVERY = 0.1;
 
 /** Where the twelve start, as a fraction of the arena. */
 const OPENING_RING = 0.5;
@@ -97,7 +78,7 @@ const OPENING_RING = 0.5;
 /**
  * Seconds the opening picture is held before anybody moves.
  *
- * The twelve fans dividing the rim are the most legible frame in the video and
+ * The twelve wedges dividing the rim are the most legible frame in the video and
  * they are gone in an instant otherwise. Nothing happens during the hold, so it
  * reads as a held breath rather than a slow start.
  */
@@ -112,13 +93,10 @@ const FADE = 3.5;
 /**
  * The whistle, which the seed picks between these.
  *
- * The fight's own length is bimodal and neither mode is a video: most rounds are
- * settled inside forty seconds, and the ones that are not are two balls trading
- * the same rope for as long as you let them — at a hundred-second cap, a third
- * of seeds ran the whole hundred. So the round is given a length the way every
- * other mode here is. A fight settled early keeps playing, the winner running
- * the ring on its own until the whistle; a fight still going at the whistle is
- * given to whoever holds the most rope.
+ * The fight's own length is not a video's: a round can settle inside half a
+ * minute or grind on well past two. So a fight settled early keeps playing, the
+ * winner running the ring on its own until the whistle, and a fight still going
+ * at the whistle is given to whoever holds the most rope.
  */
 const SHORTEST = 60;
 const LONGEST = 78;
@@ -134,13 +112,13 @@ export interface LineBall {
 
 export interface LineFrame {
   balls: readonly LineBall[];
-  /** Who holds each pin, by pin index, or EMPTY where the thread was broken. */
+  /** Who holds each pin, by pin index. */
   threads: readonly number[];
   /** Nought while the fight is on, one from the moment it is decided. */
   reveal: number;
 }
 
-export type LineEventKind = 'wall' | 'clash' | 'take' | 'break' | 'out' | 'win';
+export type LineEventKind = 'wall' | 'clash' | 'take' | 'out' | 'win';
 
 export interface LineEvent {
   t: number;
@@ -159,7 +137,7 @@ export interface LineRound {
   best: number;
   /** The same number, under the name the page's other modes use. */
   held: number;
-  /** Whether it was the last side standing rather than the leader at the cap. */
+  /** Whether it was the last side standing rather than the leader at the whistle. */
   swept: boolean;
   duration: number;
   durationInFrames: number;
@@ -176,16 +154,15 @@ interface Live {
   fade: number;
   /** When it last bounced off another ball, so one contact is not counted twice. */
   clashedAt: number;
-  /** When it last took a thread. */
-  cutAt: number;
 }
 
 /**
  * Where every pin sits, worked out once.
  *
- * The contact test asks for these sixty positions twelve times a substep and
- * four times a frame, so working them out each time with two trigonometric calls
- * was most of what a round cost.
+ * The contact test asks for these positions for every ball on every substep, so
+ * working them out each time with two trigonometric calls was most of what a
+ * round cost. The half-step offset is what centres a side's arc on the angle its
+ * ball opens at.
  */
 const PINS: readonly { x: number; y: number }[] = Array.from({ length: ANCHORS }, (_, pin) => {
   const angle = -Math.PI / 2 + ((pin - (EACH - 1) / 2) / ANCHORS) * Math.PI * 2;
@@ -212,13 +189,42 @@ function nearSegment(
   return (px - (ax + dx * t)) ** 2 + (py - (ay + dy * t)) ** 2;
 }
 
+/**
+ * The pin a victim gives up to a taker: the end of the victim's arc that the
+ * taker's own arc is already up against, and of its two ends, the one nearer to
+ * the pin that was actually caught.
+ *
+ * Solid rope already keeps a ball where its own territory is, so this is nearly
+ * always the pin it caught. It is here for the case it is not — a ball that has
+ * come round through the middle and reached a fan from behind — because an arc
+ * that stays an arc is what keeps the fans from ever crossing, and a rule is a
+ * better guarantee of that than a tendency.
+ */
+function borderPin(owner: Int8Array, taker: number, victim: number, caught: number): number {
+  let best = -1;
+  let closest = Infinity;
+  for (let pin = 0; pin < ANCHORS; pin += 1) {
+    if (owner[pin] !== victim) continue;
+    const before = owner[(pin - 1 + ANCHORS) % ANCHORS];
+    const after = owner[(pin + 1) % ANCHORS];
+    if (before !== taker && after !== taker) continue;
+    let gap = Math.abs(pin - caught);
+    if (gap > ANCHORS / 2) gap = ANCHORS - gap;
+    if (gap < closest) {
+      closest = gap;
+      best = pin;
+    }
+  }
+  return best;
+}
+
 export function generateLine(seed: number): LineRound {
   const rng = createRng(seed ^ 0x6d2b79f5);
   const whistle = SHORTEST + rng.next() * (LONGEST - SHORTEST);
 
-  // The opening: each side's five pins sit together on the rim and its ball
-  // stands in front of them, so the first frame is twelve fans meeting edge to
-  // edge with an empty middle.
+  // The opening: each side's pins sit together on the rim and its ball stands in
+  // front of them, so the first frame is twelve wedges meeting edge to edge with
+  // an empty middle.
   const owner = new Int8Array(ANCHORS);
   for (let pin = 0; pin < ANCHORS; pin += 1) owner[pin] = Math.floor(pin / EACH);
 
@@ -228,7 +234,7 @@ export function generateLine(seed: number): LineRound {
     // choreographed. Still built around inward: a billiard in a circle keeps its
     // angle of incidence for ever, and a ball sent off near the tangent spends
     // the whole video hugging the wall in a tiny rosette.
-    const heading = around + Math.PI + rng.range(-1.3, 1.3);
+    const heading = around + Math.PI + rng.range(-1.1, 1.1);
     return {
       x: Math.cos(around) * OPENING_RING,
       y: Math.sin(around) * OPENING_RING,
@@ -239,7 +245,6 @@ export function generateLine(seed: number): LineRound {
       alive: true,
       fade: 0,
       clashedAt: -99,
-      cutAt: -99,
     };
   });
 
@@ -337,17 +342,17 @@ export function generateLine(seed: number): LineRound {
         }
       }
 
-      // Touch a thread and it comes away with you — new hub, same pin. Full
-      // hands break it instead, and that pin is empty for good. One at a time:
-      // the nearest thread the ball is on, and then it has to clear.
+      // Rope is solid. Only the nearest thread matters: catching on one stops
+      // the ball there, so it cannot be in among the bundle behind it in the
+      // same instant.
       for (const ball of balls) {
-        if (!ball.alive || time - ball.cutAt < TAKE_EVERY) continue;
+        if (!ball.alive) continue;
 
         let caught = -1;
         let nearest = reach;
         for (let pin = 0; pin < ANCHORS; pin += 1) {
           const victim = owner[pin];
-          if (victim === ball.who || victim === EMPTY) continue;
+          if (victim === ball.who) continue;
           const hub = balls[victim];
           const foot = PINS[pin];
           const away = nearSegment(ball.x, ball.y, hub.x, hub.y, foot.x, foot.y);
@@ -358,12 +363,35 @@ export function generateLine(seed: number): LineRound {
         if (caught < 0) continue;
 
         const hub = balls[owner[caught]];
-        ball.cutAt = time;
+        const foot = PINS[caught];
+
+        // Rebound off the line the thread was lying along, and clear of it, so
+        // the same rope cannot be caught twice in a row.
+        const tx = foot.x - hub.x;
+        const ty = foot.y - hub.y;
+        const length = Math.hypot(tx, ty);
+        if (length > 0) {
+          const nx = -ty / length;
+          const ny = tx / length;
+          const dot = ball.vx * nx + ball.vy * ny;
+          ball.vx -= 2 * dot * nx;
+          ball.vy -= 2 * dot * ny;
+          const side = (ball.x - hub.x) * nx + (ball.y - hub.y) * ny;
+          const push = BALL + THREAD_WIDTH / 2 - Math.abs(side) + 1e-4;
+          if (push > 0) {
+            const away = side >= 0 ? 1 : -1;
+            ball.x += nx * push * away;
+            ball.y += ny * push * away;
+          }
+        }
+
+        // Territory only changes hands at a border, so an arc stays an arc.
+        const moved = borderPin(owner, ball.who, hub.who, caught);
+        if (moved < 0) continue;
+        owner[moved] = ball.who;
         hub.held -= 1;
-        const full = ball.held >= HOLD_LIMIT;
-        owner[caught] = full ? EMPTY : ball.who;
-        if (!full) ball.held += 1;
-        events.push({ t: time, kind: full ? 'break' : 'take', month: ball.who, alive });
+        ball.held += 1;
+        events.push({ t: time, kind: 'take', month: ball.who, alive });
 
         if (hub.held === 0) {
           hub.alive = false;
@@ -386,7 +414,7 @@ export function generateLine(seed: number): LineRound {
         events.push({ t: time, kind: 'win', month: winner, alive });
       }
       // A fight that settled early keeps playing: the winner runs the ring on
-      // its own until the minute has been cleared.
+      // its own until the whistle.
       if (winner >= 0 && time >= Math.max(wonAt, whistle - OUTRO)) {
         decidedAt = frames.length;
         break;

@@ -83,7 +83,7 @@ const MODE_ABOUT: Record<Mode, string> = {
     "One of the twelve is holding a fuse, and touching another hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last one still in survives.",
   pachinko:
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
-  line: "Twelve balls in the ring, and sixty threads pinned to it — five a side, each running from its own point on the rim to the ball that owns it. Touch somebody else's thread and it comes away with you, pin and all. A ball can only hold twelve, and a full one breaks the rope instead of taking it, which is what empties the ring towards a winner. No threads means out, and the last one left holds everything there is.",
+  line: "Twelve balls in the ring, and sixty threads pinned to it — five a side, each running from its own point on the rim to the ball that owns it. Rope is solid: a ball cannot pass through somebody else's thread, it catches on it, the thread comes away with it, and the ball rebounds off where it was lying. So every ball is penned inside its own wedge, no two threads ever cross, and a wedge grows one pin at a time from the outside in. A side whose wedge is taken down to nothing is out.",
 };
 
 /** Everything a press of the button needs. */

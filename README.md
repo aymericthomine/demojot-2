@@ -228,55 +228,55 @@ would read as a different site rather than as another game.
 
 ## Line war
 
-The oldest set of rules in this repository, played by the twelve. Sixty threads
-are pinned to the rim, five a side, each running from its own fixed point to the
-ball that owns it, so every side wears a fan that swings as its ball travels.
-Three rules:
+Sixty threads pinned to the rim, five a side, each running from its pin to the
+ball that owns it. One rule does all the work:
 
-1. **The pins never move.** A thread's rim end is where it was in the first
-   frame; only its inner end swings, to whichever ball holds it.
-2. **Touch a thread and it comes away with you.** Rope does not push back, so a
-   ball is never turned by it.
-3. **Threads are life.** A side holding none is out, and the only way back would
-   be to take somebody else's, which a side with no ball in the ring cannot do.
+> **Rope is solid.** A ball cannot pass through a thread that is not its own. It
+> catches on it, the thread comes away with it — new hub, new colour, same pin —
+> and the ball rebounds off where the thread was lying.
 
-**A full ball breaks rope instead of taking it**, and that pin is empty for the
-rest of the round. This is the rule that is not obvious and the reason a round
-ever ends: transfer alone conserves, and a conserving economy has no drift
-towards a winner — the last two trade the same threads back and forth for ever.
+**Everything else falls out of that.** A ball is penned inside the wedge its own
+arc opens onto, so its threads can never reach across somebody else's fan: *no
+two threads ever overlap*, and that is a consequence of the physics rather than
+something repaired afterwards. Arcs stay whole for the same reason — the only
+rope in reach is the rope at the edge of your own territory — so a wedge grows
+one pin at a time, from the outside in, and the picture is twelve coloured
+wedges pushing at each other rather than a plate of spaghetti.
 
-**A ball holds twelve**, and that number is how full the ring looks, because
-everything over the limit is destroyed rather than passed on. At nine — the old
-game's rung — half the seeds are won outright, but by the twenty-fifth second
-only fourteen threads are left and the video finishes on two balls and a nearly
-empty ring. At eighteen the board stays full and nothing is ever settled. Twelve
-keeps forty threads on the ring at the tenth second and sixteen at the
-fifty-fifth, which is the reference's density, and the winner is holding about
-two thirds of what is left — dominant enough to read without a number under it.
+Checked on **every frame of six full rounds — 23 307 frames, zero crossings, and
+no side ever holding two separate patches of rim.** Contiguity is also enforced
+directly, as a second lock: the pin that moves is the end of the victim's arc
+that the taker's own arc is already up against.
 
-**A cut costs a tenth of a second**, and this is the dial the mode turns on.
-Without it a ball that runs the length of a fan takes the whole fan in one
-substep, and a side is not stripped so much as deleted: twelve went to four in
-the first five seconds, and the video spent its remaining minute on a winner
-that had already won. At a tenth of a second the ring goes twelve to seven by
-the fifth second, to three by the twentieth, and is usually down to the last one
-or two by the fortieth — which is the shape the reference has.
+**Eight substeps a frame, not four.** Rope is caught by testing where the ball
+*is*, so a ball moving further than its own reach in one substep steps clean
+over a thread. At four, two frames in ten thousand had a fan swung across
+another; at eight, none.
 
-**The whistle is the seed's**, between sixty and seventy-eight seconds, because
-the fight's own length is no use as a video's. It is bimodal: most rounds settle
-inside forty seconds, and the ones that do not are two balls trading the same
-rope for as long as you let them — at a hundred-second cap a third of seeds ran
-the whole hundred. So a fight settled early keeps playing, the winner running
-the ring on its own until the whistle, and a fight still going at the whistle
-goes to whoever holds the most rope, which is the usual ending: at this hold
-limit only a tenth of seeds are won outright.
+**Threads are life.** A side whose wedge is taken down to nothing is out — its
+threads are not freed, because somebody already owns them.
 
-**There is no counter.** There was one for a while, along the top, and it was
-doing the work the picture should do: a side that is winning wears a fan across
-half the rim and a side that is losing is a ball with three threads left.
+**Twelve sides do not usually come down to one, and this is the honest limit of
+the mode.** A ball takes rope by being in contact with it, and a squeezed ball
+is in contact almost all the time while one with room is away wandering — so the
+small wedge takes more often than the big one, and every border settles. Twelve
+become eight by the fifth second, five by the fifteenth and about three by the
+end, where they hold. That was measured against ball speed from 0.85 to 1.8,
+ball size from 0.05 to 0.095, five to ten threads a side, and a rule that made a
+cut need a run-up: none of them broke the equilibrium, and the run-up made it
+worse by cutting the take rate for everybody. The reference resolves because it
+deals eight sides, not twelve.
 
-Over sixty seeds the twelve win between two and nine rounds each, and a round
-costs about fifty milliseconds to play out, which is the cheapest mode here.
+So **the whistle decides it**, between sixty and seventy-eight seconds as in
+every other mode here, and it goes to whoever holds the most rope — about
+two-fifths of the ring, against two or three fans that are visibly smaller. A
+round that does settle early keeps playing, the winner running the ring alone.
+
+Over three hundred seeds the twelve win between twelve and thirty-four rounds
+each, and a round costs about a fifth of a second to play out.
+
+**There is no counter.** There was one for a while and it was doing the work the
+picture should do: a side that is winning wears a fan across half the rim.
 
 ## Who is playing
 

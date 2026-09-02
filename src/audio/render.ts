@@ -229,10 +229,10 @@ export function renderPachinkoAudio(round: PachinkoRound): Promise<AudioBuffer> 
  * Line war's sound.
  *
  * The tick for a bounce off the wall, the octave for a thread changing hands,
- * and three of them for a side going out. A ball running through a fan takes a
- * dozen threads in one substep, so takes and breaks are held to one note every
- * tenth of a second: without that, the busy middle of a round is a thousand
- * octaves and the mode has no sound at all, only noise.
+ * and three of them for a side going out. A ball pressed against somebody's
+ * rope takes a thread every few frames, so takes are held to one note every
+ * tenth of a second: without that, a squeeze is a hundred octaves and the mode
+ * has no sound at all, only noise.
  */
 export function renderLineAudio(round: LineRound): Promise<AudioBuffer> {
   const list: Hit[] = [];
@@ -243,10 +243,9 @@ export function renderLineAudio(round: LineRound): Promise<AudioBuffer> {
         list.push({ t: event.t, slot: TICK, gain: 0.55 });
         break;
       case 'take':
-      case 'break':
         if (event.t - lastTake < 0.1) break;
         lastTake = event.t;
-        list.push({ t: event.t, slot: OCTAVE, gain: event.kind === 'break' ? 0.6 : 0.8 });
+        list.push({ t: event.t, slot: OCTAVE, gain: 0.8 });
         break;
       case 'out':
         [0, 0.09, 0.18].forEach((offset) =>
