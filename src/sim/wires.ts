@@ -49,17 +49,22 @@ const SUBSTEPS = 8;
 /**
  * How fast a ball travels, in arena radii a second.
  *
- * A quarter of what the old fight ran at, and it is the only dial that sets the
- * pace of this one. A ball takes every wire it touches, so the fight's speed is
- * the ball's speed, and at anything near the old 0.85 twelve sides are down to
- * two inside ten seconds and the video spends its remaining minute on a winner
- * that has already won. A guard around each hub would have bought the same time
- * more cheaply — and it cannot be had, because a wire a ball may pass without
- * taking is a wire it can end up on the far side of, which is a crossing. At
- * this speed the wire count runs 120 at the opening, 79 by the tenth second, 36
- * by the twenty-fifth and 20 at the end, which is the reference's own curve.
+ * Half what the old fight ran at, and it is paid for by the wire count rather
+ * than given away. A ball takes every wire it touches, so the fight's speed is
+ * the ball's speed: at this speed on ten wires a side the ring was settled by
+ * the thirtieth second and the video spent its rest on a winner that had already
+ * won, and a guard around each hub would have bought the time back but cannot be
+ * had — a wire a ball may pass without taking is a wire it can end up on the far
+ * side of, which is a crossing.
+ *
+ * What does buy it is dealing more wire: a side with more of it takes longer to
+ * strip. At fifteen a side the fight lasts exactly as long as it did at 0.24 on
+ * ten — a median of forty seconds out of a sixty-eight-second video — with the
+ * balls travelling half again as fast. Twenty-five a side buys enough for 0.45,
+ * and costs the picture: three hundred wires read as twelve solid triangles
+ * rather than as fans of lines.
  */
-const SPEED = 0.24;
+const SPEED = 0.35;
 
 /** A ball's radius, in arena radii. */
 const BALL = 0.05;
@@ -70,21 +75,20 @@ const THREAD_WIDTH = 0.0062;
 /**
  * Wires each side opens with, and therefore the pins on the rim.
  *
- * Counted off the reference, which deals its cast about ten each and opens with
- * a rim of close-set lines rather than a handful of spokes.
+ * The reference deals its cast about ten each; this is fifteen, and the extra is
+ * what pays for the ball speed. It is about as far as the rim will go: a hundred
+ * and eighty pins is one every seventeen pixels round the ring, and at three
+ * hundred the fans stop reading as lines and come out as solid triangles.
  */
-const EACH = 10;
+const EACH = 15;
 
 /**
  * Most wire one ball can hold, and the reason a round ever finishes.
  *
- * Nearly twice what a ball opens with. Against the reference, which starts on
- * about ninety wires and is down to twenty-odd between the last two at the
- * fiftieth second, this rung lands the same shape: a hundred and twenty at the
- * start, fifty-six by the tenth second, thirty by the twenty-fifth and twenty-two
- * at the end.
+ * Nearly twice what a ball opens with, which is the rung the old fight settled
+ * on and the one that keeps the ring emptying at the reference's rate.
  */
-const HOLD_LIMIT = 18;
+const HOLD_LIMIT = 27;
 
 /** A pin whose wire has been broken. It stays empty for the rest of the round. */
 export const EMPTY = -1;

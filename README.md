@@ -229,14 +229,14 @@ would read as a different site rather than as another game.
 
 ## Keep the wires
 
-A hundred and twenty wires pinned to the rim — ten a side, the number the
-reference deals — each running from its pin to the ball that owns it. Two rules:
+A hundred and eighty wires pinned to the rim — fifteen a side — each running
+from its pin to the ball that owns it. Two rules:
 
 > **Run through a wire and it comes away with you** — new hub, new colour, same
 > pin. Every wire the ball passed through, not the first one found: it is not
 > turned by them, it cuts and carries on.
 
-> **A ball can only hold eighteen.** Full hands break the wire instead of taking
+> **A ball can only hold twenty-seven.** Full hands break the wire instead of taking
 > it, and that pin is empty for the rest of the round.
 
 **No two wires ever overlap, and that falls out of the first rule** rather than
@@ -252,12 +252,16 @@ the crossing this does not allow.
 conserving economy has no drift towards a winner: with nothing entering or
 leaving the ring, the last two trade the same wires back and forth for ever.
 
-**Ball speed is the only pace dial, and it is set very low — 0.24 arena radii a
-second, a quarter of the old fight's.** A ball takes every wire it touches, so
-the fight's speed *is* the ball's speed: at anything near 0.85, twelve sides are
-down to two inside ten seconds and the video spends its remaining minute on a
-winner that has already won. Neither the wire count (five to thirty a side) nor
-the hold limit moved that; only speed did.
+**Ball speed and the wire count are one dial between them.** A ball takes every
+wire it touches, so the fight's speed *is* the ball's speed: at the old fight's
+0.85, twelve sides are down to two inside ten seconds and the video spends its
+remaining minute on a winner that has already won. What buys the time back is
+dealing more wire, since a side with more of it takes longer to strip. At 0.24
+on ten a side the fight ran to a median of forty-one seconds; at **0.35 on
+fifteen** it runs to forty — the same fight, with the balls travelling half again
+as fast. Going further costs the picture rather than the pace: 0.45 on
+twenty-five holds the length too, but three hundred wires read as twelve solid
+triangles instead of fans of lines.
 
 **A guard around each hub would have bought the same time more cheaply, and it
 cannot be had.** Wires bundle together at their owner, so a ball among them
@@ -267,12 +271,12 @@ a ball may pass without taking is a wire it can end up on the far side of. The
 guarantee and the guard are the same rule pointing opposite ways, and the
 guarantee wins.
 
-At this speed the wire count runs 120 at the opening, 79 by the tenth second, 36
-by the twenty-fifth and 20 at the end, which is the reference's own curve; sides
-go twelve to eight by the fifth second, four by the fifteenth and one or two by
-the end. Half the rounds are won outright and the rest go to the biggest fan at
-the whistle, which the seed picks between sixty and seventy-eight seconds. Over
-three hundred seeds the twelve win between sixteen and thirty-seven rounds each.
+The wire count runs 180 at the opening and 29 at the end, the same shape as the
+reference's 88 falling to 22; sides go twelve to seven by the fifth second, three
+by the fifteenth and one or two by the end. Two rounds in three are won outright
+and the rest go to the biggest fan at the whistle, which the seed picks between
+sixty and seventy-eight seconds. Over three hundred seeds the twelve win between
+twenty and thirty-one rounds each.
 
 **Arcs are no longer guaranteed whole.** An earlier version moved the pin at the
 border of the taker's own arc, which kept every side on one unbroken run of rim.
