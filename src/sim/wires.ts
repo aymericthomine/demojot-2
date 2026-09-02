@@ -1,34 +1,34 @@
 /**
- * Line war.
+ * Keep the wires.
  *
- * Threads are pinned to the rim — the pins never move — and each one runs from
- * its pin to the ball that owns it, so every side wears a fan. One rule does all
- * the work:
+ * Wires are pinned to the rim — the pins never move — and each one runs from its
+ * pin to the ball that owns it, so every side wears a fan. Two rules:
  *
- * > **Rope is solid.** A ball cannot pass through a thread that is not its own.
- * > It catches on it, the thread comes away with it — new hub, new colour, same
- * > pin — and the ball rebounds off where the thread was lying.
+ * > **Run through a wire and it comes away with you** — new hub, new colour,
+ * > same pin. Every wire the ball passed through, not the first one found: it is
+ * > not turned by them, it cuts and carries on.
  *
- * Everything else falls out of that. A ball is penned inside the wedge its own
- * arc opens onto, so its threads can never reach across somebody else's fan:
- * **no two threads ever overlap**, and that is a consequence of the physics
- * rather than something repaired afterwards. Arcs stay whole for the same
- * reason — the only rope within reach is the rope at the edge of your own
- * territory — so a wedge grows one pin at a time, from the outside in.
+ * > **A ball can only hold so much.** Full hands break the wire instead of
+ * > taking it, and that pin is empty for the rest of the round.
  *
- * Territory changing hands only ever happens at a border, which is enforced as
- * well as implied: the pin that moves is the end of the victim's arc that the
- * taker's own arc is already up against. Run through the rope of a side that is
- * not your neighbour and you are turned by it and nothing else.
+ * **No two wires ever overlap**, and that falls out of the first rule rather
+ * than being repaired afterwards: a ball takes what it touches, so it is never
+ * on the far side of a wire it does not own, and a fan can therefore never reach
+ * across another. It keeps each side's pins in one unbroken run of the rim for
+ * the same reason — a patch of somebody else's rim inside your own would need
+ * their wire to cross yours to get out.
  *
- * **Threads are life.** A side whose wedge is taken down to nothing is out. Its
- * threads are not freed, because somebody already owns them, and the round ends
- * with one side holding every thread in the ring.
+ * **Wires are life.** A side holding none is out; its wires are not freed,
+ * because somebody already owns them.
  *
- * This replaced a version where rope was not solid: a ball ran clean through a
- * fan, took whatever it passed, and the fans crossed each other into a plate of
- * spaghetti. Slowing the cutting down made that bearable; it did not make it the
- * reference's picture, and the picture is the point.
+ * The break is what makes a round finish. Transfer alone conserves, and a
+ * conserving economy has no drift towards a winner: with nothing entering or
+ * leaving the ring, the last two trade the same wires back and forth for ever.
+ *
+ * A version of this made rope solid — a ball could not pass through a wire at
+ * all, it caught on it and rebounded. That kept the picture just as clean and
+ * cost the fight: every border settled into an equilibrium and twelve sides
+ * became three and stayed three.
  */
 
 import { MONTHS } from './months';
@@ -38,37 +38,57 @@ import { FPS } from './style';
 /**
  * Physics substeps per rendered frame.
  *
- * Rope is caught by testing where the ball *is*, so a ball that moves further
- * than its own reach in one substep steps clean over a thread. Four is
- * comfortably inside that at this speed.
+ * A wire is caught by testing where the ball *is*, so a ball that moves further
+ * than its own reach in one substep steps clean over one — and a wire stepped
+ * over rather than taken is exactly the crossing this mode does not allow.
+ * Eight, because at four two frames in ten thousand had a fan swung across
+ * another.
  */
 const SUBSTEPS = 8;
 
 /**
  * How fast a ball travels, in arena radii a second.
  *
- * The reference runs at 0.85 and this is a shade quicker, because with twelve
- * wedges rather than the reference's eight there is more border to work and less
- * of a video to work it in.
+ * A quarter of what the old fight ran at, and it is the only dial that sets the
+ * pace of this one. A ball takes every wire it touches, so the fight's speed is
+ * the ball's speed, and at anything near the old 0.85 twelve sides are down to
+ * two inside ten seconds and the video spends its remaining minute on a winner
+ * that has already won. A guard around each hub would have bought the same time
+ * more cheaply — and it cannot be had, because a wire a ball may pass without
+ * taking is a wire it can end up on the far side of, which is a crossing. At
+ * this speed the wire count runs 120 at the opening, 79 by the tenth second, 36
+ * by the twenty-fifth and 20 at the end, which is the reference's own curve.
  */
-const SPEED = 1.1;
+const SPEED = 0.24;
 
 /** A ball's radius, in arena radii. */
 const BALL = 0.05;
 
-/** How wide a thread is, which is the rest of a ball's reach for one. */
+/** How wide a wire is, which is the rest of a ball's reach for one. */
 const THREAD_WIDTH = 0.0062;
 
 /**
- * Threads each side opens with, and therefore the pins on the rim.
+ * Wires each side opens with, and therefore the pins on the rim.
  *
- * It does not change how wide a wedge is — that is always a twelfth of the ring
- * — only how many lines it is drawn with and how finely a border moves. The
- * reference deals its eight about ten each; five is the number the twelve have
- * been drawn with since the mode was built, and at twelve sides a coarser border
- * is what keeps the fight moving.
+ * Counted off the reference, which deals its cast about ten each and opens with
+ * a rim of close-set lines rather than a handful of spokes.
  */
-const EACH = 5;
+const EACH = 10;
+
+/**
+ * Most wire one ball can hold, and the reason a round ever finishes.
+ *
+ * Nearly twice what a ball opens with. Against the reference, which starts on
+ * about ninety wires and is down to twenty-odd between the last two at the
+ * fiftieth second, this rung lands the same shape: a hundred and twenty at the
+ * start, fifty-six by the tenth second, thirty by the twenty-fifth and twenty-two
+ * at the end.
+ */
+const HOLD_LIMIT = 18;
+
+/** A pin whose wire has been broken. It stays empty for the rest of the round. */
+export const EMPTY = -1;
+
 export const SIDES = MONTHS.length;
 export const ANCHORS = SIDES * EACH;
 
@@ -101,7 +121,7 @@ const FADE = 3.5;
 const SHORTEST = 60;
 const LONGEST = 78;
 
-export interface LineBall {
+export interface WiresBall {
   x: number;
   y: number;
   r: number;
@@ -110,28 +130,28 @@ export interface LineBall {
   fade: number;
 }
 
-export interface LineFrame {
-  balls: readonly LineBall[];
-  /** Who holds each pin, by pin index. */
+export interface WiresFrame {
+  balls: readonly WiresBall[];
+  /** Who holds each pin, by pin index, or EMPTY where the wire was broken. */
   threads: readonly number[];
   /** Nought while the fight is on, one from the moment it is decided. */
   reveal: number;
 }
 
-export type LineEventKind = 'wall' | 'clash' | 'take' | 'out' | 'win';
+export type WiresEventKind = 'wall' | 'clash' | 'take' | 'break' | 'out' | 'win';
 
-export interface LineEvent {
+export interface WiresEvent {
   t: number;
-  kind: LineEventKind;
+  kind: WiresEventKind;
   month: number;
   /** How many sides are still in, after the event. Drives the pitch rise. */
   alive: number;
 }
 
-export interface LineRound {
+export interface WiresRound {
   seed: number;
-  frames: LineFrame[];
-  events: LineEvent[];
+  frames: WiresFrame[];
+  events: WiresEvent[];
   winner: number;
   /** Threads it finished holding. */
   best: number;
@@ -189,36 +209,7 @@ function nearSegment(
   return (px - (ax + dx * t)) ** 2 + (py - (ay + dy * t)) ** 2;
 }
 
-/**
- * The pin a victim gives up to a taker: the end of the victim's arc that the
- * taker's own arc is already up against, and of its two ends, the one nearer to
- * the pin that was actually caught.
- *
- * Solid rope already keeps a ball where its own territory is, so this is nearly
- * always the pin it caught. It is here for the case it is not — a ball that has
- * come round through the middle and reached a fan from behind — because an arc
- * that stays an arc is what keeps the fans from ever crossing, and a rule is a
- * better guarantee of that than a tendency.
- */
-function borderPin(owner: Int8Array, taker: number, victim: number, caught: number): number {
-  let best = -1;
-  let closest = Infinity;
-  for (let pin = 0; pin < ANCHORS; pin += 1) {
-    if (owner[pin] !== victim) continue;
-    const before = owner[(pin - 1 + ANCHORS) % ANCHORS];
-    const after = owner[(pin + 1) % ANCHORS];
-    if (before !== taker && after !== taker) continue;
-    let gap = Math.abs(pin - caught);
-    if (gap > ANCHORS / 2) gap = ANCHORS - gap;
-    if (gap < closest) {
-      closest = gap;
-      best = pin;
-    }
-  }
-  return best;
-}
-
-export function generateLine(seed: number): LineRound {
+export function generateWires(seed: number): WiresRound {
   const rng = createRng(seed ^ 0x6d2b79f5);
   const whistle = SHORTEST + rng.next() * (LONGEST - SHORTEST);
 
@@ -248,8 +239,8 @@ export function generateLine(seed: number): LineRound {
     };
   });
 
-  const frames: LineFrame[] = [];
-  const events: LineEvent[] = [];
+  const frames: WiresFrame[] = [];
+  const events: WiresEvent[] = [];
   const dt = 1 / (FPS * SUBSTEPS);
   const wall = 1 - BALL;
   const touching = (BALL * 2) ** 2;
@@ -342,61 +333,32 @@ export function generateLine(seed: number): LineRound {
         }
       }
 
-      // Rope is solid. Only the nearest thread matters: catching on one stops
-      // the ball there, so it cannot be in among the bundle behind it in the
-      // same instant.
+      // Run through a wire and it comes away with you. Every one the ball is on,
+      // not the first found: a ball crossing a fan takes the fan, and taking
+      // what it touches is exactly what keeps it from ever being on the far side
+      // of somebody else's wire.
       for (const ball of balls) {
         if (!ball.alive) continue;
-
-        let caught = -1;
-        let nearest = reach;
         for (let pin = 0; pin < ANCHORS; pin += 1) {
           const victim = owner[pin];
-          if (victim === ball.who) continue;
+          if (victim === ball.who || victim === EMPTY) continue;
           const hub = balls[victim];
           const foot = PINS[pin];
-          const away = nearSegment(ball.x, ball.y, hub.x, hub.y, foot.x, foot.y);
-          if (away >= nearest) continue;
-          nearest = away;
-          caught = pin;
-        }
-        if (caught < 0) continue;
+          if (nearSegment(ball.x, ball.y, hub.x, hub.y, foot.x, foot.y) >= reach) continue;
 
-        const hub = balls[owner[caught]];
-        const foot = PINS[caught];
+          // Full hands break the wire rather than take it, and the pin stays
+          // empty for good.
+          const full = ball.held >= HOLD_LIMIT;
+          owner[pin] = full ? EMPTY : ball.who;
+          hub.held -= 1;
+          if (!full) ball.held += 1;
+          events.push({ t: time, kind: full ? 'break' : 'take', month: ball.who, alive });
 
-        // Rebound off the line the thread was lying along, and clear of it, so
-        // the same rope cannot be caught twice in a row.
-        const tx = foot.x - hub.x;
-        const ty = foot.y - hub.y;
-        const length = Math.hypot(tx, ty);
-        if (length > 0) {
-          const nx = -ty / length;
-          const ny = tx / length;
-          const dot = ball.vx * nx + ball.vy * ny;
-          ball.vx -= 2 * dot * nx;
-          ball.vy -= 2 * dot * ny;
-          const side = (ball.x - hub.x) * nx + (ball.y - hub.y) * ny;
-          const push = BALL + THREAD_WIDTH / 2 - Math.abs(side) + 1e-4;
-          if (push > 0) {
-            const away = side >= 0 ? 1 : -1;
-            ball.x += nx * push * away;
-            ball.y += ny * push * away;
+          if (hub.held === 0) {
+            hub.alive = false;
+            alive -= 1;
+            events.push({ t: time, kind: 'out', month: hub.who, alive });
           }
-        }
-
-        // Territory only changes hands at a border, so an arc stays an arc.
-        const moved = borderPin(owner, ball.who, hub.who, caught);
-        if (moved < 0) continue;
-        owner[moved] = ball.who;
-        hub.held -= 1;
-        ball.held += 1;
-        events.push({ t: time, kind: 'take', month: ball.who, alive });
-
-        if (hub.held === 0) {
-          hub.alive = false;
-          alive -= 1;
-          events.push({ t: time, kind: 'out', month: hub.who, alive });
         }
       }
 

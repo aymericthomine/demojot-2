@@ -10,11 +10,11 @@
 
 import type { Reel } from './encodeVideo';
 import { CAST_FIT, CAST_WEIGHT, castFor, type CastName } from '../render/cast';
-import { drawLineFrame } from '../render/drawLine';
+import { drawWiresFrame } from '../render/drawWires';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPachinkoFrame } from '../render/drawPachinko';
 import { drawPotatoFrame } from '../render/drawPotato';
-import type { LineRound } from '../sim/line';
+import type { WiresRound } from '../sim/wires';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
@@ -108,18 +108,18 @@ export function pachinkoReel(round: PachinkoRound, dress: Dress = {}): Reel {
   };
 }
 
-/** Line war, painted from its own frames. */
-export function lineReel(round: LineRound, dress: Dress = {}): Reel {
+/** Keep the wires, painted from its own frames. */
+export function wiresReel(round: WiresRound, dress: Dress = {}): Reel {
   return {
     durationInFrames: round.durationInFrames,
     duration: round.duration,
-    name: `line-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
+    name: `wires-${round.seed}-${castFor(dress.cast)[round.winner].key}-${Math.round(
       round.duration,
     )}s${dress.cast && dress.cast !== 'months' ? `-${dress.cast}` : ''}${
       dress.invert ? '-white' : ''
     }`,
     paint(ctx, index) {
-      drawLineFrame(ctx, round.frames[index], {
+      drawWiresFrame(ctx, round.frames[index], {
         width: WIDTH,
         height: HEIGHT,
         invert: dress.invert,

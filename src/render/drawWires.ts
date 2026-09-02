@@ -1,25 +1,26 @@
 /**
- * One frame of Line war.
+ * One frame of Keep the wires.
  *
  * The ring and nothing else: no counter, no writing. The picture is the score —
  * a side that is winning wears a fan across half the rim, and a side that is
- * losing is a ball with three threads left. There was a counter along the top
- * for a while and it was doing the work the picture should do.
+ * losing is a ball with three wires left. There was a counter along the top for
+ * a while and it was doing the work the picture should do.
  *
  * The ring is the arena every other mode is played in, on the same centre and at
  * the same size, so this reads as another game on the same page rather than as a
  * different site.
  *
- * Threads go under the balls and are drawn thin: they are what the balls are
- * playing on, not the subject.
+ * Wires go under the balls and are drawn thin: they are what the balls are
+ * playing on, not the subject. A broken pin holds nothing and is drawn as
+ * nothing — the gap in the fan is the record of it.
  */
 
 import { drawLabel, drawMemberFaded, draws, type Member } from './cast';
 import { ink, textOn } from './ink';
-import { pinAt, type LineFrame } from '../sim/line';
+import { EMPTY, pinAt, type WiresFrame } from '../sim/wires';
 import { ARENA, RIM_WIDTH } from '../sim/style';
 
-export interface LineLook {
+export interface WiresLook {
   width: number;
   height: number;
   /** White ground, every colour its complement. */
@@ -34,7 +35,7 @@ export interface LineLook {
   weight: number;
 }
 
-/** How wide a thread is drawn, as a fraction of the ring's radius. */
+/** How wide a wire is drawn, as a fraction of the ring's radius. */
 const THREAD = 0.011;
 
 /** The dark line round a ball that carries writing rather than a picture. */
@@ -48,10 +49,10 @@ const withAlpha = (hex: string, alpha: number): string => {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 };
 
-export function drawLineFrame(
+export function drawWiresFrame(
   ctx: CanvasRenderingContext2D,
-  frame: LineFrame,
-  look: LineLook,
+  frame: WiresFrame,
+  look: WiresLook,
 ): void {
   const { width, height, invert = false, winner, cast, fit, weight } = look;
   const radius = width * ARENA;
@@ -66,7 +67,7 @@ export function drawLineFrame(
 
   const reveal = frame.reveal;
 
-  // Where each side's ball is, so a thread knows the end it is pulled by.
+  // Where each side's ball is, so a wire knows the end it is pulled by.
   const ballOf = new Array<{ x: number; y: number } | undefined>(cast.length);
   for (const ball of frame.balls) ballOf[ball.who] = ball;
 
@@ -77,11 +78,12 @@ export function drawLineFrame(
   ctx.arc(cx, cy, radius, 0, Math.PI * 2);
   ctx.stroke();
 
-  // The board: every thread still on the rim, pin to owner.
+  // The board: every wire still on the rim, pin to owner.
   ctx.lineCap = 'round';
   ctx.lineWidth = radius * THREAD;
   for (let pin = 0; pin < frame.threads.length; pin += 1) {
     const who = frame.threads[pin];
+    if (who === EMPTY) continue;
     const ball = ballOf[who];
     if (!ball) continue;
     const lost = reveal > 0 && who !== winner ? reveal : 0;

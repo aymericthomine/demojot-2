@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-  renderLineAudio,
+  renderWiresAudio,
   renderMonthsAudio,
   renderPachinkoAudio,
   renderPotatoAudio,
@@ -31,12 +31,12 @@ import {
   type Reel,
 } from "../export/encodeVideo";
 import {
-  lineReel,
+  wiresReel,
   monthsReel,
   pachinkoReel,
   potatoReel,
 } from "../export/reels";
-import { generateLine } from "../sim/line";
+import { generateWires } from "../sim/wires";
 import { generateMonths } from "../sim/months";
 import { generatePachinko } from "../sim/pachinko";
 import { generatePotato } from "../sim/potato";
@@ -51,29 +51,29 @@ import { FPS, HEIGHT, WIDTH } from "../sim/style";
  * nothing else: one is about holding a place, one about not holding a thing,
  * one about where a ball lands, and one about taking everybody else's.
  */
-type Mode = "month" | "potato" | "pachinko" | "line";
+type Mode = "month" | "potato" | "pachinko" | "wires";
 
-const MODES: readonly Mode[] = ["month", "potato", "pachinko", "line"];
+const MODES: readonly Mode[] = ["month", "potato", "pachinko", "wires"];
 
 const MODE_NAME: Record<Mode, string> = {
   month: "Month",
   potato: "Hot Potato",
   pachinko: "Pachinko",
-  line: "Line War",
+  wires: "Keep The Wires",
 };
 
 const MODE_BUTTON: Record<Mode, string> = {
   month: "Month",
   potato: "Hot potato",
   pachinko: "Pachinko",
-  line: "Line war",
+  wires: "Keep the wires",
 };
 
 const MODE_BUSY: Record<Mode, string> = {
   month: "Playing the round…",
   potato: "Passing it round…",
   pachinko: "Dropping them…",
-  line: "Cutting it up…",
+  wires: "Cutting it up…",
 };
 
 const MODE_ABOUT: Record<Mode, string> = {
@@ -83,7 +83,8 @@ const MODE_ABOUT: Record<Mode, string> = {
     "One of the twelve is holding a fuse, and touching another hands it over. When the fuse runs out, whoever is holding it is out — and does not leave: it stops dead and becomes a wall everybody else bounces off, so the ring silts up as the game runs. Last one still in survives.",
   pachinko:
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
-  line: "Twelve balls in the ring, and sixty threads pinned to it — five a side, each running from its own point on the rim to the ball that owns it. Rope is solid: a ball cannot pass through somebody else's thread, it catches on it, the thread comes away with it, and the ball rebounds off where it was lying. So every ball is penned inside its own wedge, no two threads ever cross, and a wedge grows one pin at a time from the outside in. A side whose wedge is taken down to nothing is out.",
+  wires:
+    "Twelve balls in the ring, and a hundred and twenty wires pinned to it — ten a side, each running from its own point on the rim to the ball that owns it. Run through a wire and it comes away with you, pin and all: the ball is not turned by it, it cuts and carries on, and it takes every wire it passed through. Because it takes what it touches it is never on the far side of one, so no two wires ever overlap. A ball holds eighteen at most and a full one breaks the wire instead of taking it, which is what empties the ring towards a winner. No wires means out.",
 };
 
 /** Everything a press of the button needs. */
@@ -259,11 +260,11 @@ export default function HomePage() {
           } else {
             // The seed picks the whistle; a side that takes the ring before it
             // keeps drawing until the minute has been cleared.
-            const round = generateLine(job.seed);
+            const round = generateWires(job.seed);
             total = round.durationInFrames;
             onStage("sound");
-            audio = await renderLineAudio(round).catch(() => null);
-            reel = lineReel(round, dress);
+            audio = await renderWiresAudio(round).catch(() => null);
+            reel = wiresReel(round, dress);
             summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} ${round.swept ? "took the ring" : `led on ${round.held}`}`;
           }
 

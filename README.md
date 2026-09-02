@@ -15,9 +15,10 @@ else bounces off. Last one still in survives.
 over and over. A slot is worth what is written on it; where a ball lands is
 added to whoever it belongs to, and the last wave lands on multipliers instead.
 
-**Line war** — twelve balls in one ring, and every straight run any of them makes
-stays on the board as a line in its own colour. The number of lines a side holds
-is its score, counted along the top; crossing somebody else's line destroys it.
+**Keep the wires** — a hundred and twenty wires pinned to the rim, ten a side,
+each running to the ball that owns it. Run through a wire and it comes away with
+you; because a ball takes what it touches, no two wires ever overlap. A side
+holding none is out.
 
 Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
@@ -226,61 +227,66 @@ diameter it comes out at 976 pixels against the ring's 978, on the same centre.
 A mode that arrived on the same page half again the size of the ones next to it
 would read as a different site rather than as another game.
 
-## Line war
+## Keep the wires
 
-Sixty threads pinned to the rim, five a side, each running from its pin to the
-ball that owns it. One rule does all the work:
+A hundred and twenty wires pinned to the rim — ten a side, the number the
+reference deals — each running from its pin to the ball that owns it. Two rules:
 
-> **Rope is solid.** A ball cannot pass through a thread that is not its own. It
-> catches on it, the thread comes away with it — new hub, new colour, same pin —
-> and the ball rebounds off where the thread was lying.
+> **Run through a wire and it comes away with you** — new hub, new colour, same
+> pin. Every wire the ball passed through, not the first one found: it is not
+> turned by them, it cuts and carries on.
 
-**Everything else falls out of that.** A ball is penned inside the wedge its own
-arc opens onto, so its threads can never reach across somebody else's fan: *no
-two threads ever overlap*, and that is a consequence of the physics rather than
-something repaired afterwards. Arcs stay whole for the same reason — the only
-rope in reach is the rope at the edge of your own territory — so a wedge grows
-one pin at a time, from the outside in, and the picture is twelve coloured
-wedges pushing at each other rather than a plate of spaghetti.
+> **A ball can only hold eighteen.** Full hands break the wire instead of taking
+> it, and that pin is empty for the rest of the round.
 
-Checked on **every frame of six full rounds — 23 307 frames, zero crossings, and
-no side ever holding two separate patches of rim.** Contiguity is also enforced
-directly, as a second lock: the pin that moves is the end of the victim's arc
-that the taker's own arc is already up against.
+**No two wires ever overlap, and that falls out of the first rule** rather than
+being repaired afterwards: a ball takes what it touches, so it is never on the
+far side of a wire it does not own, and a fan can therefore never reach across
+another. Checked on every frame of six full rounds — **23 307 frames, zero
+crossings.** Eight substeps a frame, not four, because a wire is caught by
+testing where the ball *is*, and a ball moving further than its own reach in one
+substep steps over one — and a wire stepped over rather than taken is exactly
+the crossing this does not allow.
 
-**Eight substeps a frame, not four.** Rope is caught by testing where the ball
-*is*, so a ball moving further than its own reach in one substep steps clean
-over a thread. At four, two frames in ten thousand had a fan swung across
-another; at eight, none.
+**The break is what makes a round finish.** Transfer alone conserves, and a
+conserving economy has no drift towards a winner: with nothing entering or
+leaving the ring, the last two trade the same wires back and forth for ever.
 
-**Threads are life.** A side whose wedge is taken down to nothing is out — its
-threads are not freed, because somebody already owns them.
+**Ball speed is the only pace dial, and it is set very low — 0.24 arena radii a
+second, a quarter of the old fight's.** A ball takes every wire it touches, so
+the fight's speed *is* the ball's speed: at anything near 0.85, twelve sides are
+down to two inside ten seconds and the video spends its remaining minute on a
+winner that has already won. Neither the wire count (five to thirty a side) nor
+the hold limit moved that; only speed did.
 
-**Twelve sides do not usually come down to one, and this is the honest limit of
-the mode.** A ball takes rope by being in contact with it, and a squeezed ball
-is in contact almost all the time while one with room is away wandering — so the
-small wedge takes more often than the big one, and every border settles. Twelve
-become eight by the fifth second, five by the fifteenth and about three by the
-end, where they hold. That was measured against ball speed from 0.85 to 1.8,
-ball size from 0.05 to 0.095, five to ten threads a side, and a rule that made a
-cut need a run-up: none of them broke the equilibrium, and the run-up made it
-worse by cutting the take rate for everybody. The reference resolves because it
-deals eight sides, not twelve.
+**A guard around each hub would have bought the same time more cheaply, and it
+cannot be had.** Wires bundle together at their owner, so a ball among them
+takes an armful at once, and refusing cuts within half a radius of the hub gave
+a fine, slow fight — and 968 433 crossing pairs over the same six rounds. A wire
+a ball may pass without taking is a wire it can end up on the far side of. The
+guarantee and the guard are the same rule pointing opposite ways, and the
+guarantee wins.
 
-So **the whistle decides it**, between sixty and seventy-eight seconds as in
-every other mode here, and it goes to whoever holds the most rope — about
-two-fifths of the ring, against two or three fans that are visibly smaller. A
-round that does settle early keeps playing, the winner running the ring alone.
+At this speed the wire count runs 120 at the opening, 79 by the tenth second, 36
+by the twenty-fifth and 20 at the end, which is the reference's own curve; sides
+go twelve to eight by the fifth second, four by the fifteenth and one or two by
+the end. Half the rounds are won outright and the rest go to the biggest fan at
+the whistle, which the seed picks between sixty and seventy-eight seconds. Over
+three hundred seeds the twelve win between sixteen and thirty-seven rounds each.
 
-Over three hundred seeds the twelve win between twelve and thirty-four rounds
-each, and a round costs about a fifth of a second to play out.
+**Arcs are no longer guaranteed whole.** An earlier version moved the pin at the
+border of the taker's own arc, which kept every side on one unbroken run of rim.
+That bookkeeping is gone, because the pin that moves has to be the pin that was
+touched — anything else breaks the no-crossing argument. A ball can therefore
+hold a pin inside somebody else's fan, sitting alongside them, without any wire
+crossing another.
 
 **There is no counter.** There was one for a while and it was doing the work the
 picture should do: a side that is winning wears a fan across half the rim.
 
 ## Who is playing
 
-Month, Hot potato, Pachinko and Line war are games about twelve things —
+Month, Hot potato, Pachinko and Keep the wires are games about twelve things —
 three of them around a ring, one falling down a board — and none of them cares
 what the twelve *are*: the simulations count to twelve, and the painters ask for a
 colour and something to put on the disc. So the cast is a **dress rather than a
