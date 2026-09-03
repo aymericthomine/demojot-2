@@ -279,7 +279,6 @@ export function generateWires(seed: number): WiresRound {
       reveal: decidedAt >= 0 ? Math.min(1, (frame - decidedAt) / (FPS * OUTRO)) : 0,
     });
     if (decidedAt >= 0 && frame >= decidedAt + Math.round(OUTRO * FPS)) break;
-    if (decidedAt >= 0) continue;
 
     for (let step = 0; step < SUBSTEPS; step += 1) {
       time += dt;
@@ -348,6 +347,13 @@ export function generateWires(seed: number): WiresRound {
           b.clashedAt = time;
         }
       }
+
+      // Once it is decided, the ring keeps running but stops changing hands: the
+      // balls travel and their fans swing with them through the ending, and the
+      // standings they are being shown on cannot move any more. Skipping the
+      // whole substep instead — which is what this did — left the last two and a
+      // half seconds of every video a still frame.
+      if (decidedAt >= 0) continue;
 
       // Run through a wire and it comes away with you. Every one the ball is on,
       // not the first found: a ball crossing a fan takes the fan, and taking
