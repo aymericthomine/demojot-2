@@ -49,22 +49,20 @@ const SUBSTEPS = 8;
 /**
  * How fast a ball travels, in arena radii a second.
  *
- * Half what the old fight ran at, and it is paid for by the wire count rather
- * than given away. A ball takes every wire it touches, so the fight's speed is
- * the ball's speed: at this speed on ten wires a side the ring was settled by
- * the thirtieth second and the video spent its rest on a winner that had already
- * won, and a guard around each hub would have bought the time back but cannot be
- * had — a wire a ball may pass without taking is a wire it can end up on the far
- * side of, which is a crossing.
+ * A ball takes every wire it touches, so the fight's speed is the ball's speed,
+ * and left on its own a quick ball settles the ring early: at 0.35 on ten wires
+ * a side it was over by the thirtieth second and the video spent its rest on a
+ * winner that had already won. A guard around each hub would have bought the
+ * time back and cannot be had — a wire a ball may pass without taking is a wire
+ * it can end up on the far side of, which is a crossing.
  *
- * What does buy it is dealing more wire: a side with more of it takes longer to
- * strip. At fifteen a side the fight lasts exactly as long as it did at 0.24 on
- * ten — a median of forty seconds out of a sixty-eight-second video — with the
- * balls travelling half again as fast. Twenty-five a side buys enough for 0.45,
- * and costs the picture: three hundred wires read as twelve solid triangles
- * rather than as fans of lines.
+ * Two things buy it instead, and both are used here. Dealing more wire, because
+ * a side with more of it takes longer to strip; and holding back the breaking,
+ * which is what the limit below does. Between them the ball has been taken from
+ * 0.24 to 0.7 — a third of the way past the old fight's 0.85 — with the round
+ * still running to the whistle every time.
  */
-const SPEED = 0.35;
+const SPEED = 0.7;
 
 /** A ball's radius, in arena radii. */
 const BALL = 0.05;
@@ -92,16 +90,17 @@ const EACH = 15;
  * At twenty-seven — the old fight's rung, near twice what a ball opens with —
  * two rounds in three were over by the fortieth second and the winner finished
  * on 92% of what was left, running the rest of the video alone. Each step up
- * pushes the finish later and the margin narrower: 60 ends at a median of 65
- * seconds on 66%, 84 never finishes early at all and ends on 51%.
+ * pushes the finish later and the margin narrower, and each step up also pays
+ * for ball speed, which is why this rung is high.
  *
- * Seventy-two is where the fight always lasts the whole video — the earliest
- * finish over thirty seeds is 58 seconds, which is the whistle — and the winner
- * comes home on 58% of about a hundred wires with the runner-up twenty-two
- * behind. It also means the ring is barely ever emptied to one side: a round is
- * usually decided on the whistle, which is the price of it being close.
+ * At ninety, with the ball at 0.7, the earliest finish over forty seeds is 58
+ * seconds — which is the whistle — so the fight lasts the whole video every
+ * time. The winner comes home on 57% of about a hundred and twenty-five wires
+ * with the runner-up twenty-eight behind, and the ring still thins by a third
+ * over the round. The price is that it is scarcely ever emptied to one side: a
+ * round is decided on the whistle, and being close is what that buys.
  */
-const HOLD_LIMIT = 72;
+const HOLD_LIMIT = 90;
 
 /** A pin whose wire has been broken. It stays empty for the rest of the round. */
 export const EMPTY = -1;

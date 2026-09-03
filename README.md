@@ -236,7 +236,7 @@ from its pin to the ball that owns it. Two rules:
 > pin. Every wire the ball passed through, not the first one found: it is not
 > turned by them, it cuts and carries on.
 
-> **A ball can only hold seventy-two.** Full hands break the wire instead of taking
+> **A ball can only hold ninety.** Full hands break the wire instead of taking
 > it, and that pin is empty for the rest of the round.
 
 **No two wires ever overlap, and that falls out of the first rule** rather than
@@ -258,24 +258,27 @@ limit therefore sets both how long the fight lasts and how close it stays.
 At twenty-seven, near twice what a ball opens with, two rounds in three were over
 by the fortieth second and the winner finished on 92% of what was left, running
 the rest of the video alone. Each step up pushes the finish later and the margin
-narrower: sixty ends at a median of sixty-five seconds on 66%, eighty-four never
-finishes early at all and ends on 51%. **Seventy-two** is where the fight lasts
-the whole video — the earliest finish over thirty seeds is fifty-eight seconds,
-which *is* the whistle — and the winner comes home on 58% of about a hundred
-wires with the runner-up twenty-two behind. The price is that the ring is
-scarcely ever emptied to one side: a round is decided on the whistle, and being
-close is what that buys.
+narrower, and each step up also pays for ball speed, which is why the rung is
+high. At **ninety**, with the ball at 0.7, the earliest finish over forty seeds
+is fifty-eight seconds — which *is* the whistle — so the fight lasts the whole
+video every time; the winner comes home on 57% of about a hundred and twenty-five
+wires with the runner-up twenty-eight behind, and the ring still thins by a third
+over the round. The price is that it is scarcely ever emptied to one side: a
+round is decided on the whistle, and being close is what that buys.
 
-**Ball speed and the wire count are one dial between them.** A ball takes every
-wire it touches, so the fight's speed *is* the ball's speed: at the old fight's
-0.85, twelve sides are down to two inside ten seconds and the video spends its
-remaining minute on a winner that has already won. What buys the time back is
-dealing more wire, since a side with more of it takes longer to strip. At 0.24
-on ten a side the fight ran to a median of forty-one seconds; at **0.35 on
-fifteen** it runs to forty — the same fight, with the balls travelling half again
-as fast. Going further costs the picture rather than the pace: 0.45 on
-twenty-five holds the length too, but three hundred wires read as twelve solid
-triangles instead of fans of lines.
+**Ball speed is bought, not set.** A ball takes every wire it touches, so the
+fight's speed *is* the ball's speed, and a quick ball left on its own settles the
+ring early: at 0.35 on ten wires a side it was over by the thirtieth second and
+the video spent its rest on a winner that had already won. Two things buy the
+time back, and both are used — dealing more wire, since a side with more of it
+takes longer to strip, and holding back the breaking, which is what the limit
+does. Between them the ball has gone from 0.24 to **0.7**, most of the way to the
+old fight's 0.85, with the round still running to the whistle every time.
+
+Dealing wire has a ceiling the picture sets rather than the pace: 0.45 on
+twenty-five a side holds the length too, and three hundred wires read as twelve
+solid triangles instead of fans of lines. A hundred and eighty is one pin every
+seventeen pixels round the ring and still reads.
 
 **A guard around each hub would have bought the same time more cheaply, and it
 cannot be had.** Wires bundle together at their owner, so a ball among them
@@ -285,8 +288,8 @@ a ball may pass without taking is a wire it can end up on the far side of. The
 guarantee and the guard are the same rule pointing opposite ways, and the
 guarantee wins.
 
-The wire count runs 180 at the opening and about 100 at the end; sides go twelve
-to seven by the fifth second, four by the fifteenth and two or three at the
+The wire count runs 180 at the opening and about 120 at the end; sides go twelve
+to five by the fifth second, four by the fifteenth and two or three at the
 whistle, which the seed picks between sixty and seventy-eight seconds. Nine of
 the twelve are knocked out over the course of a video and the last two or three
 are still trading when it ends.
