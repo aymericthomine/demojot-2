@@ -85,10 +85,23 @@ const EACH = 15;
 /**
  * Most wire one ball can hold, and the reason a round ever finishes.
  *
- * Nearly twice what a ball opens with, which is the rung the old fight settled
- * on and the one that keeps the ring emptying at the reference's rate.
+ * This is the dial that says how long the fight lasts and how close it stays,
+ * because everything above the limit is destroyed rather than passed on and a
+ * ring that is being destroyed is a ring being decided.
+ *
+ * At twenty-seven — the old fight's rung, near twice what a ball opens with —
+ * two rounds in three were over by the fortieth second and the winner finished
+ * on 92% of what was left, running the rest of the video alone. Each step up
+ * pushes the finish later and the margin narrower: 60 ends at a median of 65
+ * seconds on 66%, 84 never finishes early at all and ends on 51%.
+ *
+ * Seventy-two is where the fight always lasts the whole video — the earliest
+ * finish over thirty seeds is 58 seconds, which is the whistle — and the winner
+ * comes home on 58% of about a hundred wires with the runner-up twenty-two
+ * behind. It also means the ring is barely ever emptied to one side: a round is
+ * usually decided on the whistle, which is the price of it being close.
  */
-const HOLD_LIMIT = 27;
+const HOLD_LIMIT = 72;
 
 /** A pin whose wire has been broken. It stays empty for the rest of the round. */
 export const EMPTY = -1;

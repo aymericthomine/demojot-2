@@ -84,7 +84,7 @@ const MODE_ABOUT: Record<Mode, string> = {
   pachinko:
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
   wires:
-    "Twelve balls in the ring, and a hundred and eighty wires pinned to it — fifteen a side, each running from its own point on the rim to the ball that owns it. Run through a wire and it comes away with you, pin and all: the ball is not turned by it, it cuts and carries on, and it takes every wire it passed through. Because it takes what it touches it is never on the far side of one, so no two wires ever overlap. A ball holds twenty-seven at most and a full one breaks the wire instead of taking it, which is what empties the ring towards a winner. No wires means out.",
+    "Twelve balls in the ring, and a hundred and eighty wires pinned to it — fifteen a side, each running from its own point on the rim to the ball that owns it. Run through a wire and it comes away with you, pin and all: the ball is not turned by it, it cuts and carries on, and it takes every wire it passed through. Because it takes what it touches it is never on the far side of one, so no two wires ever overlap. A ball holds seventy-two at most and a full one breaks the wire instead of taking it, which is what keeps the ring emptying — set high, so the fight is still close when the whistle goes. No wires means out.",
 };
 
 /** Everything a press of the button needs. */

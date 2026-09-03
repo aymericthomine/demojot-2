@@ -236,7 +236,7 @@ from its pin to the ball that owns it. Two rules:
 > pin. Every wire the ball passed through, not the first one found: it is not
 > turned by them, it cuts and carries on.
 
-> **A ball can only hold twenty-seven.** Full hands break the wire instead of taking
+> **A ball can only hold seventy-two.** Full hands break the wire instead of taking
 > it, and that pin is empty for the rest of the round.
 
 **No two wires ever overlap, and that falls out of the first rule** rather than
@@ -248,9 +248,23 @@ testing where the ball *is*, and a ball moving further than its own reach in one
 substep steps over one — and a wire stepped over rather than taken is exactly
 the crossing this does not allow.
 
-**The break is what makes a round finish.** Transfer alone conserves, and a
-conserving economy has no drift towards a winner: with nothing entering or
-leaving the ring, the last two trade the same wires back and forth for ever.
+**The break is what makes a round finish, and the limit is how hard it pushes.**
+Transfer alone conserves, and a conserving economy has no drift towards a
+winner: with nothing entering or leaving the ring, the last two trade the same
+wires back and forth for ever. Everything above the limit is destroyed rather
+than passed on, so a ring being destroyed is a ring being decided — and the
+limit therefore sets both how long the fight lasts and how close it stays.
+
+At twenty-seven, near twice what a ball opens with, two rounds in three were over
+by the fortieth second and the winner finished on 92% of what was left, running
+the rest of the video alone. Each step up pushes the finish later and the margin
+narrower: sixty ends at a median of sixty-five seconds on 66%, eighty-four never
+finishes early at all and ends on 51%. **Seventy-two** is where the fight lasts
+the whole video — the earliest finish over thirty seeds is fifty-eight seconds,
+which *is* the whistle — and the winner comes home on 58% of about a hundred
+wires with the runner-up twenty-two behind. The price is that the ring is
+scarcely ever emptied to one side: a round is decided on the whistle, and being
+close is what that buys.
 
 **Ball speed and the wire count are one dial between them.** A ball takes every
 wire it touches, so the fight's speed *is* the ball's speed: at the old fight's
@@ -271,12 +285,11 @@ a ball may pass without taking is a wire it can end up on the far side of. The
 guarantee and the guard are the same rule pointing opposite ways, and the
 guarantee wins.
 
-The wire count runs 180 at the opening and 29 at the end, the same shape as the
-reference's 88 falling to 22; sides go twelve to seven by the fifth second, three
-by the fifteenth and one or two by the end. Two rounds in three are won outright
-and the rest go to the biggest fan at the whistle, which the seed picks between
-sixty and seventy-eight seconds. Over three hundred seeds the twelve win between
-twenty and thirty-one rounds each.
+The wire count runs 180 at the opening and about 100 at the end; sides go twelve
+to seven by the fifth second, four by the fifteenth and two or three at the
+whistle, which the seed picks between sixty and seventy-eight seconds. Nine of
+the twelve are knocked out over the course of a video and the last two or three
+are still trading when it ends.
 
 **Arcs are no longer guaranteed whole.** An earlier version moved the pin at the
 border of the taker's own arc, which kept every side on one unbroken run of rim.
