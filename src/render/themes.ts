@@ -24,9 +24,21 @@
  */
 
 import { fade, lift, sink, sphere, type JellyShape, type Marks } from './jelly3d';
+import type { Art } from './jellyArt';
 
 export interface Rung {
   /** What it is called, for the ending's caption. */
+  name: string;
+  /** What its sparks and its ring are coloured, taken off the picture itself. */
+  color: string;
+  /** The picture, which is what is actually drawn. */
+  art: Art;
+  /** What is drawn if the picture has not arrived. */
+  shape?: JellyShape;
+}
+
+/** A drawn fallback: a shape and the colour it is drawn in. */
+interface DrawnRung {
   name: string;
   color: string;
   shape: JellyShape;
@@ -418,7 +430,7 @@ const both =
 
 /* ---------------------------------------------------------------- themes -- */
 
-const FRUIT: readonly Rung[] = [
+const FRUIT_DRAWN: readonly DrawnRung[] = [
   { name: 'Blueberry', color: '#2a4bd7', shape: { path: sphere } },
   { name: 'Strawberry', color: '#e5173f', shape: { path: berry, marks: speckle(11, 0.055, 'rgba(255,236,150,0.9)'), reach: 1.1 } },
   { name: 'Grape', color: '#7a2fbf', shape: { path: blob(5, 0.1) } },
@@ -429,7 +441,7 @@ const FRUIT: readonly Rung[] = [
   { name: 'Pineapple', color: '#f0a92b', shape: { path: oval(0.86, 1.08), marks: both(hatch, crown), reach: 1.5, upright: true } },
 ];
 
-const PLANETS: readonly Rung[] = [
+const PLANETS_DRAWN: readonly DrawnRung[] = [
   { name: 'Moon', color: '#cfd3da', shape: { path: sphere, marks: speckle(7, 0.1, 'rgba(120,125,135,0.5)') } },
   { name: 'Mars', color: '#d6462a', shape: { path: sphere, marks: speckle(5, 0.14, 'rgba(120,45,25,0.45)') } },
   { name: 'Venus', color: '#e8a33d', shape: { path: sphere, marks: bands([[-0.3, 0.1, 'rgba(255,225,170,0.35)'], [0.25, 0.12, 'rgba(180,110,40,0.35)']]) } },
@@ -440,7 +452,7 @@ const PLANETS: readonly Rung[] = [
   { name: 'Sun', color: '#ffb02e', shape: { path: blob(14, 0.035), marks: speckle(9, 0.1, 'rgba(255,90,20,0.35)'), reach: 1.1 } },
 ];
 
-const GEMS: readonly Rung[] = [
+const GEMS_DRAWN: readonly DrawnRung[] = [
   { name: 'Pearl', color: '#f2e6ef', shape: { path: sphere } },
   { name: 'Emerald', color: '#12b886', shape: { path: cut(8, Math.PI / 8), marks: facets(8, Math.PI / 8) } },
   { name: 'Ruby', color: '#e01050', shape: { path: cut(10, 0), marks: facets(10) } },
@@ -451,7 +463,7 @@ const GEMS: readonly Rung[] = [
   { name: 'Diamond', color: '#a8e6ff', shape: { path: cut(9, -Math.PI / 2), marks: facets(9, -Math.PI / 2) } },
 ];
 
-const SWEETS: readonly Rung[] = [
+const SWEETS_DRAWN: readonly DrawnRung[] = [
   { name: 'Cookie', color: '#c98a45', shape: { path: blob(9, 0.035), marks: speckle(8, 0.11, 'rgba(70,40,20,0.75)') } },
   { name: 'Jelly bean', color: '#8e44e0', shape: { path: bean, reach: 1.15 } },
   { name: 'Lollipop', color: '#ff5d8f', shape: { path: sphere, marks: swirl } },
@@ -462,7 +474,7 @@ const SWEETS: readonly Rung[] = [
   { name: 'Birthday cake', color: '#ffd166', shape: { path: oval(1.05, 0.92), marks: speckle(14, 0.055, 'rgba(255,90,140,0.8)') } },
 ];
 
-const OCEAN: readonly Rung[] = [
+const OCEAN_DRAWN: readonly DrawnRung[] = [
   { name: 'Clownfish', color: '#ff6b1f', shape: { path: fish, marks: eye(0.5, -0.12, 0.14), reach: 1.15 } },
   { name: 'Starfish', color: '#ffa62b', shape: { path: star(5, 0.46), reach: 1.05 } },
   { name: 'Pufferfish', color: '#ffd23f', shape: { path: blob(13, 0.08), marks: eye(0.42, -0.18, 0.12), reach: 1.15 } },
@@ -473,12 +485,77 @@ const OCEAN: readonly Rung[] = [
   { name: 'Whale', color: '#1e6fd9', shape: { path: whaleBody, marks: eye(0.55, -0.1, 0.1), reach: 1.2 } },
 ];
 
+const FRUIT_ART: readonly Rung[] = [
+  { name: 'Blueberry', color: '#1f5ed6', art: { file: 'fruit/0.webp', w: 136, h: 131, cx: 0.489, cy: 0.4885, span: 110.0 } },
+  { name: 'Strawberry', color: '#d9381c', art: { file: 'fruit/1.webp', w: 130, h: 147, cx: 0.4962, cy: 0.4898, span: 121.0 } },
+  { name: 'Blackberry', color: '#5d3fc6', art: { file: 'fruit/2.webp', w: 130, h: 143, cx: 0.4923, cy: 0.493, span: 116.0 } },
+  { name: 'Lemon', color: '#ddc619', art: { file: 'fruit/3.webp', w: 131, h: 146, cx: 0.5382, cy: 0.4966, span: 118.0 } },
+  { name: 'Orange', color: '#f09f21', art: { file: 'fruit/4.webp', w: 141, h: 140, cx: 0.4929, cy: 0.4857, span: 119.0 } },
+  { name: 'Pear', color: '#abd124', art: { file: 'fruit/5.webp', w: 119, h: 150, cx: 0.5084, cy: 0.4767, span: 128.0 } },
+  { name: 'Apple', color: '#dd2717', art: { file: 'fruit/6.webp', w: 131, h: 147, cx: 0.4847, cy: 0.5034, span: 119.0 } },
+  { name: 'Pineapple', color: '#d4a317', art: { file: 'fruit/7.webp', w: 117, h: 152, cx: 0.4915, cy: 0.4539, span: 139.0 } },
+];
+
+const PLANETS_ART: readonly Rung[] = [
+  { name: 'Moon', color: '#ddcec9', art: { file: 'planets/0.webp', w: 130, h: 131, cx: 0.4462, cy: 0.4924, span: 113.0 } },
+  { name: 'Mars', color: '#d53621', art: { file: 'planets/1.webp', w: 129, h: 122, cx: 0.5426, cy: 0.4959, span: 113.0 } },
+  { name: 'Saturn', color: '#e29e35', art: { file: 'planets/2.webp', w: 164, h: 116, cx: 0.4939, cy: 0.4784, span: 163.0 } },
+  { name: 'Earth', color: '#52adc4', art: { file: 'planets/3.webp', w: 133, h: 133, cx: 0.4511, cy: 0.4962, span: 117.0 } },
+  { name: 'Neptune', color: '#1360d9', art: { file: 'planets/4.webp', w: 132, h: 131, cx: 0.4924, cy: 0.4924, span: 110.0 } },
+  { name: 'Jupiter', color: '#dfb07d', art: { file: 'planets/5.webp', w: 134, h: 132, cx: 0.4925, cy: 0.4962, span: 108.0 } },
+  { name: 'Venus', color: '#d9711c', art: { file: 'planets/6.webp', w: 134, h: 133, cx: 0.4925, cy: 0.5075, span: 108.0 } },
+  { name: 'Sun', color: '#e6a811', art: { file: 'planets/7.webp', w: 149, h: 152, cx: 0.5034, cy: 0.5, span: 127.0 } },
+];
+
+const GEMS_ART: readonly Rung[] = [
+  { name: 'Pearl', color: '#e2cfc8', art: { file: 'gems/0.webp', w: 121, h: 121, cx: 0.4876, cy: 0.4917, span: 100.0 } },
+  { name: 'Emerald', color: '#1eca4d', art: { file: 'gems/1.webp', w: 115, h: 130, cx: 0.4783, cy: 0.5077, span: 103.0 } },
+  { name: 'Ruby', color: '#d61b5a', art: { file: 'gems/2.webp', w: 134, h: 133, cx: 0.4888, cy: 0.5, span: 110.0 } },
+  { name: 'Topaz', color: '#dd8719', art: { file: 'gems/3.webp', w: 112, h: 149, cx: 0.4955, cy: 0.5, span: 124.0 } },
+  { name: 'Amethyst', color: '#9435da', art: { file: 'gems/4.webp', w: 120, h: 142, cx: 0.5, cy: 0.4859, span: 121.0 } },
+  { name: 'Sapphire', color: '#1545dc', art: { file: 'gems/5.webp', w: 125, h: 127, cx: 0.504, cy: 0.4921, span: 104.0 } },
+  { name: 'Peridot', color: '#29ce46', art: { file: 'gems/6.webp', w: 121, h: 129, cx: 0.4917, cy: 0.5, span: 104.0 } },
+  { name: 'Diamond', color: '#5ea7e7', art: { file: 'gems/7.webp', w: 133, h: 129, cx: 0.4887, cy: 0.5, span: 113.0 } },
+];
+
+const SWEETS_ART: readonly Rung[] = [
+  { name: 'Cookie', color: '#dc8d34', art: { file: 'sweets/0.webp', w: 134, h: 120, cx: 0.4478, cy: 0.5, span: 117.0 } },
+  { name: 'Jelly bean', color: '#8c33d7', art: { file: 'sweets/1.webp', w: 128, h: 133, cx: 0.4961, cy: 0.5075, span: 108.0 } },
+  { name: 'Lollipop', color: '#cd9da3', art: { file: 'sweets/2.webp', w: 119, h: 147, cx: 0.5126, cy: 0.5068, span: 124.0 } },
+  { name: 'Marshmallow', color: '#f09bb3', art: { file: 'sweets/3.webp', w: 120, h: 128, cx: 0.4958, cy: 0.4922, span: 105.0 } },
+  { name: 'Cupcake', color: '#e88d94', art: { file: 'sweets/4.webp', w: 121, h: 147, cx: 0.5, cy: 0.4898, span: 125.0 } },
+  { name: 'Ice cream', color: '#e6b574', art: { file: 'sweets/5.webp', w: 92, h: 152, cx: 0.5109, cy: 0.4836, span: 132.0 } },
+  { name: 'Donut', color: '#e85e6a', art: { file: 'sweets/6.webp', w: 145, h: 133, cx: 0.4931, cy: 0.485, span: 118.0 } },
+  { name: 'Gumball', color: '#ed9e26', art: { file: 'sweets/7.webp', w: 127, h: 132, cx: 0.5039, cy: 0.4962, span: 108.0 } },
+];
+
+const OCEAN_ART: readonly Rung[] = [
+  { name: 'Clownfish', color: '#e0753a', art: { file: 'ocean/0.webp', w: 152, h: 118, cx: 0.5066, cy: 0.4746, span: 145.0 } },
+  { name: 'Starfish', color: '#e8a92f', art: { file: 'ocean/1.webp', w: 140, h: 134, cx: 0.4571, cy: 0.4851, span: 125.0 } },
+  { name: 'Pufferfish', color: '#e7b227', art: { file: 'ocean/2.webp', w: 147, h: 132, cx: 0.4932, cy: 0.5076, span: 118.0 } },
+  { name: 'Jellyfish', color: '#2fcbd8', art: { file: 'ocean/3.webp', w: 125, h: 151, cx: 0.496, cy: 0.5, span: 124.0 } },
+  { name: 'Pink jellyfish', color: '#e63996', art: { file: 'ocean/4.webp', w: 129, h: 150, cx: 0.4845, cy: 0.5133, span: 127.0 } },
+  { name: 'Sea urchin', color: '#c4aa71', art: { file: 'ocean/5.webp', w: 141, h: 132, cx: 0.4965, cy: 0.5265, span: 115.0 } },
+  { name: 'Sea jelly', color: '#8b3ada', art: { file: 'ocean/6.webp', w: 137, h: 145, cx: 0.5036, cy: 0.5, span: 122.0 } },
+  { name: 'Blue tang', color: '#3d8ed0', art: { file: 'ocean/7.webp', w: 160, h: 129, cx: 0.5125, cy: 0.5233, span: 137.0 } },
+];
+
+/**
+ * The five ladders, each a picture, a name and a colour.
+ *
+ * The drawn shapes above are kept and paired with them one for one: if a
+ * theme's pictures do not arrive, the painter has something to fall back on that
+ * is the right size and the right colour and reads as the right object.
+ */
+const pair = (art: readonly Rung[], drawn: readonly DrawnRung[]): readonly Rung[] =>
+  art.map((rung, i) => ({ ...rung, shape: drawn[i].shape }));
+
 export const THEMES: Record<ThemeName, Theme> = {
-  fruit: { key: 'fruit', label: 'Fruit', ladder: FRUIT },
-  planets: { key: 'planets', label: 'Planets', ladder: PLANETS },
-  gems: { key: 'gems', label: 'Gems', ladder: GEMS },
-  sweets: { key: 'sweets', label: 'Sweets', ladder: SWEETS },
-  ocean: { key: 'ocean', label: 'Ocean', ladder: OCEAN },
+  fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
+  planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
+  gems: { key: 'gems', label: 'Gems', ladder: pair(GEMS_ART, GEMS_DRAWN) },
+  sweets: { key: 'sweets', label: 'Sweets', ladder: pair(SWEETS_ART, SWEETS_DRAWN) },
+  ocean: { key: 'ocean', label: 'Ocean', ladder: pair(OCEAN_ART, OCEAN_DRAWN) },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = ['fruit', 'planets', 'gems', 'sweets', 'ocean'];

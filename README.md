@@ -356,35 +356,44 @@ Videos run 60 to 74 seconds.
 
 ### The objects
 
-There is no mesh and no light vector. Each object is a flat silhouette with five
-washes laid inside its own clip, in an order taken off the references: a **body**
-gradient lit from the upper left; a **depth** wash from the opposite corner, so
-the far side falls into its own shadow; a **subsurface** glow low in the body,
-which is the one that makes it gel rather than plastic, because light that goes
-into a gummy sweet comes back out of its underside; a **rim** hairline low and
-right, which is what separates one jelly from the one behind it on black; and
-**two highlights**, a soft one and a hard core inside it, because a single
-blurred blob reads as matte and the hard core is what says the surface is wet.
-Round it all, a neon bloom cast as a shadow so it never tints the object's own
-pixels.
+Forty pictures, eight to a theme, cut out of a sheet supplied for this mode.
+They were sliced off it by finding each cell's body, filling its holes, keeping
+the one blob nearest the middle of the cell, and gating the glow to a dilation of
+that blob — which is what stops a neighbour's bloom and the odd speck of JPEG
+noise being cut out along with the object. The alpha is a ramp off the
+luminance, so the neon halo the artwork came with survives instead of getting a
+hard edge.
 
-**The light does not turn with the object.** Rotating the canvas and painting
-the washes through it put the highlight wherever the object happened to be
-lying, so a peach resting at a quarter turn was lit from underneath — which
-reads as a hole, not a gloss. Path points are baked into user space as each
-command is issued, so the turn is undone the moment the outline is closed and
-every wash after it is level.
+**They are files rather than data.** The flags in this project are carried as
+base64 inside a module, because twelve small icons come to ninety kilobytes and
+data cannot fail to arrive. Forty of these come to 1.6 megabytes that way, which
+is a page that will not load on a phone, so they are fetched as WebP — and only
+the eight belonging to the theme being made, which is fifty kilobytes. The paths
+are **relative**, because a static export served from `/demojot-2/` has no way to
+tell a hand-written `fetch` about its own prefix: `assetPrefix` rewrites what
+Next emits, not what this asks for, and a relative path is right under the
+sub-path and right at the root with nothing to configure.
 
-**The whole object is built offscreen and blitted once**, for the law this
-project has now been caught by three times: two passes at partial alpha
-composite twice, so anything drawn in two goes comes out denser where they meet.
+**A picture is hung off its body, not its bounding box.** The pictures are not
+square and their bodies are not centred in them — a pufferfish has a tail off one
+side, Saturn's ring is wider than the planet is tall, a pineapple has a crown
+above it. So each one carries where its solid body's middle sits and how far it
+spans, both as fractions, and the scale comes from the body. Fitting the
+bounding box to the collision circle instead drew every object a little small
+and each one by a different amount.
 
-Five themes ship — fruit, planets, gems, sweets and sea creatures — each an
-ordered ladder of eight. They are drawn rather than photographed, for the same
-reason every other cast here is: a picture belongs to whoever made it, and this
-is a generator meant to be publishable without anybody's permission. That is
-also the honest limit of it — these are drawn gels, not the rendered 3D assets
-in the reference clips, and nobody would mistake one for the other.
+**The bloom is cast by the picture's own alpha**, in the same pass that draws it,
+so it takes the object's shape and lands behind it. A disc of colour laid
+underneath was the first try and it showed: a pineapple is tall and narrow, and
+the parts of the disc it did not cover read as a dull smear around its foot.
+
+**The drawn gels are still in the build.** Before the sheet arrived, each object
+was a silhouette with five washes laid inside its own clip — body, depth,
+subsurface, rim and two highlights — with the light kept level while the object
+tumbled, and the whole thing built offscreen and blitted once for the law this
+project has now been caught by three times. They are kept, paired one for one
+with the pictures, so a theme whose files do not arrive comes out looking like
+the older version of this mode rather than coming out broken.
 
 ### The sound
 

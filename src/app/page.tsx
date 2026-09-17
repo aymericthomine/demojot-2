@@ -46,6 +46,7 @@ import { generatePachinko } from "../sim/pachinko";
 import { generatePotato } from "../sim/potato";
 import { CAST_LABEL, castFor, type CastName } from "../render/cast";
 import { loadFlags } from "../render/flags";
+import { loadArt } from "../render/jellyArt";
 import { FPS, HEIGHT, WIDTH } from "../sim/style";
 
 /**
@@ -241,6 +242,16 @@ export default function HomePage() {
           // The flags are pictures and painting is synchronous, so they are
           // decoded before the first frame rather than during it.
           if (job.cast === "countries") await loadFlags();
+          // The pictures have to be decoded before a frame can be painted, and
+          // painting is synchronous. A theme that will not load is not fatal —
+          // the drawn shapes are still in the build — so this is allowed to
+          // fail and the round comes out in the fallback rather than not at all.
+          if (job.mode === "jelly") {
+            await loadArt(
+              job.theme,
+              THEMES[job.theme].ladder.map((rung) => rung.art),
+            ).catch(() => {});
+          }
           const dress = {
             invert: job.invert,
             cast: job.cast,

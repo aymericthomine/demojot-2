@@ -20,6 +20,7 @@
  */
 
 import { drawJelly } from './jelly3d';
+import { drawArt } from './jellyArt';
 import type { JellyFrame } from '../sim/jelly';
 import { CHUTE, rungRadius } from '../sim/jelly';
 import type { Theme } from './themes';
@@ -149,11 +150,19 @@ export function drawJellyFrame(
   for (const body of [...settled, ...falling]) {
     const rung = theme.ladder[Math.min(body.rung, theme.ladder.length - 1)];
     const [x, y] = place(body.x, body.y);
-    drawJelly(ctx, rung.shape, rung.color, x, y, body.r * r, {
-      glow: 1,
-      pop: body.born,
-      turn: body.turn,
-    });
+    // The swell a merge's new object arrives with. It lives here rather than in
+    // the simulation because it is a look, not a physics: the body it collides
+    // with is always its true size.
+    const swell = 1 + 0.28 * (1 - body.born) ** 2;
+    const size = body.r * r * swell;
+
+    if (!drawArt(ctx, rung.art, x, y, size, body.turn, rung.color) && rung.shape) {
+      drawJelly(ctx, rung.shape, rung.color, x, y, body.r * r, {
+        glow: 1,
+        pop: body.born,
+        turn: body.turn,
+      });
+    }
   }
 
   // Sparks last: they are thrown out over everything.
