@@ -348,32 +348,61 @@ the twentieth second the bowl held three objects where the references hold a
 dozen. The wait, plus a sideways kick on every new object, is what spreads the
 pile along the floor instead of stacking it in a column.
 
-**The pile never stops moving, and getting that wrong was the mode's worst
-mistake.** It was measured, not eyeballed: the frame-to-frame motion down the two
-sides of the bowl — the pile, with the falling column left out of it — comes to
-1.79 in the references and came to 0.68 here. Objects arrived, stopped dead and
-stayed exactly where they stopped for the rest of the video. The fix is not more
-gravity but **more bounce and almost no drag**: gravity 2.8, restitution 0.85,
-drag 0.03, and the rule that parked a slow object deleted outright. Swept across
-gravity 0.9 to 3.6, bounce 0.08 to 0.92 and drag 1.6 to 0.015, those land on
-1.78 against the references' 1.79.
+**The flask is the union of two shapes, and treating it as two regions with a
+boundary between them was the worst bug this mode has had.** The tube's walls
+hold a ball while it is in the tube and the tube has no floor; the bowl's rim
+holds a ball everywhere *except across its mouth*, where the tube opens into it.
+Without that last clause the rim was applied at the mouth as though it were
+solid — at dead centre a ball's middle is 0.99 from the bowl's middle and the
+bowl's usable radius is 0.944, so every object counted as embedded the instant
+it left the tube. Each one was marked as landed there and fell the rest of the
+way under gravity instead of at the conveyor's constant speed.
 
-**Two of a kind merge at 1.3 times touching, not at touching.** A bouncy pile
-keeps rearranging itself, so a pair spends most of its time near rather than
-against, and a round ended with an odd one stranded at every rung — five
-blueberries, three lemons, three oranges, one apple and no pineapple, two hundred
-merges already spent. The last rung needs 128 of the smallest and the stream
-delivers 210, so there is no room for that. It has to be a *multiple* rather than
-a fixed gap, and that was measured too: a fixed slack reaches the last rung in 19
-seeds of 24 however wide it is set, because the stranding that blocks the ladder
-is at the top, where one leftover is worth sixty-four of the smallest. At 1.3 it
-is 23 of 24.
+Everything that looked wrong about the descent came from that one line. The
+column of falling objects stopped dead at the mouth; below it, objects fell at
+whatever speed gravity had given them and ran into each other on the way down.
+Measured in the simulation, the falling column now runs unbroken from y = −2.3
+to y = +0.47 with a gap of 0.245 between every pair, top to bottom — against a
+column that used to end at −1.0, the mouth, every single time.
 
-An earlier version shortened the drop interval to 0.28 seconds to feed the bowl
-faster. That showed up in the same measurement — the chute's own motion came to
-8.80 against the references' 7.16 — so it is back at the interval they use, and
-the ladder is paid for out of the pile instead. Videos run 60 to 74 seconds,
-median 67, against the references' 61 to 67.
+**The bounce is slow and nearly floating**: gravity 0.6 and restitution 0.5, a
+fifth of the gravity and half the bounce of the version before it. An object
+arrives at 0.724 radii a second and leaves its first bounce at half that, so it
+rises about fifty pixels and takes over a second to go up and come back. With
+almost no drag the pile keeps shifting long after the last thing landed, but
+nothing in it ever moves quickly. Nothing ever settles back up inside the tube:
+over twelve seeds the highest any resting object reached was 0.42 of the bowl's
+radius above centre, with the mouth at 0.99.
+
+An earlier version ran at gravity 2.8 and restitution 0.85, tuned to match a
+measurement of the references' own motion. That measurement was reading the bug:
+everything was being slammed downward from the mouth rather than arriving at the
+conveyor's speed, so the number it matched was violence rather than life.
+
+**The stream falls dead centre.** It was given a small lean off centre for a
+while, on the theory that a centred stream would stack the pile into a cone. It
+does not, and the lean was the first thing the eye caught: a column of objects
+sitting to one side of the tube it was falling down.
+
+**The glass is a hairline with a tight halo and a mitred elbow.** Measured across
+the chute's wall: the references read 239 at the core and are back to nothing six
+pixels out — 210, 239, ten pixels of 237, then 97, 52, 17, 7, 2, 0. This was set
+to a blur of two and a bit line widths and came out as a plateau rather than a
+falloff: 229 at the core and still sitting at 22 to 40 twenty pixels away, which
+is not a glow but a haze over the whole frame. The chute meets the bowl at a
+corner in every reference, so the join is mitred; a round join put a bead of
+extra paint on the outside of it.
+
+**Two of a kind merge at 1.3 times touching, not at touching.** A pile that keeps
+rearranging itself leaves a pair near rather than against, and a round ended with
+an odd one stranded at every rung — five blueberries, three lemons, three
+oranges, one apple and no pineapple, two hundred merges already spent. The last
+rung needs 128 of the smallest and the stream delivers 210, so there is no room
+for that. It has to be a *multiple* rather than a fixed gap: a fixed slack tops
+out in 19 seeds of 24 however wide it is set, because the stranding that blocks
+the ladder is at the top, where one leftover is worth sixty-four of the smallest.
+
+Videos run 60 to 74 seconds, and the last rung is reached in every seed tried.
 
 ### The objects
 

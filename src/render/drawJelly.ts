@@ -40,6 +40,18 @@ const BOWL_R = 456 / 1080;
 /** The flask's hairline, as a fraction of the frame's width. */
 const LINE = 11 / 1080;
 
+/**
+ * How far the glass's own light carries, as a fraction of the frame's width.
+ *
+ * Measured across the chute's wall in the references and here. Theirs reads
+ * 239 at the core and is back to nothing six pixels out: 210, 239, ten pixels
+ * of 237, then 97, 52, 17, 7, 2, 0. This was set to two and a bit line widths
+ * and came out as a plateau instead of a falloff — 229 at the core and still
+ * sitting at 22 to 40 twenty pixels away, which is not a glow, it is a haze
+ * over the whole frame. Seven pixels is the falloff the references have.
+ */
+const HALO = 7 / 1080;
+
 /** The two ends of the gradient down the glass. */
 const GLASS_TOP = '#c3aeed';
 const GLASS_LOW = '#fbcbdf';
@@ -118,11 +130,15 @@ export function drawJellyFrame(
   glass.addColorStop(1, GLASS_LOW);
   ctx.save();
   ctx.lineWidth = width * LINE;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  ctx.lineCap = 'butt';
+  // Mitred, not rounded. The chute meets the bowl at a corner in every
+  // reference — it is an elbow, not a fillet — and a round join put a bead of
+  // extra paint on the outside of it.
+  ctx.lineJoin = 'miter';
+  ctx.miterLimit = 6;
   ctx.strokeStyle = glass;
-  ctx.shadowColor = 'rgba(200,170,240,0.55)';
-  ctx.shadowBlur = width * LINE * 2.2;
+  ctx.shadowColor = 'rgba(214,180,246,0.8)';
+  ctx.shadowBlur = width * HALO;
   flask(ctx, cx, cy, r, -width * LINE);
   ctx.stroke();
   ctx.restore();

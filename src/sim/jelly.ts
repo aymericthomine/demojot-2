@@ -79,23 +79,25 @@ const CLIMB = 1.32;
  * Gravity on a landed object, in bowl radii a second squared, and how much of a
  * landing survives it.
  *
- * These three are one dial, and they were set against the references rather than
- * by eye. Measuring the frame-to-frame motion down the two sides of the bowl —
- * the pile, with the falling column left out of it — over the same fifteen
- * seconds: the references come to 1.79 and the first version of this came to
- * 0.68. The pile here was dead. Objects arrived, stopped, and stayed exactly
- * where they stopped for the rest of the video, while the references' bowl never
- * stops moving.
+ * Slow and nearly floating, which is what was asked for: a fifth of the gravity
+ * the first working version used, and half the bounce.
  *
- * What fixes it is not more gravity but more bounce and almost no drag: a low,
- * springy pile keeps rearranging itself long after the last thing landed. Swept
- * across gravity 0.9 to 3.6, bounce 0.08 to 0.92 and drag 1.6 down to 0.015,
- * these are the values that land on 1.78 against the references' 1.79.
+ * An object arrives from the conveyor at 0.724 radii a second and leaves the
+ * first bounce at half of that, so it rises about a ninth of the bowl's radius
+ * — fifty pixels — and takes more than a second to go up and come back. The
+ * pile keeps shifting for a long time after the last thing landed, because
+ * there is almost no drag to stop it, but nothing in it ever moves quickly.
+ *
+ * An earlier version ran at 2.8 and 0.85 and was tuned to match a measurement
+ * of the references' own motion. That measurement was reading a bug: everything
+ * was being slammed downward by gravity from the tube's mouth rather than
+ * arriving at the conveyor's speed, so the number it matched was violence, not
+ * life.
  */
-const GRAVITY = 2.8;
+const GRAVITY = 0.6;
 
 /** How much bounce is left in a landing. */
-const BOUNCE = 0.85;
+const BOUNCE = 0.5;
 
 /** How much speed is rubbed off every second by everything it touches. */
 const DRAG = 0.03;
@@ -253,28 +255,38 @@ interface Live extends JellyBody {
 /**
  * How far outside the flask a point is, and which way is out.
  *
- * The flask is a bowl with a chute standing on it, so being inside is being
- * inside either — and the wall an object is pushed off is whichever of the two
- * it is nearest to. Above the bowl's shoulders the chute's flat sides are the
- * wall; below, the bowl's arc is.
+ * The flask is the **union** of two shapes — a tube running off the top of the
+ * frame and a bowl hanging under it — and treating them as two separate regions
+ * with a boundary between them was the worst bug this mode has had.
+ *
+ * The tube's walls hold a ball while it is in the tube, and the tube has no
+ * floor. The bowl's rim holds a ball everywhere except across its mouth, where
+ * the tube opens into it: **the rim does not exist there**, and a ball passing
+ * through is held by nothing at all.
+ *
+ * Without that last clause the rim was applied at the mouth as though it were
+ * solid, and every object in the stream hit a wall the instant it left the tube
+ * — at dead centre, a ball's middle is 0.99 from the bowl's middle and the
+ * bowl's usable radius is 0.944, so it counted as embedded. Each one was marked
+ * landed at the mouth and fell the rest of the way under gravity instead of at
+ * the conveyor's constant speed. The column of falling objects stopped at the
+ * mouth, the ones below it fell at whatever speed gravity had given them, and
+ * they ran into each other on the way down. That is the descent not being
+ * linear, and it is objects touching before they land.
  */
 function outside(x: number, y: number, r: number): { nx: number; ny: number; depth: number } | null {
-  if (y < MOUTH) {
-    // In the chute: two flat walls, and no floor — the chute's mouth is open to
-    // the bowl below it.
+  if (y <= MOUTH) {
+    // In the tube: two flat walls, and no floor.
     const edge = CHUTE - r;
     if (x > edge) return { nx: -1, ny: 0, depth: x - edge };
     if (x < -edge) return { nx: 1, ny: 0, depth: -edge - x };
     return null;
   }
   const away = Math.hypot(x, y);
-  const reach = 1 - r;
-  if (away <= reach) return null;
-  // The shoulder: an object below the mouth but out beyond the chute's wall is
-  // in the bowl, and the bowl's arc is what holds it.
-  const nx = away > 0 ? -x / away : 0;
-  const ny = away > 0 ? -y / away : 1;
-  return { nx, ny, depth: away - reach };
+  if (away <= 1 - r) return null;
+  // Across the mouth the rim is open, so nothing is holding it.
+  if (y < 0 && Math.abs(x) <= CHUTE) return null;
+  return { nx: -x / away, ny: -y / away, depth: away - (1 - r) };
 }
 
 export function generateJelly(seed: number): JellyRound {
@@ -308,11 +320,16 @@ export function generateJelly(seed: number): JellyRound {
   let decidedAt = -1;
   let crowned = 0;
 
-  // Where the stream comes down. Dead centre would stack the pile into a cone
-  // and leave the sides of the bowl empty for the whole video; a hair off centre,
-  // and which side it leans is the seed's, is what makes the bowl fill unevenly
-  // and the pile keep moving.
-  const lean = rng.range(-0.35, 0.35) * CHUTE;
+  /**
+   * Where the stream comes down: the middle of the chute, exactly.
+   *
+   * It used to be given a small lean off centre, different every seed, on the
+   * theory that a dead-centre stream would stack the pile into a cone. It does
+   * not — the pile spreads on its own — and the lean was visible: the column of
+   * falling objects sat to one side of the tube it was falling down, which is
+   * the first thing the eye checks.
+   */
+  const lean = 0;
 
   // The chute starts full. Every reference opens on a column already running
   // from the top of the frame down into the bowl — the stream has been going for
