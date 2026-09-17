@@ -348,11 +348,32 @@ the twentieth second the bowl held three objects where the references hold a
 dozen. The wait, plus a sideways kick on every new object, is what spreads the
 pile along the floor instead of stacking it in a column.
 
-One measurement has been overruled: the references drop one object every third
-of a second, and at that rate the eighth rung is reached in only half the seeds,
-because merging here is less forgiving than theirs. At 0.28 seconds it is
-reached in 26 of 30, and what it costs is twenty pixels of spacing in the chute.
-Videos run 60 to 74 seconds.
+**The pile never stops moving, and getting that wrong was the mode's worst
+mistake.** It was measured, not eyeballed: the frame-to-frame motion down the two
+sides of the bowl — the pile, with the falling column left out of it — comes to
+1.79 in the references and came to 0.68 here. Objects arrived, stopped dead and
+stayed exactly where they stopped for the rest of the video. The fix is not more
+gravity but **more bounce and almost no drag**: gravity 2.8, restitution 0.85,
+drag 0.03, and the rule that parked a slow object deleted outright. Swept across
+gravity 0.9 to 3.6, bounce 0.08 to 0.92 and drag 1.6 to 0.015, those land on
+1.78 against the references' 1.79.
+
+**Two of a kind merge at 1.3 times touching, not at touching.** A bouncy pile
+keeps rearranging itself, so a pair spends most of its time near rather than
+against, and a round ended with an odd one stranded at every rung — five
+blueberries, three lemons, three oranges, one apple and no pineapple, two hundred
+merges already spent. The last rung needs 128 of the smallest and the stream
+delivers 210, so there is no room for that. It has to be a *multiple* rather than
+a fixed gap, and that was measured too: a fixed slack reaches the last rung in 19
+seeds of 24 however wide it is set, because the stranding that blocks the ladder
+is at the top, where one leftover is worth sixty-four of the smallest. At 1.3 it
+is 23 of 24.
+
+An earlier version shortened the drop interval to 0.28 seconds to feed the bowl
+faster. That showed up in the same measurement — the chute's own motion came to
+8.80 against the references' 7.16 — so it is back at the interval they use, and
+the ladder is paid for out of the pile instead. Videos run 60 to 74 seconds,
+median 67, against the references' 61 to 67.
 
 ### The objects
 

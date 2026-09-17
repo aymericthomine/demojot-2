@@ -54,15 +54,16 @@ const FALL = 0.724;
 /**
  * Seconds between one object entering the chute and the next.
  *
- * The references drop one every third of a second — 112 pixels of spacing at 330
- * pixels a second, counted off the chute. This is a shade quicker, and it is the
- * one measurement here that has been overruled rather than followed: at the
- * reference's own rate the eighth rung is reached in half the seeds, because
- * merging here is less forgiving than theirs and the bowl runs out of material
- * before it runs out of time. At 0.28 it is reached in ten of twelve, and what
- * it costs is twenty pixels of spacing in the chute.
+ * The references' own interval: 112 pixels of spacing at 330 pixels a second,
+ * counted off the chute. It was overruled for a while — shortened to 0.28, which
+ * fed the bowl faster and reached the last rung more often — and that showed up
+ * in a measurement rather than in an opinion. Comparing the chute's frame-to-
+ * frame motion against the references over the same fifteen seconds: theirs
+ * 7.16, the shortened version 8.80. Too much was moving through the tube. At the
+ * measured interval it is a match, and the reach of the ladder is paid for out
+ * of the pile instead, which now jostles enough to keep finding pairs.
  */
-const EVERY = 0.28;
+const EVERY = 0.339;
 
 /**
  * The smallest object's radius, in bowl radii, and what each rung multiplies by.
@@ -74,14 +75,30 @@ const EVERY = 0.28;
 const SMALLEST = 0.056;
 const CLIMB = 1.32;
 
-/** Gravity on a landed object, in bowl radii a second squared. */
-const GRAVITY = 3.6;
+/**
+ * Gravity on a landed object, in bowl radii a second squared, and how much of a
+ * landing survives it.
+ *
+ * These three are one dial, and they were set against the references rather than
+ * by eye. Measuring the frame-to-frame motion down the two sides of the bowl —
+ * the pile, with the falling column left out of it — over the same fifteen
+ * seconds: the references come to 1.79 and the first version of this came to
+ * 0.68. The pile here was dead. Objects arrived, stopped, and stayed exactly
+ * where they stopped for the rest of the video, while the references' bowl never
+ * stops moving.
+ *
+ * What fixes it is not more gravity but more bounce and almost no drag: a low,
+ * springy pile keeps rearranging itself long after the last thing landed. Swept
+ * across gravity 0.9 to 3.6, bounce 0.08 to 0.92 and drag 1.6 down to 0.015,
+ * these are the values that land on 1.78 against the references' 1.79.
+ */
+const GRAVITY = 2.8;
 
-/** How much bounce is left in a landing. Jelly is not a marble. */
-const BOUNCE = 0.08;
+/** How much bounce is left in a landing. */
+const BOUNCE = 0.85;
 
 /** How much speed is rubbed off every second by everything it touches. */
-const DRAG = 1.6;
+const DRAG = 0.03;
 
 /** Solver passes per substep. More passes, a firmer pile. */
 const PASSES = 6;
@@ -89,8 +106,39 @@ const PASSES = 6;
 /** How much of an overlap is pushed out per pass. */
 const STIFFNESS = 0.42;
 
-/** Below this speed an object is treated as parked, in bowl radii a second. */
-const ASLEEP = 0.035;
+/**
+ * Below this speed an object used to be treated as parked and had its movement
+ * halved away.
+ *
+ * Nought, which is to say the rule is gone. It was there to settle the pile, and
+ * settling the pile is exactly the thing that made this mode look wrong: the
+ * references' bowl is never still.
+ */
+const ASLEEP = 0;
+
+/**
+ * How close two of a kind have to be to become one, as a multiple of their
+ * touching distance.
+ *
+ * Exactly touching is the obvious rule and it strands material. A bouncy pile
+ * keeps rearranging itself, so two of a kind spend most of their time near each
+ * other rather than against each other, and a round ends with an odd one left
+ * over at every rung — five blueberries, three lemons, three oranges, one apple
+ * and no pineapple, with two hundred merges already spent. The last rung needs a
+ * hundred and twenty-eight of the smallest and the stream delivers about two
+ * hundred and ten, so there is no room for that much waste.
+ *
+ * A little reach is also what jelly does: two gels that meet flow together
+ * rather than resting against each other.
+ *
+ * It has to be a multiple rather than a fixed slack, and that was measured too:
+ * a fixed gap tied to the smallest rung reaches the last rung in 19 seeds of 24
+ * however wide it is set, because the stranding that actually blocks the ladder
+ * is at the *top*, where a leftover is worth sixty-four of the smallest. At a
+ * multiple of 1.3 it is 23 of 24, and the median video comes to 67 seconds
+ * against the references' 61 to 67.
+ */
+const MERGE_REACH = 1.3;
 
 /**
  * How long a newly merged object has to wait before it can merge again.
@@ -449,7 +497,7 @@ export function generateJelly(seed: number): JellyRound {
             const b = bodies[j];
             if (!b.landed || b.rung !== a.rung || b.calm > 0) continue;
             const gap = Math.hypot(b.x - a.x, b.y - a.y);
-            if (gap > a.r + b.r) continue;
+            if (gap > (a.r + b.r) * MERGE_REACH) continue;
 
             const rung = a.rung + 1;
             const r = rungRadius(rung);
