@@ -68,12 +68,28 @@ const EVERY = 0.339;
 /**
  * The smallest object's radius, in bowl radii, and what each rung multiplies by.
  *
- * Both measured: the stream's object is 51 pixels across in a 1080-wide frame
- * and the last rung is about 370, over the eight rungs the references deal. That
- * fixes the climb at a third again each time — it is not a free dial.
+ * Both measured, and both measured twice. The first pass read a bounding box off
+ * a still and called the stream's object 51 pixels across in a 1080-wide frame
+ * and the last rung 370, which put the climb at a third again each time. A
+ * bounding box is the wrong ruler for a strawberry — the leaves are in it and
+ * the fruit is not — so the second pass took the lit *area* of each object and
+ * turned it back into a diameter, which is a ruler that does not care what
+ * shape a thing is.
+ *
+ * Measured that way across all five references, an object in the chute is 54,
+ * 60, 68, 70 and 71 pixels across, and the thing that ends the video is 576,
+ * 621, 629, 648 and 619. That is 65 at the bottom of the ladder and 620 at the
+ * top, or nine and a fifth over the seven steps between them: a climb of 1.37,
+ * and a smallest object half again bigger than the first reading made it.
+ *
+ * It is worth saying what the old numbers cost, because it was not subtle. At
+ * 51 pixels and 1.32 the bowl held about two thirds of the material the
+ * references' bowl holds at the same second, and the object the video ends on
+ * came to 356 pixels against their 620 — the climax was a third of the size of
+ * the thing it was copying.
  */
-const SMALLEST = 0.056;
-const CLIMB = 1.32;
+const SMALLEST = 0.07;
+const CLIMB = 1.37;
 
 /**
  * Gravity on a landed object, in bowl radii a second squared, and how much of a
@@ -141,11 +157,17 @@ const ASLEEP = 0;
  * It has to be a multiple rather than a fixed slack, and that was measured too:
  * a fixed gap tied to the smallest rung reaches the last rung in 19 seeds of 24
  * however wide it is set, because the stranding that actually blocks the ladder
- * is at the *top*, where a leftover is worth sixty-four of the smallest. At a
- * multiple of 1.3 it is 23 of 24, and the median video comes to 67 seconds
- * against the references' 61 to 67.
+ * is at the *top*, where a leftover is worth sixty-four of the smallest.
+ *
+ * The reach was 1.3 while the objects were too small, and had to come back down
+ * when they were put right: a bigger object touches more of its neighbours, so
+ * the same reach spends the ladder faster. Counted against the references —
+ * which hold six things in the bowl at the eighth second, a dozen at the
+ * twentieth and thirteen at the thirty-fifth — a reach of 1.0 keeps the count
+ * but takes seventy seconds to climb, and 1.2 climbs in sixty-three and still
+ * reaches the top from every seed.
  */
-const MERGE_REACH = 1.3;
+const MERGE_REACH = 1.2;
 
 /**
  * How long a newly merged object has to wait before it can merge again.
@@ -154,11 +176,17 @@ const MERGE_REACH = 1.3;
  * stacked under the stream collapse to one of the next kind up inside a single
  * substep, and the bowl is never more than two or three objects deep. At the
  * twentieth second this had three things in it where the references have a
- * dozen. A quarter of a second is enough for the new object to fall, roll and
- * find somewhere to sit before it is allowed to count again, which is what
- * spreads the pile across the floor instead of stacking it under the chute.
+ * dozen. The wait is what spreads the pile across the floor instead of stacking
+ * it under the chute: the new object gets to fall, roll and find somewhere to
+ * sit before it is allowed to count again.
+ *
+ * It is the one dial that buys a fuller bowl without slowing the climb, because
+ * it moves *when* merges happen rather than how many. A quarter of a second
+ * leaves the bowl a quarter emptier than the references at every mark; at half
+ * a second the count comes to six, nine, thirteen and thirteen against their
+ * six, twelve, thirteen and twelve, and the video is no longer for it.
  */
-const CALM = 0.26;
+const CALM = 0.55;
 
 /** How hard a merge throws its new object sideways, in bowl radii a second. */
 const KICK = 0.55;

@@ -3,17 +3,22 @@
 /**
  * The themes' artwork.
  *
- * Forty pictures, eight to a theme, cut out of a sheet that was supplied for
+ * Eighty pictures, eight to a theme, cut out of two sheets that were supplied for
  * this mode. They replace the drawn gels that were here first — those were made
  * because there was nothing else, and the note in the README at the time said
  * plainly that they were drawn gels rather than rendered assets and nobody would
  * mistake one for the other. These are the rendered assets.
  *
+ * They are kept at twice the size the sheets give, resampled and sharpened: the
+ * sheets are about 130 pixels an object and the top of the ladder is drawn at
+ * 620, so the canvas was stretching the biggest thing in the video four or five
+ * times and it was the softest thing on screen.
+ *
  * **They are files rather than data.** The flags in this project are carried as
  * base64 inside a module because twelve small icons come to ninety kilobytes and
- * data cannot fail to arrive. Forty of these come to 1.6 megabytes as base64,
- * which is a page that will not load on a phone, so they are fetched — but only
- * the eight belonging to the theme being made, which is fifty kilobytes.
+ * data cannot fail to arrive. Eighty of these come to megabytes as base64, which
+ * is a page that will not load on a phone, so they are fetched — but only the
+ * eight belonging to the theme being made.
  *
  * **The paths are relative on purpose.** A static export served from
  * `/demojot-2/` has no way to tell a hand-written `fetch` about its own prefix:

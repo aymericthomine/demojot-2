@@ -337,16 +337,34 @@ opening that none of them have.
 **The ladder is eight rungs and that is arithmetic, not taste.** Each rung is
 two of the one below, so the last needs 128 of the smallest — and the stream
 delivers about 200 over a video. Nine rungs would need 512 and could never be
-reached: measured, a ten-rung ladder tops out at the seventh every time. The
-smallest object is 51 pixels across and the last is about 370, which fixes the
-climb at a third again each rung.
+reached: measured, a ten-rung ladder tops out at the seventh every time.
 
-**A merge has to wait a quarter of a second before it can merge again.** Without
-that, a merge is not an event but an avalanche: eight of a kind stacked under
+**The rung sizes were measured twice, and the first reading was wrong.** A
+bounding box off a still made the smallest object 51 pixels across and the last
+about 370, which fixed the climb at a third again each rung. A bounding box is
+the wrong ruler for a strawberry — the leaves are in it and the fruit is not — so
+the second pass took each object's lit *area* and turned it back into a diameter,
+a ruler that does not care what shape a thing is. Measured that way across all
+five references, an object in the chute is 54, 60, 68, 70 and 71 pixels across
+and the thing that ends the video is 576, 621, 629, 648 and 619: **65 at the
+bottom of the ladder and 620 at the top**, which is nine and a fifth over seven
+steps, or a climb of **1.37**. The old numbers cost more than they look: the bowl
+held about two thirds of the material the references' bowl holds at the same
+second, and the object the video ends on came out at 356 pixels against their
+620 — the climax was a third of the size of the thing it was copying.
+
+**A merge has to wait half a second before it can merge again.** Without any
+wait, a merge is not an event but an avalanche: eight of a kind stacked under
 the chute collapse to one of the next kind up inside a single substep, and at
 the twentieth second the bowl held three objects where the references hold a
 dozen. The wait, plus a sideways kick on every new object, is what spreads the
-pile along the floor instead of stacking it in a column.
+pile along the floor instead of stacking it in a column — and it is the one dial
+that buys a fuller bowl without slowing the climb, because it moves *when*
+merges happen rather than how many. Counted against the references, which hold
+six objects at the eighth second, twelve at the twentieth, thirteen at the
+thirty-fifth and twelve at the fiftieth: a quarter-second wait leaves the bowl a
+quarter emptier at every mark, and half a second comes to six, nine, thirteen
+and thirteen.
 
 **The flask is the union of two shapes, and treating it as two regions with a
 boundary between them was the worst bug this mode has had.** The tube's walls
@@ -395,10 +413,10 @@ pixels out — 210, 239, ten pixels of 237, then 97, 52, 17, 7, 2, 0. This was s
 to a blur of two and a bit line widths and came out as a plateau rather than a
 falloff: 229 at the core and still sitting at 22 to 40 twenty pixels away, which
 is not a glow but a haze over the whole frame. The chute meets the bowl at a
-corner in every reference, so the join is mitred; a round join put a bead of
-extra paint on the outside of it.
+sharp corner, and a mitred join bit a notch out of the inside of that corner
+where the two strokes crossed; rounding the join and the caps fills it.
 
-**Two of a kind merge at 1.3 times touching, not at touching.** A pile that keeps
+**Two of a kind merge at 1.2 times touching, not at touching.** A pile that keeps
 rearranging itself leaves a pair near rather than against, and a round ended with
 an odd one stranded at every rung — five blueberries, three lemons, three
 oranges, one apple and no pineapple, two hundred merges already spent. The last
@@ -406,24 +424,40 @@ rung needs 128 of the smallest and the stream delivers 210, so there is no room
 for that. It has to be a *multiple* rather than a fixed gap: a fixed slack tops
 out in 19 seeds of 24 however wide it is set, because the stranding that blocks
 the ladder is at the top, where one leftover is worth sixty-four of the smallest.
+The reach was 1.3 while the objects were too small and had to come back down when
+they were put right: a bigger object touches more of its neighbours, so the same
+reach spends the ladder faster. A reach of 1.0 keeps the references' object count
+but takes seventy seconds to climb; 1.2 climbs in sixty-three and still reaches
+the top from every seed.
 
-Videos run 60 to 74 seconds, and the last rung is reached in every seed tried.
+Videos run 60 to 71 seconds, median 63, and the last rung is reached in every
+seed tried.
 
 ### The objects
 
-Forty pictures, eight to a theme, cut out of a sheet supplied for this mode.
-They were sliced off it by finding each cell's body, filling its holes, keeping
+Eighty pictures, eight to a theme, cut out of two sheets supplied for this mode.
+They were sliced off them by finding each cell's body, filling its holes, keeping
 the one blob nearest the middle of the cell, and gating the glow to a dilation of
 that blob — which is what stops a neighbour's bloom and the odd speck of JPEG
 noise being cut out along with the object. The alpha is a ramp off the
 luminance, so the neon halo the artwork came with survives instead of getting a
 hard edge.
 
+**They are stored at twice the size they came at, sharpened.** The sheets give
+about 130 pixels an object and the top of the ladder is drawn at 620, so the
+canvas was stretching every large object four or five times and the climax — the
+one thing the video is about — was the softest thing on screen. Doubling them
+with a Lanczos resample and an unsharp mask over the colour only, leaving the
+alpha alone so the neon edge does not ring, halves that stretch and puts the
+texture back. It cannot invent detail the sheet never had, but a lemon's skin and
+a pear's speckle survive the draw now instead of smearing.
+
 **They are files rather than data.** The flags in this project are carried as
 base64 inside a module, because twelve small icons come to ninety kilobytes and
-data cannot fail to arrive. Forty of these come to 1.6 megabytes that way, which
-is a page that will not load on a phone, so they are fetched as WebP — and only
-the eight belonging to the theme being made, which is fifty kilobytes. The paths
+data cannot fail to arrive. Eighty of these come to megabytes that way, which is
+a page that will not load on a phone, so they are fetched as WebP — and only the
+eight belonging to the theme being made, which is about two hundred kilobytes of
+the two and a bit megabytes on disk. The paths
 are **relative**, because a static export served from `/demojot-2/` has no way to
 tell a hand-written `fetch` about its own prefix: `assetPrefix` rewrites what
 Next emits, not what this asks for, and a relative path is right under the
