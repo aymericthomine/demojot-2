@@ -14,10 +14,13 @@ import { drawWiresFrame } from '../render/drawWires';
 import { drawMonthsFrame } from '../render/drawMonths';
 import { drawPachinkoFrame } from '../render/drawPachinko';
 import { drawPotatoFrame } from '../render/drawPotato';
+import { drawJellyFrame } from '../render/drawJelly';
+import { themeFor, type ThemeName } from '../render/themes';
 import type { WiresRound } from '../sim/wires';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
+import type { JellyRound } from '../sim/jelly';
 import { HEIGHT, WIDTH } from '../sim/style';
 
 export interface Dress {
@@ -25,6 +28,8 @@ export interface Dress {
   invert?: boolean;
   /** Who the twelve balls are, where the mode has a cast to dress. */
   cast?: CastName;
+  /** Which ladder Jelly drops, where that is the mode being made. */
+  theme?: ThemeName;
 }
 
 /** Frames are dropped as they are painted; the array is the round's own. */
@@ -128,6 +133,29 @@ export function wiresReel(round: WiresRound, dress: Dress = {}): Reel {
         fit: CAST_FIT[dress.cast ?? 'months'],
         weight: CAST_WEIGHT[dress.cast ?? 'months'],
       });
+      release(round.frames, index);
+    },
+  };
+}
+
+/**
+ * Jelly, painted from its own frames.
+ *
+ * Named after the rung it reached rather than a winner, because there is no
+ * winner — the video is about the ladder being climbed, and the thing at the top
+ * of it is what the ending says.
+ */
+export function jellyReel(round: JellyRound, dress: Dress = {}): Reel {
+  const theme = themeFor(dress.theme);
+  const crown = theme.ladder[Math.min(round.best, theme.ladder.length - 1)];
+  return {
+    durationInFrames: round.durationInFrames,
+    duration: round.duration,
+    name: `jelly-${round.seed}-${theme.key}-${crown.name.toLowerCase().replace(/\s+/g, '-')}-${Math.round(
+      round.duration,
+    )}s`,
+    paint(ctx, index) {
+      drawJellyFrame(ctx, round.frames[index], { width: WIDTH, height: HEIGHT, theme });
       release(round.frames, index);
     },
   };

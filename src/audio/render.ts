@@ -26,6 +26,7 @@ import type { WiresRound } from '../sim/wires';
 import type { MonthsRound } from '../sim/months';
 import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
+import type { JellyRound } from '../sim/jelly';
 import { SLOT, SPRITE } from './hits';
 
 const SAMPLE_RATE = 48000;
@@ -261,4 +262,91 @@ export function renderWiresAudio(round: WiresRound): Promise<AudioBuffer> {
     }
   }
   return renderHits(round.duration, list, sprite);
+}
+
+/**
+ * Jelly's sound, which is the one thing here that is not borrowed.
+ *
+ * The references' soundtrack was measured rather than guessed: ninety per cent
+ * of its energy sits between 200 Hz and 2 kHz with almost nothing above, and
+ * there are about one and a half onsets a second. Reading the pitch at each
+ * onset gives D4, E4, G4, C5, F3 — a pentatonic set, played soft. There is no
+ * drum, no hat and no bed, which is why nothing above 2 kHz shows: it is a
+ * handful of gentle tones and silence.
+ *
+ * That is synthesisable exactly, so it is synthesised. Every other mode on this
+ * site plays a recording lifted from its reference, which is the one thing here
+ * a platform could recognise and mute; this mode owes nobody anything.
+ *
+ * **A note a merge, and the pitch is the rung.** The ladder climbs and so does
+ * the scale, so the video's soundtrack is its own progress: the opening is all
+ * low notes coming thick and fast, and by the end the few notes left are the
+ * high ones. Landings are not sounded at all — three a second of them would be
+ * a rattle, and the references have nothing like it.
+ */
+export function renderJellyAudio(round: JellyRound): Promise<AudioBuffer> {
+  const length = Math.round(round.duration * SAMPLE_RATE);
+  const ctx = new OfflineAudioContext(1, length, SAMPLE_RATE);
+
+  const master = ctx.createGain();
+  master.gain.value = 0.85;
+  master.connect(ctx.destination);
+
+  // A pentatonic run, low to high, one step per rung of the ladder. C, D, E, G
+  // and A — the set the references play in, and the one set of five notes where
+  // any two of them sound intended together, which matters when a dozen land on
+  // top of each other in the first seconds.
+  //
+  // Pitched to sit where the references' energy sits. Measured on theirs, nine
+  // tenths of it is between 200 Hz and 2 kHz; a first cut of this scale started
+  // at F3 and put a third of the energy underneath 200, because the low rungs
+  // are also the ones that merge most often. Starting at D4 keeps every note in
+  // the band the references actually occupy.
+  const SCALE = [293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
+
+  /**
+   * One note: a sine with a little of its own octave for body, a few
+   * milliseconds of attack so it does not click, and a long soft tail.
+   */
+  const play = (at: number, hz: number, gain: number, hold = 0.42): void => {
+    if (at < 0 || at >= round.duration) return;
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, at);
+    amp.gain.exponentialRampToValueAtTime(gain, at + 0.008);
+    amp.gain.exponentialRampToValueAtTime(0.0001, at + hold);
+    amp.connect(master);
+
+    const tone = ctx.createOscillator();
+    tone.type = 'sine';
+    tone.frequency.value = hz;
+    tone.connect(amp);
+    tone.start(at);
+    tone.stop(at + hold);
+
+    const body = ctx.createOscillator();
+    body.type = 'triangle';
+    body.frequency.value = hz * 2;
+    const quiet = ctx.createGain();
+    quiet.gain.value = 0.16;
+    body.connect(quiet).connect(amp);
+    body.start(at);
+    body.stop(at + hold);
+  };
+
+  for (const event of round.events) {
+    if (event.kind === 'merge') {
+      const note = SCALE[Math.min(event.rung, SCALE.length - 1)];
+      // The bigger the rung, the fewer there are and the more each one is
+      // worth, so the loud notes are also the rare ones.
+      play(event.t, note, 0.1 + event.rung * 0.035, 0.42 + event.rung * 0.06);
+    }
+    if (event.kind === 'crown') {
+      // The ending: the top of the scale, arpeggiated, and left ringing.
+      [0, 0.16, 0.32, 0.48].forEach((offset, i) =>
+        play(event.t + offset, SCALE[Math.min(SCALE.length - 1, 5 + i)], 0.24, 1.4),
+      );
+    }
+  }
+
+  return ctx.startRendering();
 }

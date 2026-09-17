@@ -20,6 +20,11 @@ each running to the ball that owns it. Run through a wire and it comes away with
 you; because a ball takes what it touches, no two wires ever overlap. A side
 holding none is out.
 
+**Jelly** — a flask with a chute running into it, and a stream of the smallest
+object coming down for ever. Two of anything that touch become one of the next
+thing up, eight rungs of it, and the video ends when the top is reached. The odd
+one out: no cast of twelve, a theme instead, and a soundtrack of its own.
+
 Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
 wearing it.
@@ -303,6 +308,103 @@ crossing another.
 
 **There is no counter.** There was one for a while and it was doing the work the
 picture should do: a side that is winning wears a fan across half the rim.
+
+## Jelly
+
+The odd one out. Every other mode here is twelve of something in a ring; this is
+a flask — a chute running into a round bowl — with a stream of the smallest
+object coming down it for ever, and **two of anything that touch become one of
+the next thing up**. The bowl fills with small things that keep turning into
+fewer large ones, and the video ends when the top of the ladder is made.
+
+Everything about the flask was measured off five reference clips rather than
+chosen, which is why the numbers are odd: the bowl is 912 pixels across on the
+inside of a 1080-wide frame and its middle sits 972 pixels down, the chute is
+131 wide between its walls, the glass is an 11-pixel hairline running from
+lavender at the top to pink at the bottom, and the opening caption is held for
+1.4 seconds and then cut.
+
+**The stream is a conveyor, not a drop.** Counted frame by frame in the
+reference's chute: the objects are 112 pixels apart at the top and 112 apart at
+the bottom of the bowl, and the whole column moves 5.5 pixels a frame — 330
+pixels a second, flat. A falling object accelerates and its spacing opens out;
+this one does not. So an object has no weight until it lands on something, and
+then it gets gravity, drag and a pile to settle into. The chute also **starts
+full**: every reference opens on a column already running into the bowl, about
+four seconds of stream, and starting it empty gives the video a slow wrong
+opening that none of them have.
+
+**The ladder is eight rungs and that is arithmetic, not taste.** Each rung is
+two of the one below, so the last needs 128 of the smallest — and the stream
+delivers about 200 over a video. Nine rungs would need 512 and could never be
+reached: measured, a ten-rung ladder tops out at the seventh every time. The
+smallest object is 51 pixels across and the last is about 370, which fixes the
+climb at a third again each rung.
+
+**A merge has to wait a quarter of a second before it can merge again.** Without
+that, a merge is not an event but an avalanche: eight of a kind stacked under
+the chute collapse to one of the next kind up inside a single substep, and at
+the twentieth second the bowl held three objects where the references hold a
+dozen. The wait, plus a sideways kick on every new object, is what spreads the
+pile along the floor instead of stacking it in a column.
+
+One measurement has been overruled: the references drop one object every third
+of a second, and at that rate the eighth rung is reached in only half the seeds,
+because merging here is less forgiving than theirs. At 0.28 seconds it is
+reached in 26 of 30, and what it costs is twenty pixels of spacing in the chute.
+Videos run 60 to 74 seconds.
+
+### The objects
+
+There is no mesh and no light vector. Each object is a flat silhouette with five
+washes laid inside its own clip, in an order taken off the references: a **body**
+gradient lit from the upper left; a **depth** wash from the opposite corner, so
+the far side falls into its own shadow; a **subsurface** glow low in the body,
+which is the one that makes it gel rather than plastic, because light that goes
+into a gummy sweet comes back out of its underside; a **rim** hairline low and
+right, which is what separates one jelly from the one behind it on black; and
+**two highlights**, a soft one and a hard core inside it, because a single
+blurred blob reads as matte and the hard core is what says the surface is wet.
+Round it all, a neon bloom cast as a shadow so it never tints the object's own
+pixels.
+
+**The light does not turn with the object.** Rotating the canvas and painting
+the washes through it put the highlight wherever the object happened to be
+lying, so a peach resting at a quarter turn was lit from underneath — which
+reads as a hole, not a gloss. Path points are baked into user space as each
+command is issued, so the turn is undone the moment the outline is closed and
+every wash after it is level.
+
+**The whole object is built offscreen and blitted once**, for the law this
+project has now been caught by three times: two passes at partial alpha
+composite twice, so anything drawn in two goes comes out denser where they meet.
+
+Five themes ship — fruit, planets, gems, sweets and sea creatures — each an
+ordered ladder of eight. They are drawn rather than photographed, for the same
+reason every other cast here is: a picture belongs to whoever made it, and this
+is a generator meant to be publishable without anybody's permission. That is
+also the honest limit of it — these are drawn gels, not the rendered 3D assets
+in the reference clips, and nobody would mistake one for the other.
+
+### The sound
+
+The one thing on this site that is not borrowed. The references' soundtrack was
+measured rather than guessed: nine tenths of its energy sits between 200 Hz and
+2 kHz with almost nothing above, and there are about one and a half onsets a
+second. Reading the pitch at each onset gives D4, E4, G4, C5 and F3 — a
+pentatonic set, played soft, with no drum, no hat and no bed.
+
+That is synthesisable exactly, so it is synthesised: a sine with a little of its
+own octave for body, eight milliseconds of attack and a long soft tail. **A note
+a merge, and the pitch is the rung**, so the soundtrack is the video's own
+progress — the opening is low notes coming thick and fast, and by the end the
+few notes left are the high ones. Landings are not sounded at all; three a
+second of them would be a rattle. A first cut of the scale started at F3 and put
+a third of the energy under 200 Hz, because the low rungs are also the ones that
+merge most often, so it starts at D4 instead.
+
+Every other mode here plays a recording lifted from its reference, which is the
+one thing a platform could recognise and mute. This mode owes nobody anything.
 
 ## Who is playing
 

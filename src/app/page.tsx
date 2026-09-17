@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   renderWiresAudio,
+  renderJellyAudio,
   renderMonthsAudio,
   renderPachinkoAudio,
   renderPotatoAudio,
@@ -32,11 +33,14 @@ import {
 } from "../export/encodeVideo";
 import {
   wiresReel,
+  jellyReel,
   monthsReel,
   pachinkoReel,
   potatoReel,
 } from "../export/reels";
 import { generateWires } from "../sim/wires";
+import { generateJelly } from "../sim/jelly";
+import { THEMES, THEME_NAMES, type ThemeName } from "../render/themes";
 import { generateMonths } from "../sim/months";
 import { generatePachinko } from "../sim/pachinko";
 import { generatePotato } from "../sim/potato";
@@ -51,15 +55,22 @@ import { FPS, HEIGHT, WIDTH } from "../sim/style";
  * nothing else: one is about holding a place, one about not holding a thing,
  * one about where a ball lands, and one about taking everybody else's.
  */
-type Mode = "month" | "potato" | "pachinko" | "wires";
+type Mode = "month" | "potato" | "pachinko" | "wires" | "jelly";
 
-const MODES: readonly Mode[] = ["month", "potato", "pachinko", "wires"];
+const MODES: readonly Mode[] = [
+  "month",
+  "potato",
+  "pachinko",
+  "wires",
+  "jelly",
+];
 
 const MODE_NAME: Record<Mode, string> = {
   month: "Month",
   potato: "Hot Potato",
   pachinko: "Pachinko",
   wires: "Keep The Wires",
+  jelly: "Jelly",
 };
 
 const MODE_BUTTON: Record<Mode, string> = {
@@ -67,6 +78,7 @@ const MODE_BUTTON: Record<Mode, string> = {
   potato: "Hot potato",
   pachinko: "Pachinko",
   wires: "Keep the wires",
+  jelly: "Jelly",
 };
 
 const MODE_BUSY: Record<Mode, string> = {
@@ -74,6 +86,7 @@ const MODE_BUSY: Record<Mode, string> = {
   potato: "Passing it round…",
   pachinko: "Dropping them…",
   wires: "Cutting it up…",
+  jelly: "Dropping them in…",
 };
 
 const MODE_ABOUT: Record<Mode, string> = {
@@ -85,6 +98,8 @@ const MODE_ABOUT: Record<Mode, string> = {
     "Twelve balls down a field of pegs into seven slots, over and over. A slot is worth what is written on it — two in the middle, twenty-five at the edges — and where a ball lands is added to whoever it belongs to. They fall in waves of twelve, and the last wave lands on multipliers instead, so a minute of scoring can be turned over in the final four seconds.",
   wires:
     "Twelve balls in the ring, and a hundred and eighty wires pinned to it — fifteen a side, each running from its own point on the rim to the ball that owns it. Run through a wire and it comes away with you, pin and all: the ball is not turned by it, it cuts and carries on, and it takes every wire it passed through. Because it takes what it touches it is never on the far side of one, so no two wires ever overlap. A ball holds ninety at most and a full one breaks the wire instead of taking it, which is what keeps the ring emptying — set high, so the fight is still close when the whistle goes. No wires means out.",
+  jelly:
+    "A flask with a chute running into it, and a stream of the smallest thing coming down for ever. Two of anything that touch become one of the next thing up, which is bigger, so the bowl fills with small things that keep turning into fewer large ones. Eight rungs of ladder, and the video ends when the top of it is reached. The theme picks what is falling — fruit, planets, gems, sweets or sea creatures — and every object is shaded rather than drawn flat, so it reads as a solid of coloured gel.",
 };
 
 /** Everything a press of the button needs. */
@@ -93,6 +108,7 @@ interface Job {
   seed: number;
   invert: boolean;
   cast: CastName;
+  theme: ThemeName;
 }
 
 type Stage =
@@ -149,6 +165,7 @@ export default function HomePage() {
   // Who the twelve are. A dress, not a mode: the same seed plays the same round
   // whichever cast is wearing it.
   const [cast, setCast] = useState<CastName>("months");
+  const [theme, setTheme] = useState<ThemeName>("fruit");
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
   const [support, setSupport] = useState<string | null>(null);
 
@@ -224,7 +241,11 @@ export default function HomePage() {
           // The flags are pictures and painting is synchronous, so they are
           // decoded before the first frame rather than during it.
           if (job.cast === "countries") await loadFlags();
-          const dress = { invert: job.invert, cast: job.cast };
+          const dress = {
+            invert: job.invert,
+            cast: job.cast,
+            theme: job.theme,
+          };
           const who = castFor(job.cast);
 
           let reel: Reel;
@@ -257,6 +278,18 @@ export default function HomePage() {
             audio = await renderPachinkoAudio(round).catch(() => null);
             reel = pachinkoReel(round, dress);
             summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} on ${round.best} · ${round.waves} waves`;
+          } else if (job.mode === "jelly") {
+            // No whistle and no winner: the stream is constant, and the video is
+            // over when the ladder's last rung is made — held to the minute if
+            // it arrives early.
+            const round = generateJelly(job.seed);
+            total = round.durationInFrames;
+            onStage("sound");
+            audio = await renderJellyAudio(round).catch(() => null);
+            reel = jellyReel(round, dress);
+            summary = `${round.duration.toFixed(1)}s · ${
+              THEMES[job.theme].ladder[Math.min(round.best, 7)].name
+            } · ${round.merges} merges`;
           } else {
             // The seed picks the whistle; a side that takes the ring before it
             // keeps drawing until the minute has been cleared.
@@ -370,23 +403,46 @@ export default function HomePage() {
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-1.5">
-          <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
-          {(["months", "zodiac", "countries", "sport", "fruit"] as const).map(
-            (choice) => (
-              <button
-                key={choice}
-                type="button"
-                onClick={() => setCast(choice)}
-                disabled={busy}
-                className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
-                  cast === choice
-                    ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
-                    : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
-                }`}
-              >
-                {CAST_LABEL[choice]}
-              </button>
-            ),
+          {mode === "jelly" ? (
+            <>
+              <span className="px-1 text-sm text-[#8b90a0]">Theme</span>
+              {THEME_NAMES.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setTheme(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                    theme === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {THEMES[choice].label}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              <span className="px-1 text-sm text-[#8b90a0]">Cast</span>
+              {(
+                ["months", "zodiac", "countries", "sport", "fruit"] as const
+              ).map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  onClick={() => setCast(choice)}
+                  disabled={busy}
+                  className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-40 ${
+                    cast === choice
+                      ? "border-emerald-400/40 bg-emerald-400/15 text-emerald-200"
+                      : "border-[#23262f] bg-white/[0.04] hover:border-[#3a3f4d]"
+                  }`}
+                >
+                  {CAST_LABEL[choice]}
+                </button>
+              ))}
+            </>
           )}
         </div>
 
@@ -403,7 +459,7 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run({ mode, seed, invert, cast })}
+          onClick={() => run({ mode, seed, invert, cast, theme })}
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
