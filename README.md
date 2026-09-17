@@ -365,26 +365,31 @@ Measured in the simulation, the falling column now runs unbroken from y = −2.3
 to y = +0.47 with a gap of 0.245 between every pair, top to bottom — against a
 column that used to end at −1.0, the mouth, every single time.
 
-**The bounce is slow and nearly floating**: gravity 0.6 and restitution 0.5, a
-fifth of the gravity and half the bounce of the version before it. An object
-arrives at 0.724 radii a second and leaves its first bounce at half that, so it
-rises about fifty pixels and takes over a second to go up and come back. With
-almost no drag the pile keeps shifting long after the last thing landed, but
-nothing in it ever moves quickly. Nothing ever settles back up inside the tube:
-over twelve seeds the highest any resting object reached was 0.42 of the bowl's
-radius above centre, with the mouth at 0.99.
+**The references barely bounce at all, and that is measured rather than judged.**
+Tracking single objects through their bowl frame by frame and finding the moment
+each one lands: one arrives at 502 pixels a second and rebounds 1.3 pixels;
+another arrives at 217 and rebounds 8. That is a restitution of about **0.05**.
+An object arrives, stops, and is then shoved about by whatever lands on it next.
+Gravity is 0.6 to match how slowly their pile settles, and there is no drag at
+all, so what motion there is carries on a long time without anything ever moving
+quickly. Nothing ever settles back up inside the tube: over twelve seeds the
+highest a resting object reached was 0.42 of the bowl's radius above centre,
+against a mouth at 0.99.
 
-An earlier version ran at gravity 2.8 and restitution 0.85, tuned to match a
-measurement of the references' own motion. That measurement was reading the bug:
-everything was being slammed downward from the mouth rather than arriving at the
-conveyor's speed, so the number it matched was violence rather than life.
+**Two earlier versions got this wrong the same way, and it is worth writing down
+why.** Both were tuned to match a *pixel* measurement of the references' motion —
+the frame-to-frame change down the sides of their bowl, 1.79. Restitution is the
+easiest dial for raising that number, so the tuning kept raising it: 0.85, then
+0.5. Neither is remotely what their objects do. The aggregate was being matched
+by making the pile violent, and the violence is what kept being reported back. A
+measurement of the thing itself beats a measurement of its shadow.
 
 **The stream falls dead centre.** It was given a small lean off centre for a
 while, on the theory that a centred stream would stack the pile into a cone. It
 does not, and the lean was the first thing the eye caught: a column of objects
 sitting to one side of the tube it was falling down.
 
-**The glass is a hairline with a tight halo and a mitred elbow.** Measured across
+**The glass is a hairline with a tight halo and a rounded elbow.** Measured across
 the chute's wall: the references read 239 at the core and are back to nothing six
 pixels out — 210, 239, ten pixels of 237, then 97, 52, 17, 7, 2, 0. This was set
 to a blur of two and a bit line widths and came out as a plateau rather than a

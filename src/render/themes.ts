@@ -52,7 +52,17 @@ export interface Theme {
   ladder: readonly Rung[];
 }
 
-export type ThemeName = 'fruit' | 'planets' | 'gems' | 'sweets' | 'ocean';
+export type ThemeName =
+  | 'fruit'
+  | 'planets'
+  | 'gems'
+  | 'sweets'
+  | 'ocean'
+  | 'animals'
+  | 'vegetables'
+  | 'magic'
+  | 'insects'
+  | 'weather';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -540,12 +550,69 @@ const OCEAN_ART: readonly Rung[] = [
   { name: 'Blue tang', color: '#3d8ed0', art: { file: 'ocean/7.webp', w: 160, h: 129, cx: 0.5125, cy: 0.5233, span: 137.0 } },
 ];
 
+const ANIMALS_ART: readonly Rung[] = [
+  { name: 'Fox', color: '#ec7934', shape: { path: sphere }, art: { file: 'animals/0.webp', w: 120, h: 129, cx: 0.5208, cy: 0.4845, span: 108.0 } },
+  { name: 'Rabbit', color: '#f07998', shape: { path: sphere }, art: { file: 'animals/1.webp', w: 106, h: 141, cx: 0.5189, cy: 0.4752, span: 117.0 } },
+  { name: 'Chick', color: '#eeb412', shape: { path: sphere }, art: { file: 'animals/2.webp', w: 110, h: 122, cx: 0.5409, cy: 0.5, span: 93.0 } },
+  { name: 'Frog', color: '#6dd72a', shape: { path: sphere }, art: { file: 'animals/3.webp', w: 116, h: 112, cx: 0.5474, cy: 0.4643, span: 98.0 } },
+  { name: 'Cat', color: '#a259d6', shape: { path: sphere }, art: { file: 'animals/4.webp', w: 120, h: 125, cx: 0.5292, cy: 0.492, span: 100.0 } },
+  { name: 'Whale', color: '#1d8ce6', shape: { path: sphere }, art: { file: 'animals/5.webp', w: 120, h: 140, cx: 0.5208, cy: 0.4786, span: 115.0 } },
+  { name: 'Red panda', color: '#dd725e', shape: { path: sphere }, art: { file: 'animals/6.webp', w: 120, h: 116, cx: 0.5458, cy: 0.5086, span: 106.0 } },
+  { name: 'Lion', color: '#e9a21e', shape: { path: sphere }, art: { file: 'animals/7.webp', w: 120, h: 133, cx: 0.525, cy: 0.4925, span: 114.0 } },
+];
+
+const VEGETABLES_ART: readonly Rung[] = [
+  { name: 'Tomato', color: '#dd301b', shape: { path: sphere }, art: { file: 'vegetables/0.webp', w: 120, h: 124, cx: 0.5083, cy: 0.4758, span: 105.0 } },
+  { name: 'Carrot', color: '#e18116', shape: { path: sphere }, art: { file: 'vegetables/1.webp', w: 114, h: 140, cx: 0.5088, cy: 0.4857, span: 117.0 } },
+  { name: 'Broccoli', color: '#59c42d', shape: { path: sphere }, art: { file: 'vegetables/2.webp', w: 120, h: 138, cx: 0.5458, cy: 0.4928, span: 115.0 } },
+  { name: 'Aubergine', color: '#a168c1', shape: { path: sphere }, art: { file: 'vegetables/3.webp', w: 115, h: 143, cx: 0.5043, cy: 0.458, span: 124.0 } },
+  { name: 'Corn', color: '#d2c719', shape: { path: sphere }, art: { file: 'vegetables/4.webp', w: 113, h: 146, cx: 0.4779, cy: 0.4726, span: 123.0 } },
+  { name: 'Chilli', color: '#dc3620', shape: { path: sphere }, art: { file: 'vegetables/5.webp', w: 112, h: 140, cx: 0.4688, cy: 0.4714, span: 117.0 } },
+  { name: 'Cucumber', color: '#5ac537', shape: { path: sphere }, art: { file: 'vegetables/6.webp', w: 117, h: 144, cx: 0.4573, cy: 0.4688, span: 126.0 } },
+  { name: 'Garlic', color: '#e3cfcb', shape: { path: sphere }, art: { file: 'vegetables/7.webp', w: 120, h: 136, cx: 0.4958, cy: 0.4816, span: 114.0 } },
+];
+
+const MAGIC_ART: readonly Rung[] = [
+  { name: 'Crystal ball', color: '#bc5dd0', shape: { path: sphere }, art: { file: 'magic/0.webp', w: 120, h: 144, cx: 0.475, cy: 0.4896, span: 116.0 } },
+  { name: 'Wand', color: '#e0a51f', shape: { path: sphere }, art: { file: 'magic/1.webp', w: 111, h: 145, cx: 0.5135, cy: 0.4862, span: 120.0 } },
+  { name: 'Potion', color: '#439edb', shape: { path: sphere }, art: { file: 'magic/2.webp', w: 109, h: 148, cx: 0.4862, cy: 0.4764, span: 124.0 } },
+  { name: 'Fairy wings', color: '#e369b6', shape: { path: sphere }, art: { file: 'magic/3.webp', w: 120, h: 145, cx: 0.4958, cy: 0.4862, span: 118.0 } },
+  { name: 'Spell book', color: '#adc840', shape: { path: sphere }, art: { file: 'magic/4.webp', w: 120, h: 146, cx: 0.4792, cy: 0.5068, span: 121.0 } },
+  { name: 'Flame', color: '#e56712', shape: { path: sphere }, art: { file: 'magic/5.webp', w: 120, h: 148, cx: 0.475, cy: 0.4831, span: 126.0 } },
+  { name: 'Wizard hat', color: '#1089e5', shape: { path: sphere }, art: { file: 'magic/6.webp', w: 120, h: 142, cx: 0.4958, cy: 0.493, span: 118.0 } },
+  { name: 'Unicorn horn', color: '#ceb09e', shape: { path: sphere }, art: { file: 'magic/7.webp', w: 111, h: 148, cx: 0.5045, cy: 0.4899, span: 122.0 } },
+];
+
+const INSECTS_ART: readonly Rung[] = [
+  { name: 'Butterfly', color: '#ecaa15', shape: { path: sphere }, art: { file: 'insects/0.webp', w: 120, h: 136, cx: 0.4875, cy: 0.489, span: 116.0 } },
+  { name: 'Ladybird', color: '#d53328', shape: { path: sphere }, art: { file: 'insects/1.webp', w: 116, h: 124, cx: 0.4957, cy: 0.4597, span: 107.0 } },
+  { name: 'Caterpillar', color: '#72d025', shape: { path: sphere }, art: { file: 'insects/2.webp', w: 120, h: 101, cx: 0.5125, cy: 0.5099, span: 110.0 } },
+  { name: 'Dragonfly', color: '#2a92e0', shape: { path: sphere }, art: { file: 'insects/3.webp', w: 120, h: 136, cx: 0.4958, cy: 0.4779, span: 118.0 } },
+  { name: 'Bee', color: '#a64ed0', shape: { path: sphere }, art: { file: 'insects/4.webp', w: 120, h: 124, cx: 0.5, cy: 0.4798, span: 104.0 } },
+  { name: 'Ant', color: '#e15518', shape: { path: sphere }, art: { file: 'insects/5.webp', w: 120, h: 132, cx: 0.5083, cy: 0.4773, span: 115.0 } },
+  { name: 'Firefly', color: '#e275a5', shape: { path: sphere }, art: { file: 'insects/6.webp', w: 120, h: 147, cx: 0.5208, cy: 0.4966, span: 117.0 } },
+  { name: 'Mantis', color: '#28d4c6', shape: { path: sphere }, art: { file: 'insects/7.webp', w: 120, h: 148, cx: 0.5, cy: 0.4932, span: 129.0 } },
+];
+
+const WEATHER_ART: readonly Rung[] = [
+  { name: 'Cloud', color: '#dbd6e6', shape: { path: sphere }, art: { file: 'weather/0.webp', w: 120, h: 116, cx: 0.4833, cy: 0.4914, span: 115.0 } },
+  { name: 'Lightning', color: '#e8b118', shape: { path: sphere }, art: { file: 'weather/1.webp', w: 96, h: 129, cx: 0.5, cy: 0.4961, span: 105.0 } },
+  { name: 'Raindrop', color: '#1a8bde', shape: { path: sphere }, art: { file: 'weather/2.webp', w: 99, h: 140, cx: 0.4949, cy: 0.4929, span: 111.0 } },
+  { name: 'Sun', color: '#e3760f', shape: { path: sphere }, art: { file: 'weather/3.webp', w: 120, h: 146, cx: 0.4583, cy: 0.4966, span: 118.0 } },
+  { name: 'Tornado', color: '#a746dc', shape: { path: sphere }, art: { file: 'weather/4.webp', w: 120, h: 146, cx: 0.45, cy: 0.5068, span: 123.0 } },
+  { name: 'Snowflake', color: '#29a8da', shape: { path: sphere }, art: { file: 'weather/5.webp', w: 116, h: 140, cx: 0.4698, cy: 0.4964, span: 110.0 } },
+  { name: 'Rainbow', color: '#d4a180', shape: { path: sphere }, art: { file: 'weather/6.webp', w: 120, h: 118, cx: 0.4958, cy: 0.5042, span: 118.0 } },
+  { name: 'Storm cloud', color: '#1661d1', shape: { path: sphere }, art: { file: 'weather/7.webp', w: 120, h: 144, cx: 0.5208, cy: 0.4965, span: 114.0 } },
+];
+
 /**
- * The five ladders, each a picture, a name and a colour.
+ * The ladders, each a picture, a name and a colour.
  *
- * The drawn shapes above are kept and paired with them one for one: if a
- * theme's pictures do not arrive, the painter has something to fall back on that
- * is the right size and the right colour and reads as the right object.
+ * The first five have drawn shapes above, kept and paired with them one for one:
+ * if a theme's pictures do not arrive, the painter has something the right size
+ * and the right colour that reads as the right object. The five from the second
+ * sheet fall back to a plain sphere in their own colour, which is not the object
+ * but is at least not nothing.
  */
 const pair = (art: readonly Rung[], drawn: readonly DrawnRung[]): readonly Rung[] =>
   art.map((rung, i) => ({ ...rung, shape: drawn[i].shape }));
@@ -556,9 +623,25 @@ export const THEMES: Record<ThemeName, Theme> = {
   gems: { key: 'gems', label: 'Gems', ladder: pair(GEMS_ART, GEMS_DRAWN) },
   sweets: { key: 'sweets', label: 'Sweets', ladder: pair(SWEETS_ART, SWEETS_DRAWN) },
   ocean: { key: 'ocean', label: 'Ocean', ladder: pair(OCEAN_ART, OCEAN_DRAWN) },
+  animals: { key: 'animals', label: 'Animals', ladder: ANIMALS_ART },
+  vegetables: { key: 'vegetables', label: 'Vegetables', ladder: VEGETABLES_ART },
+  magic: { key: 'magic', label: 'Magic', ladder: MAGIC_ART },
+  insects: { key: 'insects', label: 'Insects', ladder: INSECTS_ART },
+  weather: { key: 'weather', label: 'Weather', ladder: WEATHER_ART },
 };
 
-export const THEME_NAMES: readonly ThemeName[] = ['fruit', 'planets', 'gems', 'sweets', 'ocean'];
+export const THEME_NAMES: readonly ThemeName[] = [
+  'fruit',
+  'planets',
+  'gems',
+  'sweets',
+  'ocean',
+  'animals',
+  'vegetables',
+  'magic',
+  'insects',
+  'weather',
+];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
 export const themeFor = (name?: ThemeName): Theme => THEMES[name ?? 'fruit'];

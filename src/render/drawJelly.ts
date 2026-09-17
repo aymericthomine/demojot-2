@@ -130,12 +130,8 @@ export function drawJellyFrame(
   glass.addColorStop(1, GLASS_LOW);
   ctx.save();
   ctx.lineWidth = width * LINE;
-  ctx.lineCap = 'butt';
-  // Mitred, not rounded. The chute meets the bowl at a corner in every
-  // reference — it is an elbow, not a fillet — and a round join put a bead of
-  // extra paint on the outside of it.
-  ctx.lineJoin = 'miter';
-  ctx.miterLimit = 6;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
   ctx.strokeStyle = glass;
   ctx.shadowColor = 'rgba(214,180,246,0.8)';
   ctx.shadowBlur = width * HALO;

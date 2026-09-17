@@ -79,28 +79,33 @@ const CLIMB = 1.32;
  * Gravity on a landed object, in bowl radii a second squared, and how much of a
  * landing survives it.
  *
- * Slow and nearly floating, which is what was asked for: a fifth of the gravity
- * the first working version used, and half the bounce.
+ * **The references barely bounce at all, and that is measured.** Tracking single
+ * objects through their bowl frame by frame and finding the moment each one
+ * lands: one arrives at 502 pixels a second and rebounds 1.3 pixels; another
+ * arrives at 217 and rebounds 8. That is a restitution of about 0.05 — an
+ * object arrives, stops, and is then shoved about by whatever lands on it next.
+ * It does not bounce.
  *
- * An object arrives from the conveyor at 0.724 radii a second and leaves the
- * first bounce at half of that, so it rises about a ninth of the bowl's radius
- * — fifty pixels — and takes more than a second to go up and come back. The
- * pile keeps shifting for a long time after the last thing landed, because
- * there is almost no drag to stop it, but nothing in it ever moves quickly.
+ * Gravity is low to match how slowly their pile settles, and there is no drag at
+ * all, so what motion there is carries on for a long time. Nothing in the bowl
+ * ever moves quickly.
  *
- * An earlier version ran at 2.8 and 0.85 and was tuned to match a measurement
- * of the references' own motion. That measurement was reading a bug: everything
- * was being slammed downward by gravity from the tube's mouth rather than
- * arriving at the conveyor's speed, so the number it matched was violence, not
- * life.
+ * Two earlier versions got this wrong in the same way, and it is worth writing
+ * down why. Both were tuned to match a *pixel* measurement of the references'
+ * own motion — the frame-to-frame change down the sides of their bowl, 1.79.
+ * Restitution is the easiest way to raise that number, so the tuning kept
+ * raising it: 0.85, then 0.5. Neither is anywhere near what their objects
+ * actually do. The aggregate number was being matched by making the pile
+ * violent, and the violence is what kept getting reported. A measurement of the
+ * thing itself beats a measurement of its shadow.
  */
 const GRAVITY = 0.6;
 
 /** How much bounce is left in a landing. */
-const BOUNCE = 0.5;
+const BOUNCE = 0.05;
 
 /** How much speed is rubbed off every second by everything it touches. */
-const DRAG = 0.03;
+const DRAG = 0;
 
 /** Solver passes per substep. More passes, a firmer pile. */
 const PASSES = 6;
