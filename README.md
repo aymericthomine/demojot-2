@@ -402,19 +402,39 @@ easiest dial for raising that number, so the tuning kept raising it: 0.85, then
 by making the pile violent, and the violence is what kept being reported back. A
 measurement of the thing itself beats a measurement of its shadow.
 
-**The stream falls dead centre.** It was given a small lean off centre for a
-while, on the theory that a centred stream would stack the pile into a cone. It
-does not, and the lean was the first thing the eye caught: a column of objects
-sitting to one side of the tube it was falling down.
+**The stream falls dead centre, and dead upright.** It was given a small lean off
+centre for a while, on the theory that a centred stream would stack the pile into
+a cone. It does not, and the lean was the first thing the eye caught: a column of
+objects sitting to one side of the tube it was falling down.
 
-**The glass is a hairline with a tight halo and a rounded elbow.** Measured across
+Every object was also handed a random angle at birth — a quarter of a radian
+either way — and that was worse, because it applies to the whole stream at once:
+a tube of butterflies each leaning a different way. **Nothing in any reference is
+ever spawned crooked.** In all seven chutes every object is upright and identical
+to the one above it; an angle is something an object picks up from what it
+touched, never something it is born with, which is why a banana ends up lying
+across a pile and a pearl does not. Measured on the fixed version against a
+reference at the same second: three objects in the chute, each 0.5 pixels off the
+tube's middle, each 71 pixels wide, 113 and 111 pixels apart. The reference's own
+three are 0.0, 0.5 and 2.5 off.
+
+Once an object *is* turning it is allowed to keep turning. The spin was being
+rubbed out at three a second, which stops it inside a third of a second and locks
+the pile still; at 0.8 it carries for over a second, and the bowl rotates slowly
+and continuously the way theirs does.
+
+**The glass is a hairline with a tight halo and a mitred elbow.** Measured across
 the chute's wall: the references read 239 at the core and are back to nothing six
 pixels out — 210, 239, ten pixels of 237, then 97, 52, 17, 7, 2, 0. This was set
 to a blur of two and a bit line widths and came out as a plateau rather than a
 falloff: 229 at the core and still sitting at 22 to 40 twenty pixels away, which
-is not a glow but a haze over the whole frame. The chute meets the bowl at a
-sharp corner, and a mitred join bit a notch out of the inside of that corner
-where the two strokes crossed; rounding the join and the caps fills it.
+is not a glow but a haze over the whole frame.
+
+The chute meets the bowl at a sharp corner — the wall arrives vertical and the arc
+leaves it eight degrees off horizontal — and every reference mitres it to a clean
+point. Rounding the join was tried, and at this line weight it lays a bead of
+extra paint on the outside of the corner that reads as a blob hanging off the
+elbow. It is mitred, with the limit at six so the point is never clipped.
 
 **Two of a kind merge at 1.2 times touching, not at touching.** A pile that keeps
 rearranging itself leaves a pair near rather than against, and a round ended with
@@ -430,8 +450,28 @@ reach spends the ladder faster. A reach of 1.0 keeps the references' object coun
 but takes seventy seconds to climb; 1.2 climbs in sixty-three and still reaches
 the top from every seed.
 
+**A merge springs open, it does not shrink to fit.** Measured off one merge in a
+reference frame by frame at sixty a second, as a fraction of the new object's
+settled size: 0.42 at the frame it appears, then 0.70, 0.86, 0.95 — full at fifty
+milliseconds — then 1.02, 1.05 and a peak of 1.06 at a hundred, back through 1.04
+and 1.01 and settled by two hundred. The two objects it was made from vanish in
+that same frame, with no shrink of their own. This was written the other way
+round, starting a quarter too big and easing down to size, which is the one thing
+the references certainly do not do.
+
+**The bloom around an object is tight.** Reading outwards from the middle of an
+object in the references' chute, in multiples of its own radius: their light is
+gone by 1.25 and black from there on — 1.7 at 1.4 radii, 0.5 at 1.55, 0.4 at 1.7.
+A blur of 0.55 radii trailed 6, 12, 9 and 13 over the same stretch, which is
+nothing at all on a small object and a coloured fog the size of a fist around the
+620-pixel one the video ends on. At 0.22 radii the two profiles agree to a couple
+of levels out to 1.35 radii.
+
 Videos run 60 to 71 seconds, median 63, and the last rung is reached in every
-seed tried.
+seed tried. The pile's own motion, as the mean frame-to-frame change over the
+bowl between the thirtieth and forty-fourth seconds: the references read 5.37,
+4.02 and 4.52, and this reads 4.50. Their quietest frames read 2.9 and its read
+3.4 — their bowl is never still and neither is this one.
 
 ### The objects
 
@@ -486,20 +526,46 @@ the older version of this mode rather than coming out broken.
 
 ### The sound
 
-The one thing on this site that is not borrowed. The references' soundtrack was
-measured rather than guessed: nine tenths of its energy sits between 200 Hz and
-2 kHz with almost nothing above, and there are about one and a half onsets a
-second. Reading the pitch at each onset gives D4, E4, G4, C5 and F3 — a
-pentatonic set, played soft, with no drum, no hat and no bed.
+The one thing on this site that is not borrowed — not for want of trying. **No
+note in any of the seven references can be cut out and reused.** Their ring is so
+long that every onset lands on top of the ones before it: across all seven, not
+one of six hundred onsets has even three hundredths of a second of true silence
+in front of it, and every clean-looking cut carries two other pitches ringing
+underneath. So it was measured instead, which comes to the same sound and comes
+out clean.
 
-That is synthesisable exactly, so it is synthesised: a sine with a little of its
-own octave for body, eight milliseconds of attack and a long soft tail. **A note
-a merge, and the pitch is the rung**, so the soundtrack is the video's own
-progress — the opening is low notes coming thick and fast, and by the end the
-few notes left are the high ones. Landings are not sounded at all; three a
-second of them would be a rattle. A first cut of the scale started at F3 and put
-a third of the energy under 200 Hz, because the low rungs are also the ones that
-merge most often, so it starts at D4 instead.
+**The pitches.** Classifying every onset in all seven gives D4, E4, G4, A4, C5,
+D5, E5, G5 and A5 and nothing else — a pentatonic set over two octaves, one step
+a rung. There is no bed under them and nothing at all above 3 kHz.
+
+**The timbre is almost a pure sine.** Projecting each onset onto its own harmonic
+comb, after subtracting what was already ringing underneath it, puts the second
+harmonic at 0.04 to 0.17 of the fundamental depending on the pitch and the third
+and everything above at nought. The version before this one added a *triangle* at
+twice the pitch, which also lands partials at six and ten times it, where the
+references have nothing.
+
+**And it rings for two and a half seconds.** Tracking the fundamental's own
+amplitude through fifty-six onsets that have a clear second and a half after
+them: a straight 23.5 dB a second, a t60 of 2.55. The note this replaced fell 60
+dB in 0.42 s — six times too fast — so where they have four or five notes ringing
+together at any moment, this had one plink at a time. That, and not the pitches,
+was what made it sound unlike theirs. There is a knock on the front of it too:
+theirs loses about four decibels over the first fifth of a second before settling
+into the long decay, and with that in the two agree to within half a decibel at
+every mark.
+
+**A note a merge, and the pitch is the rung**, so the soundtrack is the video's
+own progress — the opening is low notes coming thick and fast, and by the end the
+few notes left are the high ones. Landings are not sounded at all; three a second
+of them would be a rattle. The ending is not an arpeggio laid over the top
+either: theirs is the last cascade of merges heard as one, nine notes inside
+eight tenths of a second, climbing, with about seventy milliseconds between them.
+
+Measured on the finished track against the references: peak 0.48 against their
+0.59 to 0.75, RMS 0.049 against their 0.060, and a decay of −2.7, −5.9, −9.2 and
+−11.0 dB at a tenth, a fifth, two fifths and seven tenths of a second against
+their −4.4, −9.0, −10.5 and −8.9.
 
 Every other mode here plays a recording lifted from its reference, which is the
 one thing a platform could recognise and mute. This mode owes nobody anything.

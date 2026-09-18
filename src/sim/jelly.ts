@@ -17,8 +17,12 @@
  *   only becomes a body with weight once it lands on something.
  * - **A new object every third of a second**, which is what 112 pixels of
  *   spacing at 330 pixels a second comes to.
- * - **The ladder climbs by a quarter each rung.** The smallest object is 51
- *   pixels across in a 1080-wide frame; the biggest, at the end, is about 380.
+ * - **The ladder climbs by a third again each rung.** Measured by lit area
+ *   rather than bounding box, the smallest object is 65 pixels across in a
+ *   1080-wide frame and the biggest, at the end, is 620.
+ * - **Nothing falls crooked.** Every object in every reference chute is upright
+ *   and identical to the one above it. An angle is something an object picks up
+ *   from what it touches, never something it is born with.
  *
  * The bowl is round and has no lid. Things can be pushed up the chute and they
  * can rest in its mouth, which is where a losing game silts up — but nothing is
@@ -190,6 +194,25 @@ const CALM = 0.55;
 
 /** How hard a merge throws its new object sideways, in bowl radii a second. */
 const KICK = 0.55;
+
+/**
+ * How fast a turning object is slowed, per second.
+ *
+ * **Nothing in the references is ever spawned crooked.** Every object in every
+ * chute, in all seven of them, is upright and identical to the one above it —
+ * they are a conveyor of the same picture, not a tumble. An object only ever
+ * acquires an angle from something it touched: a banana lying across a pile is
+ * on its side because it rolled there.
+ *
+ * This used to hand out a random angle at birth — a quarter of a radian either
+ * way, to every object, falling and merged alike — which made the whole stream
+ * lean about, and that is the first thing anybody watching it says. The angle
+ * now starts at nought everywhere and comes only out of contact, and once an
+ * object is turning it is allowed to keep turning: their pile rotates slowly
+ * and continuously rather than locking still, and a drag of three a second
+ * stopped it inside a third of a second.
+ */
+const SPIN_DRAG = 0.8;
 
 /** Seconds the opening caption is held. */
 export const CAPTION = 1.4;
@@ -377,7 +400,7 @@ export function generateJelly(seed: number): JellyRound {
       rung: 0,
       landed: false,
       born: 1,
-      turn: rng.range(-0.25, 0.25),
+      turn: 0,
       vx: 0,
       vy: FALL,
       spin: 0,
@@ -423,8 +446,8 @@ export function generateJelly(seed: number): JellyRound {
           r: rungRadius(0),
           rung: 0,
           landed: false,
-          born: 0,
-          turn: rng.range(-0.25, 0.25),
+          born: 1,
+          turn: 0,
           vx: 0,
           vy: FALL,
           spin: 0,
@@ -466,7 +489,7 @@ export function generateJelly(seed: number): JellyRound {
         body.x += body.vx * dt;
         body.y += body.vy * dt;
         body.turn += body.spin * dt;
-        body.spin *= Math.max(0, 1 - 3 * dt);
+        body.spin *= Math.max(0, 1 - SPIN_DRAG * dt);
       }
 
       // The pile. Overlaps are pushed apart rather than solved exactly, several
@@ -564,13 +587,13 @@ export function generateJelly(seed: number): JellyRound {
               rung,
               landed: true,
               born: 0,
-              turn: rng.range(-0.2, 0.2),
+              turn: 0,
               // Thrown sideways as well as inheriting the pair's travel: a merge
               // that only ever dropped straight down built a column under the
               // chute and left the sides of the bowl bare.
               vx: vx + rng.range(-KICK, KICK),
               vy: vy - Math.abs(rng.range(0, KICK * 0.5)),
-              spin: rng.range(-1, 1),
+              spin: (a.spin + b.spin) / 2,
               calm: CALM,
             });
             merges += 1;

@@ -115,8 +115,15 @@ export function drawArt(
   // object's shape exactly and lands behind it. A disc of colour laid underneath
   // was the first try and it showed: a pineapple is tall and narrow, and the
   // parts of the disc it did not cover read as a dull smear around its foot.
+  //
+  // It is a tight bloom, and that is measured. Reading outwards from the middle
+  // of an object in the references' chute, in radii: their light is gone by 1.25
+  // and black from there on — 1.7 at 1.4 radii, 0.5 at 1.55, 0.4 at 1.7. This
+  // was set to a blur of 0.55 radii and trailed 6, 12, 9, 13 over the same
+  // stretch, which is nothing at all on a small object and a coloured fog the
+  // size of a fist around the big one at the end of the video.
   ctx.shadowColor = glow;
-  ctx.shadowBlur = radius * 0.55;
+  ctx.shadowBlur = radius * 0.22;
   ctx.drawImage(picture, -art.cx * w, -art.cy * h, w, h);
   ctx.imageSmoothingQuality = smoothing;
   ctx.restore();

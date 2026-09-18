@@ -305,32 +305,64 @@ export function renderJellyAudio(round: JellyRound): Promise<AudioBuffer> {
   const SCALE = [293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
 
   /**
-   * One note: a sine with a little of its own octave for body, a few
-   * milliseconds of attack so it does not click, and a long soft tail.
+   * One note, taken off the references rather than invented.
+   *
+   * No note in any of the seven can be cut out and reused — the ring is so long
+   * that every onset lands on top of the ones before it, and not one of them is
+   * preceded by silence. So it was measured instead, which comes to the same
+   * sound and comes out clean.
+   *
+   * **It is almost a pure sine.** Projecting each of six hundred onsets onto its
+   * own harmonic comb, after subtracting what was already ringing underneath it:
+   * the second harmonic sits at 0.04 to 0.17 of the fundamental depending on the
+   * pitch, and the third and everything above it are nought. There is nothing at
+   * all above 3 kHz in any of them, and no bed under the notes either.
+   *
+   * **And it rings for two and a half seconds.** Tracking the fundamental's own
+   * amplitude through fifty-six onsets that have a clear second and a half after
+   * them, the decay is a straight 23.5 dB a second — a t60 of 2.55 s. The note
+   * this replaced fell 60 dB in 0.42 s, six times too fast, so where they have
+   * four or five notes ringing together at any moment this had one plink at a
+   * time. That, and not the pitches, is what made it sound unlike theirs.
    */
-  const play = (at: number, hz: number, gain: number, hold = 0.42): void => {
+  const RING = 2.55;
+  const play = (at: number, hz: number, gain: number, hold = RING): void => {
     if (at < 0 || at >= round.duration) return;
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, at);
     amp.gain.exponentialRampToValueAtTime(gain, at + 0.008);
-    amp.gain.exponentialRampToValueAtTime(0.0001, at + hold);
-    amp.connect(master);
+    amp.gain.exponentialRampToValueAtTime(gain * 0.001, at + hold);
+
+    // The long ring is not the whole envelope. Theirs also loses about four
+    // decibels over the first fifth of a second and then settles into the slow
+    // decay — the knock of the strike dying away and leaving the tone behind.
+    // Measured against a straight 23.5 dB a second: at a tenth of a second
+    // theirs is 4.4 dB down where a straight line is 2.4, and at two tenths 9.0
+    // against 4.7. With the knock the two agree to within half a decibel.
+    const knock = ctx.createGain();
+    knock.gain.setValueAtTime(1, at);
+    knock.gain.exponentialRampToValueAtTime(0.63, at + 0.18);
+    amp.connect(knock).connect(master);
+    const stop = Math.min(at + hold, round.duration);
 
     const tone = ctx.createOscillator();
     tone.type = 'sine';
     tone.frequency.value = hz;
     tone.connect(amp);
     tone.start(at);
-    tone.stop(at + hold);
+    tone.stop(stop);
 
+    // The measured second harmonic, and a sine rather than a triangle: a
+    // triangle at twice the pitch also lands partials at six and ten times it,
+    // and the references have nothing there at all.
     const body = ctx.createOscillator();
-    body.type = 'triangle';
+    body.type = 'sine';
     body.frequency.value = hz * 2;
     const quiet = ctx.createGain();
-    quiet.gain.value = 0.16;
+    quiet.gain.value = 0.07;
     body.connect(quiet).connect(amp);
     body.start(at);
-    body.stop(at + hold);
+    body.stop(stop);
   };
 
   for (const event of round.events) {
@@ -338,12 +370,16 @@ export function renderJellyAudio(round: JellyRound): Promise<AudioBuffer> {
       const note = SCALE[Math.min(event.rung, SCALE.length - 1)];
       // The bigger the rung, the fewer there are and the more each one is
       // worth, so the loud notes are also the rare ones.
-      play(event.t, note, 0.1 + event.rung * 0.035, 0.42 + event.rung * 0.06);
+      play(event.t, note, 0.105 + event.rung * 0.03);
     }
     if (event.kind === 'crown') {
       // The ending: the top of the scale, arpeggiated, and left ringing.
-      [0, 0.16, 0.32, 0.48].forEach((offset, i) =>
-        play(event.t + offset, SCALE[Math.min(SCALE.length - 1, 5 + i)], 0.24, 1.4),
+      // Their endings are not an arpeggio laid over the top, they are the last
+      // cascade of merges heard as one: nine notes inside eight tenths of a
+      // second, climbing. This keeps the shape and the spacing they use — about
+      // seventy milliseconds between the notes of a run.
+      [0, 0.07, 0.15, 0.24, 0.34].forEach((offset, i) =>
+        play(event.t + offset, SCALE[Math.min(SCALE.length - 1, 4 + i)], 0.25),
       );
     }
   }

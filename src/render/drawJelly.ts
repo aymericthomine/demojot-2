@@ -130,8 +130,14 @@ export function drawJellyFrame(
   glass.addColorStop(1, GLASS_LOW);
   ctx.save();
   ctx.lineWidth = width * LINE;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  // The chute meets the bowl at a sharp corner in every reference — a mitre, and
+  // a tight one: the wall arrives vertical and the arc leaves it eight degrees
+  // off horizontal. Rounding the join was tried and it is the wrong shape; it
+  // lays a bead of extra paint on the outside of the corner, which at this line
+  // weight reads as a blob hanging off the elbow.
+  ctx.lineCap = 'butt';
+  ctx.lineJoin = 'miter';
+  ctx.miterLimit = 6;
   ctx.strokeStyle = glass;
   ctx.shadowColor = 'rgba(214,180,246,0.8)';
   ctx.shadowBlur = width * HALO;
@@ -165,7 +171,15 @@ export function drawJellyFrame(
     // The swell a merge's new object arrives with. It lives here rather than in
     // the simulation because it is a look, not a physics: the body it collides
     // with is always its true size.
-    const swell = 1 + 0.28 * (1 - body.born) ** 2;
+    //
+    // Measured off a merge in a reference, frame by frame at sixty a second, as
+    // a fraction of the new object's settled size: 0.42 at the frame it appears,
+    // 0.70, 0.86, 0.95 — full at fifty milliseconds — then 1.02, 1.05, and a
+    // peak of 1.06 at a hundred, back through 1.04 and 1.01 and settled by two
+    // hundred. It arrives small and springs open past its own size. This used to
+    // be the opposite, starting a quarter too big and shrinking to fit, which is
+    // the one thing the reference certainly does not do.
+    const swell = 1 - 0.58 * Math.exp(-4.5 * body.born) * Math.cos(2 * Math.PI * body.born);
     const size = body.r * r * swell;
 
     if (!drawArt(ctx, rung.art, x, y, size, body.turn, rung.color) && rung.shape) {
