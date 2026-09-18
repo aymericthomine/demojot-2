@@ -62,7 +62,17 @@ export type ThemeName =
   | 'vegetables'
   | 'magic'
   | 'insects'
-  | 'weather';
+  | 'weather'
+  | 'vehicles'
+  | 'dessert'
+  | 'tools'
+  | 'sealife'
+  | 'mythology'
+  | 'dinosaurs'
+  | 'music'
+  | 'sports'
+  | 'space'
+  | 'fantasy';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -617,6 +627,116 @@ const WEATHER_ART: readonly Rung[] = [
 const pair = (art: readonly Rung[], drawn: readonly DrawnRung[]): readonly Rung[] =>
   art.map((rung, i) => ({ ...rung, shape: drawn[i].shape }));
 
+const VEHICLES_ART: readonly Rung[] = [
+  { name: 'Sports car', color: '#ff3f3f', shape: { path: sphere }, art: { file: 'vehicles/0.webp', w: 310, h: 190, cx: 0.4968, cy: 0.4789, span: 220, reach: 1.369 } },
+  { name: 'Saloon', color: '#4a98ff', shape: { path: sphere }, art: { file: 'vehicles/1.webp', w: 290, h: 202, cx: 0.4983, cy: 0.4827, span: 214, reach: 1.330 } },
+  { name: 'School bus', color: '#ffc02f', shape: { path: sphere }, art: { file: 'vehicles/2.webp', w: 274, h: 230, cx: 0.4909, cy: 0.4891, span: 224, reach: 1.283 } },
+  { name: 'Tractor', color: '#a3ff6f', shape: { path: sphere }, art: { file: 'vehicles/3.webp', w: 168, h: 212, cx: 0.4970, cy: 0.4764, span: 176.5, reach: 1.258 } },
+  { name: 'Motorbike', color: '#c761ff', shape: { path: sphere }, art: { file: 'vehicles/4.webp', w: 238, h: 216, cx: 0.4790, cy: 0.5139, span: 204, reach: 1.233 } },
+  { name: 'Helicopter', color: '#51d1ff', shape: { path: sphere }, art: { file: 'vehicles/5.webp', w: 280, h: 238, cx: 0.4964, cy: 0.4811, span: 230.5, reach: 1.313 } },
+  { name: 'Aeroplane', color: '#ff8226', shape: { path: sphere }, art: { file: 'vehicles/6.webp', w: 296, h: 200, cx: 0.4966, cy: 0.4925, span: 221.5, reach: 1.372 } },
+  { name: 'Hot-air balloon', color: '#ff5ba2', shape: { path: sphere }, art: { file: 'vehicles/7.webp', w: 212, h: 280, cx: 0.5047, cy: 0.5000, span: 216, reach: 1.210 } },
+];
+
+const DESSERT_ART: readonly Rung[] = [
+  { name: 'Chocolate cake', color: '#ff7d58', shape: { path: sphere }, art: { file: 'dessert/0.webp', w: 226, h: 224, cx: 0.5177, cy: 0.5201, span: 207.5, reach: 1.388 } },
+  { name: 'Ice cream', color: '#ff756e', shape: { path: sphere }, art: { file: 'dessert/1.webp', w: 218, h: 278, cx: 0.5115, cy: 0.5000, span: 220.5, reach: 1.306 } },
+  { name: 'Lemon tart', color: '#ffbb3b', shape: { path: sphere }, art: { file: 'dessert/2.webp', w: 272, h: 220, cx: 0.4982, cy: 0.4932, span: 217, reach: 1.164 } },
+  { name: 'Macaron', color: '#ff6184', shape: { path: sphere }, art: { file: 'dessert/3.webp', w: 234, h: 228, cx: 0.4979, cy: 0.4846, span: 197, reach: 1.127 } },
+  { name: 'Blueberry muffin', color: '#8db7ff', shape: { path: sphere }, art: { file: 'dessert/4.webp', w: 244, h: 252, cx: 0.5020, cy: 0.4980, span: 217, reach: 1.043 } },
+  { name: 'Creme brulee', color: '#ff852b', shape: { path: sphere }, art: { file: 'dessert/5.webp', w: 268, h: 240, cx: 0.5000, cy: 0.4896, span: 224.5, reach: 1.133 } },
+  { name: 'Cupcake', color: '#eb63ff', shape: { path: sphere }, art: { file: 'dessert/6.webp', w: 234, h: 274, cx: 0.5021, cy: 0.4945, span: 224, reach: 1.141 } },
+  { name: 'Meringue', color: '#fff4e9', shape: { path: sphere }, art: { file: 'dessert/7.webp', w: 240, h: 246, cx: 0.5000, cy: 0.4858, span: 216.5, reach: 1.134 } },
+];
+
+const TOOLS_ART: readonly Rung[] = [
+  { name: 'Hammer', color: '#ffbc3b', shape: { path: sphere }, art: { file: 'tools/0.webp', w: 220, h: 242, cx: 0.4955, cy: 0.5083, span: 197, reach: 1.292 } },
+  { name: 'Spanner', color: '#fbfaff', shape: { path: sphere }, art: { file: 'tools/1.webp', w: 242, h: 262, cx: 0.4979, cy: 0.4924, span: 222.5, reach: 1.304 } },
+  { name: 'Screwdriver', color: '#529aff', shape: { path: sphere }, art: { file: 'tools/2.webp', w: 240, h: 274, cx: 0.5021, cy: 0.4836, span: 228, reach: 1.363 } },
+  { name: 'Pliers', color: '#ff6f70', shape: { path: sphere }, art: { file: 'tools/3.webp', w: 238, h: 276, cx: 0.5000, cy: 0.4946, span: 229.5, reach: 1.338 } },
+  { name: 'Handsaw', color: '#74ff4e', shape: { path: sphere }, art: { file: 'tools/4.webp', w: 294, h: 240, cx: 0.5017, cy: 0.4938, span: 239, reach: 1.331 } },
+  { name: 'Drill', color: '#ff681d', shape: { path: sphere }, art: { file: 'tools/5.webp', w: 190, h: 246, cx: 0.4763, cy: 0.4919, span: 192.5, reach: 1.263 } },
+  { name: 'Paintbrush', color: '#c861ff', shape: { path: sphere }, art: { file: 'tools/6.webp', w: 252, h: 268, cx: 0.5000, cy: 0.4888, span: 227, reach: 1.372 } },
+  { name: 'Tape measure', color: '#77f1ff', shape: { path: sphere }, art: { file: 'tools/7.webp', w: 270, h: 236, cx: 0.5056, cy: 0.5021, span: 226, reach: 1.350 } },
+];
+
+const SEALIFE_ART: readonly Rung[] = [
+  { name: 'Seahorse', color: '#ff9426', shape: { path: sphere }, art: { file: 'sealife/0.webp', w: 172, h: 254, cx: 0.5000, cy: 0.5059, span: 184.5, reach: 1.276 } },
+  { name: 'Dolphin', color: '#389cff', shape: { path: sphere }, art: { file: 'sealife/1.webp', w: 308, h: 246, cx: 0.5000, cy: 0.4980, span: 246.5, reach: 1.404 } },
+  { name: 'Crab', color: '#ffbf22', shape: { path: sphere }, art: { file: 'sealife/2.webp', w: 270, h: 244, cx: 0.4963, cy: 0.5020, span: 228.5, reach: 1.180 } },
+  { name: 'Octopus', color: '#c14fff', shape: { path: sphere }, art: { file: 'sealife/3.webp', w: 294, h: 272, cx: 0.5000, cy: 0.4945, span: 254.5, reach: 1.152 } },
+  { name: 'Turtle', color: '#82ff4e', shape: { path: sphere }, art: { file: 'sealife/4.webp', w: 310, h: 220, cx: 0.4984, cy: 0.4932, span: 236, reach: 1.303 } },
+  { name: 'Coral', color: '#ff4f94', shape: { path: sphere }, art: { file: 'sealife/5.webp', w: 240, h: 280, cx: 0.5000, cy: 0.4911, span: 227.5, reach: 1.088 } },
+  { name: 'Shark', color: '#46cfff', shape: { path: sphere }, art: { file: 'sealife/6.webp', w: 308, h: 238, cx: 0.5049, cy: 0.4895, span: 243, reach: 1.340 } },
+  { name: 'Lobster', color: '#ff3532', shape: { path: sphere }, art: { file: 'sealife/7.webp', w: 318, h: 268, cx: 0.5016, cy: 0.4944, span: 263, reach: 1.179 } },
+];
+
+const MYTHOLOGY_ART: readonly Rung[] = [
+  { name: 'Thunderbolt', color: '#ffbb2f', shape: { path: sphere }, art: { file: 'mythology/0.webp', w: 182, h: 258, cx: 0.5000, cy: 0.4903, span: 191.5, reach: 1.529 } },
+  { name: 'Trident', color: '#4cc6ff', shape: { path: sphere }, art: { file: 'mythology/1.webp', w: 230, h: 314, cx: 0.5022, cy: 0.5000, span: 242.5, reach: 1.386 } },
+  { name: 'Helmet', color: '#ff4b4a', shape: { path: sphere }, art: { file: 'mythology/2.webp', w: 228, h: 268, cx: 0.4846, cy: 0.4869, span: 224, reach: 1.285 } },
+  { name: 'Owl', color: '#b752ff', shape: { path: sphere }, art: { file: 'mythology/3.webp', w: 218, h: 292, cx: 0.5023, cy: 0.4897, span: 224.5, reach: 1.353 } },
+  { name: 'Medusa', color: '#6cff45', shape: { path: sphere }, art: { file: 'mythology/4.webp', w: 280, h: 292, cx: 0.5000, cy: 0.4846, span: 254.5, reach: 1.104 } },
+  { name: 'Winged sandals', color: '#ff8e54', shape: { path: sphere }, art: { file: 'mythology/5.webp', w: 300, h: 272, cx: 0.5050, cy: 0.4908, span: 256, reach: 1.222 } },
+  { name: 'Lyre', color: '#3bdbff', shape: { path: sphere }, art: { file: 'mythology/6.webp', w: 234, h: 296, cx: 0.5043, cy: 0.4916, span: 231.5, reach: 1.272 } },
+  { name: 'Heart', color: '#ff59be', shape: { path: sphere }, art: { file: 'mythology/7.webp', w: 264, h: 268, cx: 0.5019, cy: 0.4963, span: 234.5, reach: 1.192 } },
+];
+
+const DINOSAURS_ART: readonly Rung[] = [
+  { name: 'Tyrannosaur', color: '#82ff35', shape: { path: sphere }, art: { file: 'dinosaurs/0.webp', w: 234, h: 252, cx: 0.5214, cy: 0.4980, span: 215.5, reach: 1.179 } },
+  { name: 'Triceratops', color: '#2eabff', shape: { path: sphere }, art: { file: 'dinosaurs/1.webp', w: 246, h: 242, cx: 0.5305, cy: 0.4897, span: 218, reach: 1.285 } },
+  { name: 'Stegosaur', color: '#ffd81c', shape: { path: sphere }, art: { file: 'dinosaurs/2.webp', w: 246, h: 244, cx: 0.4980, cy: 0.4857, span: 231, reach: 1.212 } },
+  { name: 'Pterodactyl', color: '#c543ff', shape: { path: sphere }, art: { file: 'dinosaurs/3.webp', w: 234, h: 228, cx: 0.5278, cy: 0.4956, span: 208.5, reach: 1.340 } },
+  { name: 'Brontosaur', color: '#ff861a', shape: { path: sphere }, art: { file: 'dinosaurs/4.webp', w: 182, h: 284, cx: 0.5495, cy: 0.5000, span: 210, reach: 1.342 } },
+  { name: 'Red tyrannosaur', color: '#ff413e', shape: { path: sphere }, art: { file: 'dinosaurs/5.webp', w: 246, h: 250, cx: 0.4980, cy: 0.5020, span: 234, reach: 1.297 } },
+  { name: 'Ankylosaur', color: '#34fff1', shape: { path: sphere }, art: { file: 'dinosaurs/6.webp', w: 246, h: 220, cx: 0.4980, cy: 0.4977, span: 217, reach: 1.280 } },
+  { name: 'Hatching egg', color: '#ff8ca8', shape: { path: sphere }, art: { file: 'dinosaurs/7.webp', w: 226, h: 254, cx: 0.4580, cy: 0.5039, span: 214.5, reach: 1.113 } },
+];
+
+const MUSIC_ART: readonly Rung[] = [
+  { name: 'Record', color: '#ffc630', shape: { path: sphere }, art: { file: 'music/0.webp', w: 228, h: 240, cx: 0.4912, cy: 0.4979, span: 201.5, reach: 1.064 } },
+  { name: 'Guitar', color: '#35bdff', shape: { path: sphere }, art: { file: 'music/1.webp', w: 246, h: 280, cx: 0.4878, cy: 0.5018, span: 239.5, reach: 1.374 } },
+  { name: 'Microphone', color: '#ff63bb', shape: { path: sphere }, art: { file: 'music/2.webp', w: 156, h: 262, cx: 0.4872, cy: 0.5038, span: 175, reach: 1.356 } },
+  { name: 'Drum', color: '#c762ff', shape: { path: sphere }, art: { file: 'music/3.webp', w: 200, h: 224, cx: 0.4525, cy: 0.4844, span: 184, reach: 1.293 } },
+  { name: 'Keyboard', color: '#ffd874', shape: { path: sphere }, art: { file: 'music/4.webp', w: 216, h: 212, cx: 0.4653, cy: 0.4953, span: 190.5, reach: 1.368 } },
+  { name: 'Saxophone', color: '#ff8f1d', shape: { path: sphere }, art: { file: 'music/5.webp', w: 210, h: 260, cx: 0.4595, cy: 0.5038, span: 211.5, reach: 1.222 } },
+  { name: 'Headphones', color: '#35e6ff', shape: { path: sphere }, art: { file: 'music/6.webp', w: 212, h: 240, cx: 0.4693, cy: 0.4896, span: 206, reach: 1.219 } },
+  { name: 'Music note', color: '#ff3a37', shape: { path: sphere }, art: { file: 'music/7.webp', w: 212, h: 246, cx: 0.4741, cy: 0.5061, span: 204, reach: 1.334 } },
+];
+
+const SPORTS_ART: readonly Rung[] = [
+  { name: 'Basketball', color: '#ff6320', shape: { path: sphere }, art: { file: 'sports/0.webp', w: 220, h: 232, cx: 0.4795, cy: 0.4914, span: 193.5, reach: 1.055 } },
+  { name: 'Football', color: '#fff8ed', shape: { path: sphere }, art: { file: 'sports/1.webp', w: 206, h: 228, cx: 0.4709, cy: 0.4978, span: 189.5, reach: 1.054 } },
+  { name: 'Tennis ball', color: '#e4ff37', shape: { path: sphere }, art: { file: 'sports/2.webp', w: 198, h: 224, cx: 0.4571, cy: 0.4866, span: 186.5, reach: 1.053 } },
+  { name: 'Rugby ball', color: '#ff5651', shape: { path: sphere }, art: { file: 'sports/3.webp', w: 192, h: 224, cx: 0.4583, cy: 0.4844, span: 185.5, reach: 1.323 } },
+  { name: 'Baseball', color: '#b6ff3c', shape: { path: sphere }, art: { file: 'sports/4.webp', w: 194, h: 230, cx: 0.4562, cy: 0.4978, span: 187, reach: 1.114 } },
+  { name: 'Volleyball', color: '#2686ff', shape: { path: sphere }, art: { file: 'sports/5.webp', w: 202, h: 236, cx: 0.4480, cy: 0.4936, span: 191, reach: 1.156 } },
+  { name: 'Bowling ball', color: '#943bff', shape: { path: sphere }, art: { file: 'sports/6.webp', w: 204, h: 236, cx: 0.4510, cy: 0.5000, span: 195, reach: 1.166 } },
+  { name: 'Hockey puck', color: '#1dbeff', shape: { path: sphere }, art: { file: 'sports/7.webp', w: 230, h: 210, cx: 0.4543, cy: 0.4857, span: 191.5, reach: 1.167 } },
+];
+
+const SPACE_ART: readonly Rung[] = [
+  { name: 'Rocket', color: '#ffeff9', shape: { path: sphere }, art: { file: 'space/0.webp', w: 208, h: 250, cx: 0.4832, cy: 0.5020, span: 201, reach: 1.378 } },
+  { name: 'Satellite', color: '#e1ffed', shape: { path: sphere }, art: { file: 'space/1.webp', w: 234, h: 232, cx: 0.4594, cy: 0.4935, span: 211, reach: 1.344 } },
+  { name: 'Helmet', color: '#3f93ff', shape: { path: sphere }, art: { file: 'space/2.webp', w: 206, h: 248, cx: 0.4539, cy: 0.5020, span: 200, reach: 1.226 } },
+  { name: 'Alien', color: '#ab46ff', shape: { path: sphere }, art: { file: 'space/3.webp', w: 188, h: 248, cx: 0.4388, cy: 0.5060, span: 192, reach: 1.205 } },
+  { name: 'Comet', color: '#ff7724', shape: { path: sphere }, art: { file: 'space/4.webp', w: 216, h: 252, cx: 0.4606, cy: 0.4980, span: 210, reach: 1.396 } },
+  { name: 'Flying saucer', color: '#4dd7ff', shape: { path: sphere }, art: { file: 'space/5.webp', w: 246, h: 214, cx: 0.4980, cy: 0.4883, span: 211, reach: 1.295 } },
+  { name: 'Space station', color: '#ff62c9', shape: { path: sphere }, art: { file: 'space/6.webp', w: 242, h: 222, cx: 0.4545, cy: 0.4977, span: 205.5, reach: 1.166 } },
+  { name: 'Shooting star', color: '#ffcd25', shape: { path: sphere }, art: { file: 'space/7.webp', w: 248, h: 212, cx: 0.4919, cy: 0.5024, span: 213.5, reach: 1.270 } },
+];
+
+const FANTASY_ART: readonly Rung[] = [
+  { name: 'Dragon', color: '#7aff39', shape: { path: sphere }, art: { file: 'fantasy/0.webp', w: 238, h: 284, cx: 0.5273, cy: 0.4912, span: 240, reach: 1.264 } },
+  { name: 'Unicorn', color: '#ffecda', shape: { path: sphere }, art: { file: 'fantasy/1.webp', w: 220, h: 288, cx: 0.5250, cy: 0.4913, span: 234, reach: 1.406 } },
+  { name: 'Phoenix', color: '#ff3834', shape: { path: sphere }, art: { file: 'fantasy/2.webp', w: 246, h: 308, cx: 0.4939, cy: 0.4968, span: 262.5, reach: 1.317 } },
+  { name: 'Griffin', color: '#2790ff', shape: { path: sphere }, art: { file: 'fantasy/3.webp', w: 242, h: 292, cx: 0.5083, cy: 0.4914, span: 237.5, reach: 1.400 } },
+  { name: 'Mermaid tail', color: '#ad4cff', shape: { path: sphere }, art: { file: 'fantasy/4.webp', w: 214, h: 290, cx: 0.4930, cy: 0.4931, span: 219.5, reach: 1.345 } },
+  { name: 'Firebird feather', color: '#ff7f25', shape: { path: sphere }, art: { file: 'fantasy/5.webp', w: 218, h: 300, cx: 0.4610, cy: 0.5050, span: 239, reach: 1.425 } },
+  { name: 'Fairy', color: '#5dfffa', shape: { path: sphere }, art: { file: 'fantasy/6.webp', w: 224, h: 288, cx: 0.4777, cy: 0.5052, span: 229.5, reach: 1.407 } },
+  { name: 'Sphinx', color: '#ffba21', shape: { path: sphere }, art: { file: 'fantasy/7.webp', w: 240, h: 300, cx: 0.5000, cy: 0.4933, span: 239, reach: 1.310 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -628,6 +748,16 @@ export const THEMES: Record<ThemeName, Theme> = {
   magic: { key: 'magic', label: 'Magic', ladder: MAGIC_ART },
   insects: { key: 'insects', label: 'Insects', ladder: INSECTS_ART },
   weather: { key: 'weather', label: 'Weather', ladder: WEATHER_ART },
+  vehicles: { key: 'vehicles', label: 'Vehicles', ladder: VEHICLES_ART },
+  dessert: { key: 'dessert', label: 'Dessert', ladder: DESSERT_ART },
+  tools: { key: 'tools', label: 'Tools', ladder: TOOLS_ART },
+  sealife: { key: 'sealife', label: 'Ocean life', ladder: SEALIFE_ART },
+  mythology: { key: 'mythology', label: 'Mythology', ladder: MYTHOLOGY_ART },
+  dinosaurs: { key: 'dinosaurs', label: 'Dinosaurs', ladder: DINOSAURS_ART },
+  music: { key: 'music', label: 'Music', ladder: MUSIC_ART },
+  sports: { key: 'sports', label: 'Sports', ladder: SPORTS_ART },
+  space: { key: 'space', label: 'Space', ladder: SPACE_ART },
+  fantasy: { key: 'fantasy', label: 'Fantasy', ladder: FANTASY_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -641,6 +771,16 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'magic',
   'insects',
   'weather',
+  'vehicles',
+  'dessert',
+  'tools',
+  'sealife',
+  'mythology',
+  'dinosaurs',
+  'music',
+  'sports',
+  'space',
+  'fantasy',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */

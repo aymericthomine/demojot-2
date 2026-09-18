@@ -3,8 +3,8 @@
 /**
  * The themes' artwork.
  *
- * Eighty pictures, eight to a theme, cut out of two sheets that were supplied for
- * this mode. They replace the drawn gels that were here first — those were made
+ * A hundred and sixty pictures, eight to a theme, cut out of four sheets that
+ * were supplied for this mode. They replace the drawn gels that were here first — those were made
  * because there was nothing else, and the note in the README at the time said
  * plainly that they were drawn gels rather than rendered assets and nobody would
  * mistake one for the other. These are the rendered assets.
@@ -16,7 +16,8 @@
  *
  * **They are files rather than data.** The flags in this project are carried as
  * base64 inside a module because twelve small icons come to ninety kilobytes and
- * data cannot fail to arrive. Eighty of these come to megabytes as base64, which
+ * data cannot fail to arrive. All of them together come to megabytes as base64,
+ * which
  * is a page that will not load on a phone, so they are fetched — but only the
  * eight belonging to the theme being made.
  *
@@ -52,7 +53,7 @@ export interface Art {
    * past the circle the simulation is pushing around.
    *
    * It is never one. A hat has a brim, a dragonfly has wings and an ant has
-   * legs, and across all eighty pictures the middle of this is 1.19: every
+   * legs, and across every picture the middle of this is 1.19: every
    * object was being drawn a fifth wider than the circle that holds it off the
    * glass. Resting against the bowl, an object the size of the one the video
    * ends on hung eighty pixels out through the side of the flask, which is what

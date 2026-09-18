@@ -56,7 +56,7 @@ const MOUTH = -Math.sqrt(1 - CHUTE * CHUTE);
  * The references never need this: a pearl, a planet and a cut gem all fill the
  * circle that carries them and stop there. The pictures this mode was given do
  * not — a hat has a brim, a dragonfly has wings, an ant has legs — and across
- * all eighty of them the solid part reaches a median of 1.144 times the radius
+ * all of them the solid part reaches a median of 1.144 times the radius
  * the simulation is pushing around. Resting against the bowl, the object the
  * video ends on hung eighty pixels out through the side of the flask, and the
  * wall's own line appeared to slice it in half.
