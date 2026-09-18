@@ -32,6 +32,7 @@
  * the older version of this mode rather than coming out broken.
  */
 
+import { SKIN } from '../sim/jelly';
 import type { ThemeName } from './themes';
 
 /** Where a picture's body sits inside it, so the art can be put on a circle. */
@@ -45,6 +46,29 @@ export interface Art {
   cy: number;
   /** How many of the picture's pixels the body spans, corner to corner. */
   span: number;
+  /**
+   * The furthest any lit pixel of the picture sits from the body's middle, as a
+   * multiple of half the span — which is to say, how far the drawing sticks out
+   * past the circle the simulation is pushing around.
+   *
+   * It is never one. A hat has a brim, a dragonfly has wings and an ant has
+   * legs, and across all eighty pictures the middle of this is 1.19: every
+   * object was being drawn a fifth wider than the circle that holds it off the
+   * glass. Resting against the bowl, an object the size of the one the video
+   * ends on hung eighty pixels out through the side of the flask, which is what
+   * the wall's own line then appeared to slice through.
+   *
+   * It is measured on the solid body rather than on the last visible speck of
+   * glow, because glow crossing the glass is what the references do too — their
+   * bloom bleeds over the line wherever an object rests against it. Solid
+   * crossing the glass is not.
+   *
+   * The simulation holds every object `SKIN` radii off the glass, which is the
+   * median of this number, so most pictures are drawn at their own size and
+   * land exactly against the line. Only the handful that reach further — a
+   * fairy's wings, a witch's hat — are scaled back to it.
+   */
+  reach: number;
 }
 
 const loaded = new Map<string, ImageBitmap>();
@@ -100,15 +124,28 @@ export function drawArt(
   radius: number,
   turn: number,
   glow: string,
+  squash = 0,
 ): boolean {
   const picture = loaded.get(art.file);
   if (!picture) return false;
-  const scale = (radius * 2) / art.span;
+  // The glass is held a picture's-width off every object's circle, so a picture
+  // that reaches no further than that needs no scaling at all; only the few that
+  // reach beyond it are brought back in.
+  const scale = (radius * 2) / (art.span * Math.max(1, art.reach / SKIN));
   const w = art.w * scale;
   const h = art.h * scale;
   ctx.save();
   ctx.translate(x, y);
   if (turn) ctx.rotate(turn);
+  // The ring. Area is kept: as much wider as it is flatter, so a jelly pulses
+  // rather than growing and shrinking. The axis is the frame's, not the
+  // object's — a gel settles against the ground it is sitting on, whichever way
+  // up the picture happens to have ended.
+  if (squash) {
+    if (turn) ctx.rotate(-turn);
+    ctx.scale(1 + squash, 1 / (1 + squash));
+    if (turn) ctx.rotate(turn);
+  }
   const smoothing = ctx.imageSmoothingQuality;
   ctx.imageSmoothingQuality = 'high';
   // The bloom is cast by the picture's own alpha, in one pass, so it takes the

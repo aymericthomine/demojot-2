@@ -387,9 +387,16 @@ column that used to end at −1.0, the mouth, every single time.
 Tracking single objects through their bowl frame by frame and finding the moment
 each one lands: one arrives at 502 pixels a second and rebounds 1.3 pixels;
 another arrives at 217 and rebounds 8. That is a restitution of about **0.05**.
-An object arrives, stops, and is then shoved about by whatever lands on it next.
-Gravity is 0.6 to match how slowly their pile settles, and there is no drag at
-all, so what motion there is carries on a long time without anything ever moving
+
+That is what theirs do, and it is what this did — and what it reads as, watching
+it, is an object arriving and sticking to the wall. So the restitution here is
+**0.35, asked for rather than measured**, and it is worth writing down which is
+which. With gravity this low a little of it buys a long, lazy arc instead of a
+hop: an object arriving at the stream's own speed comes back up about twenty-four
+pixels and takes over eight tenths of a second to do it. Nothing moves any
+quicker than it did; there is simply somewhere for a landing to go. Gravity stays
+at 0.6 to match how slowly their pile settles, and there is no drag at all, so
+what motion there is carries on a long time without anything ever moving
 quickly. Nothing ever settles back up inside the tube: over twelve seeds the
 highest a resting object reached was 0.42 of the bowl's radius above centre,
 against a mouth at 0.99.
@@ -418,10 +425,13 @@ reference at the same second: three objects in the chute, each 0.5 pixels off th
 tube's middle, each 71 pixels wide, 113 and 111 pixels apart. The reference's own
 three are 0.0, 0.5 and 2.5 off.
 
-Once an object *is* turning it is allowed to keep turning. The spin was being
-rubbed out at three a second, which stops it inside a third of a second and locks
-the pile still; at 0.8 it carries for over a second, and the bowl rotates slowly
-and continuously the way theirs does.
+Once an object *is* turning it is allowed to keep turning, but not far. Rotation
+that only ever decays has no ceiling, and over a minute in a jostling pile an
+object accumulates whatever it is given — a wizard's hat ended up lying on its
+side with its point down. Nothing in the references tumbles like that: their pile
+leans, a banana across a heap, a donut tipped on its rim, and settles. So the
+lean is stopped at a quarter of a right angle, and an object at the stop spends
+its spin rather than storing it.
 
 **The glass is a hairline with a tight halo and a mitred elbow.** Measured across
 the chute's wall: the references read 239 at the core and are back to nothing six
@@ -472,6 +482,30 @@ seed tried. The pile's own motion, as the mean frame-to-frame change over the
 bowl between the thirtieth and forty-fourth seconds: the references read 5.37,
 4.02 and 4.52, and this reads 4.50. Their quietest frames read 2.9 and its read
 3.4 — their bowl is never still and neither is this one.
+
+**Jelly wobbles, and it is the one thing in the references that is not a picture
+being moved about.** It is plain once an object is watched at size: a raspberry
+resting in their bowl goes tall and narrow, then wide and squat, then tall again,
+about five times a second, and its area does not change while it does. That is a
+gel ringing. Measured on a resting one, well into its decay, the width-to-height
+ratio swings between 0.903 and 0.969 — a squash of under two per cent; fresh out
+of a merge it is several times that. Here a merge starts the ring at nine per
+cent and a landing gets a share of it in proportion to how hard it arrives, at
+five a second, fading over half a second. Area is kept: as much wider as it is
+flatter.
+
+**The glass holds the picture, not the circle.** The references never need such a
+thing — a pearl, a planet and a cut gem all fill the circle that carries them and
+stop there. The pictures this mode was given do not: a hat has a brim, a
+dragonfly has wings, an ant has legs, and across all eighty the solid part
+reaches a median of 1.144 times the radius the simulation is pushing around.
+Resting against the bowl, the object the video ends on hung eighty pixels out
+through the side of the flask and the wall's own line appeared to slice it in
+half. Shrinking every picture to fit its circle was the first answer and it is
+the wrong one — it takes a fifth off everything and leaves the bowl looking thin,
+because a butterfly inside a circle covers far less of it than a pearl does. The
+circle is held a picture's-width off the glass instead, and only the few pictures
+that reach further than that are scaled back to it.
 
 ### The objects
 

@@ -49,6 +49,26 @@ export const CHUTE = 0.1425;
 /** Where the chute's mouth stops being a chute and starts being the bowl. */
 const MOUTH = -Math.sqrt(1 - CHUTE * CHUTE);
 
+/**
+ * How much bigger than its own circle an object's picture is, so the glass can
+ * be told to hold the picture rather than the circle.
+ *
+ * The references never need this: a pearl, a planet and a cut gem all fill the
+ * circle that carries them and stop there. The pictures this mode was given do
+ * not — a hat has a brim, a dragonfly has wings, an ant has legs — and across
+ * all eighty of them the solid part reaches a median of 1.144 times the radius
+ * the simulation is pushing around. Resting against the bowl, the object the
+ * video ends on hung eighty pixels out through the side of the flask, and the
+ * wall's own line appeared to slice it in half.
+ *
+ * Shrinking every picture to fit its circle was the first answer and it is the
+ * wrong one: it took a fifth off everything and left the bowl looking thin,
+ * because a butterfly inside a circle covers far less of it than a pearl does.
+ * So the circle is held a picture's-width off the glass instead, and only the
+ * handful of pictures that reach further than this are scaled back to it.
+ */
+export const SKIN = 1.144;
+
 /** How high above the bowl an object is made, in bowl radii. */
 const SPAWN = -2.4;
 
@@ -121,8 +141,22 @@ const CLIMB = 1.37;
  */
 const GRAVITY = 0.6;
 
-/** How much bounce is left in a landing. */
-const BOUNCE = 0.05;
+/**
+ * How much bounce is left in a landing.
+ *
+ * Measured off the references at 0.05, which is as near to nothing as makes no
+ * difference: one object arrives at 502 pixels a second and rebounds 1.3 pixels.
+ * That is what their objects do, and it was what this did — and watching it,
+ * what it reads as is an object arriving and sticking to the wall.
+ *
+ * So this one is asked for rather than measured, and it is worth writing down
+ * which. With gravity this low a little restitution buys a long, lazy arc
+ * instead of a hop: at 0.35, an object arriving at the stream's own speed comes
+ * back up about twenty-four pixels and takes over eight tenths of a second to
+ * do it. Nothing moves any quicker than it did; there is simply somewhere for
+ * the landing to go.
+ */
+const BOUNCE = 0.35;
 
 /** How much speed is rubbed off every second by everything it touches. */
 const DRAG = 0;
@@ -212,7 +246,43 @@ const KICK = 0.55;
  * and continuously rather than locking still, and a drag of three a second
  * stopped it inside a third of a second.
  */
-const SPIN_DRAG = 0.8;
+const SPIN_DRAG = 2.2;
+
+/** How much of a contact's closing speed is turned into spin. */
+const SPIN_GRIP = 0.18;
+
+/**
+ * The furthest from upright an object is ever allowed to get, in radians.
+ *
+ * Rotation that only ever decays has no ceiling, and over a minute in a jostling
+ * pile an object accumulates whatever it is given: a wizard's hat ended up lying
+ * on its side with its point down. Nothing in the references tumbles like that.
+ * Their pile leans — a banana across a heap, a donut tipped on its rim — and
+ * settles, and a quarter of a right angle is as far as any of it goes. Once an
+ * object is at the limit its spin is spent rather than stored, so it rests
+ * against the stop instead of straining at it.
+ */
+const TILT = 0.45;
+
+/**
+ * The wobble: how hard a jelly is squashed, how fast it rings and how long for.
+ *
+ * This is the one thing in the references that is not a picture being moved
+ * about, and it is plain once an object is watched at size: a raspberry resting
+ * in their bowl goes tall and narrow, then wide and squat, then tall again,
+ * about five times a second, and its area does not change while it does it.
+ * That is a gel ringing, not a sprite rotating.
+ *
+ * Measured on a resting one, well into its decay, the width-to-height ratio
+ * swings between 0.903 and 0.969 — a squash of under two per cent. Fresh out of
+ * a merge it is several times that. The amplitude here is what a merge starts
+ * with; a landing gets a share of it in proportion to how hard it arrives.
+ */
+const WOBBLE = 0.09;
+const WOBBLE_HZ = 5;
+const WOBBLE_FADE = 0.5;
+/** How much of an arriving speed becomes wobble, in bowl radii a second. */
+const WOBBLE_HIT = 0.16;
 
 /** Seconds the opening caption is held. */
 export const CAPTION = 1.4;
@@ -243,6 +313,12 @@ export interface JellyBody {
   born: number;
   /** Which way up it sits, in radians. */
   turn: number;
+  /**
+   * How squashed it is right now: positive is wide and flat, negative is tall
+   * and narrow, and nought is its own shape. Area is kept, so the painter
+   * stretches one way by as much as it squeezes the other.
+   */
+  squash: number;
 }
 
 export interface JellySpark {
@@ -306,6 +382,9 @@ interface Live extends JellyBody {
   spin: number;
   /** Seconds left before it may merge again. */
   calm: number;
+  /** How hard it is still ringing, and where in the ring it is. */
+  wob: number;
+  wobAt: number;
 }
 
 /**
@@ -401,10 +480,13 @@ export function generateJelly(seed: number): JellyRound {
       landed: false,
       born: 1,
       turn: 0,
+      squash: 0,
       vx: 0,
       vy: FALL,
       spin: 0,
       calm: 0,
+      wob: 0,
+      wobAt: 0,
     });
   }
   nextDrop = EVERY;
@@ -420,6 +502,7 @@ export function generateJelly(seed: number): JellyRound {
         landed: b.landed,
         born: b.born,
         turn: b.turn,
+        squash: b.squash,
       })),
       sparks: sparks.map((s) => ({ x: s.x, y: s.y, r: s.r, age: s.age, rung: s.rung })),
       rings: rings.map((g) => ({ x: g.x, y: g.y, r: g.r, age: g.age, rung: g.rung })),
@@ -448,10 +531,13 @@ export function generateJelly(seed: number): JellyRound {
           landed: false,
           born: 1,
           turn: 0,
+          squash: 0,
           vx: 0,
           vy: FALL,
           spin: 0,
           calm: 0,
+          wob: 0,
+          wobAt: 0,
         });
         events.push({ t: time, kind: 'drop', rung: 0 });
       }
@@ -472,11 +558,13 @@ export function generateJelly(seed: number): JellyRound {
               break;
             }
           }
-          if (!touched && outside(body.x, body.y, body.r)) touched = true;
+          if (!touched && outside(body.x, body.y, body.r * SKIN)) touched = true;
           if (touched) {
             body.landed = true;
             body.vx = 0;
             body.vy = FALL;
+            body.wob = Math.min(WOBBLE, FALL * WOBBLE_HIT);
+            body.wobAt = 0;
             events.push({ t: time, kind: 'land', rung: body.rung });
           }
           continue;
@@ -490,6 +578,16 @@ export function generateJelly(seed: number): JellyRound {
         body.y += body.vy * dt;
         body.turn += body.spin * dt;
         body.spin *= Math.max(0, 1 - SPIN_DRAG * dt);
+        if (body.turn > TILT) {
+          body.turn = TILT;
+          if (body.spin > 0) body.spin = 0;
+        } else if (body.turn < -TILT) {
+          body.turn = -TILT;
+          if (body.spin < 0) body.spin = 0;
+        }
+        body.wobAt += WOBBLE_HZ * 2 * Math.PI * dt;
+        body.wob *= Math.max(0, 1 - dt / WOBBLE_FADE);
+        body.squash = body.wob * Math.cos(body.wobAt);
       }
 
       // The pile. Overlaps are pushed apart rather than solved exactly, several
@@ -527,15 +625,19 @@ export function generateJelly(seed: number): JellyRound {
                 a.vy += swap * ny * (wb / total);
                 b.vx -= swap * nx * (wa / total);
                 b.vy -= swap * ny * (wa / total);
-                a.spin += closing * ny * 0.4;
-                b.spin -= closing * ny * 0.4;
+                a.spin += closing * ny * SPIN_GRIP;
+                b.spin -= closing * ny * SPIN_GRIP;
+                // Both ends of a knock ring, by how hard it was.
+                const rung = Math.min(WOBBLE, -closing * WOBBLE_HIT);
+                if (rung > a.wob) { a.wob = rung; a.wobAt = 0; }
+                if (rung > b.wob) { b.wob = rung; b.wobAt = 0; }
               }
             }
           }
         }
         for (const body of bodies) {
           if (!body.landed) continue;
-          const wall = outside(body.x, body.y, body.r);
+          const wall = outside(body.x, body.y, body.r * SKIN);
           if (!wall) continue;
           body.x += wall.nx * wall.depth;
           body.y += wall.ny * wall.depth;
@@ -544,6 +646,13 @@ export function generateJelly(seed: number): JellyRound {
             if (into < 0) {
               body.vx -= (1 + BOUNCE) * into * wall.nx;
               body.vy -= (1 + BOUNCE) * into * wall.ny;
+              // Arriving against the glass rings it, the same as arriving
+              // against another object does.
+              const ring = Math.min(WOBBLE, -into * WOBBLE_HIT);
+              if (ring > body.wob) {
+                body.wob = ring;
+                body.wobAt = 0;
+              }
             }
           }
         }
@@ -588,6 +697,7 @@ export function generateJelly(seed: number): JellyRound {
               landed: true,
               born: 0,
               turn: 0,
+              squash: 0,
               // Thrown sideways as well as inheriting the pair's travel: a merge
               // that only ever dropped straight down built a column under the
               // chute and left the sides of the bowl bare.
@@ -595,6 +705,11 @@ export function generateJelly(seed: number): JellyRound {
               vy: vy - Math.abs(rng.range(0, KICK * 0.5)),
               spin: (a.spin + b.spin) / 2,
               calm: CALM,
+              // A merge is the hardest thing that happens to a jelly, so it is
+              // what starts the ring. The phase begins at the squat end: the new
+              // object springs open wide and flat and settles from there.
+              wob: WOBBLE,
+              wobAt: 0,
             });
             merges += 1;
             best = Math.max(best, rung);

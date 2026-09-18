@@ -182,7 +182,7 @@ export function drawJellyFrame(
     const swell = 1 - 0.58 * Math.exp(-4.5 * body.born) * Math.cos(2 * Math.PI * body.born);
     const size = body.r * r * swell;
 
-    if (!drawArt(ctx, rung.art, x, y, size, body.turn, rung.color) && rung.shape) {
+    if (!drawArt(ctx, rung.art, x, y, size, body.turn, rung.color, body.squash) && rung.shape) {
       drawJelly(ctx, rung.shape, rung.color, x, y, body.r * r, {
         glow: 1,
         pop: body.born,
