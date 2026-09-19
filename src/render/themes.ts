@@ -73,7 +73,10 @@ export type ThemeName =
   | 'sports'
   | 'space'
   | 'fantasy'
-  | 'flowers';
+  | 'flowers'
+  | 'tropical'
+  | 'candy'
+  | 'hats';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -749,6 +752,39 @@ const FLOWERS_ART: readonly Rung[] = [
   { name: 'Lily', color: '#fffbeb', shape: { path: sphere }, art: { file: 'flowers/7.webp', w: 290, h: 352, cx: 0.5017, cy: 0.5014, span: 307, reach: 1.080 } },
 ];
 
+const TROPICAL_ART: readonly Rung[] = [
+  { name: 'Mango', color: '#ffd423', shape: { path: sphere }, art: { file: 'tropical/0.webp', w: 238, h: 340, cx: 0.5021, cy: 0.4941, span: 271.5, reach: 1.244 } },
+  { name: 'Kiwi', color: '#d9ff52', shape: { path: sphere }, art: { file: 'tropical/1.webp', w: 252, h: 310, cx: 0.5020, cy: 0.4952, span: 261, reach: 1.071 } },
+  { name: 'Papaya', color: '#ff7e19', shape: { path: sphere }, art: { file: 'tropical/2.webp', w: 274, h: 336, cx: 0.4982, cy: 0.4970, span: 286.5, reach: 1.294 } },
+  { name: 'Dragon fruit', color: '#ff6791', shape: { path: sphere }, art: { file: 'tropical/3.webp', w: 252, h: 370, cx: 0.5020, cy: 0.4932, span: 298, reach: 1.251 } },
+  { name: 'Passion fruit', color: '#ffafb6', shape: { path: sphere }, art: { file: 'tropical/4.webp', w: 266, h: 314, cx: 0.5019, cy: 0.5016, span: 270, reach: 1.097 } },
+  { name: 'Lychee', color: '#ff4550', shape: { path: sphere }, art: { file: 'tropical/5.webp', w: 250, h: 316, cx: 0.5020, cy: 0.4968, span: 263.5, reach: 1.086 } },
+  { name: 'Coconut', color: '#73fffb', shape: { path: sphere }, art: { file: 'tropical/6.webp', w: 274, h: 320, cx: 0.5018, cy: 0.5031, span: 279.5, reach: 1.080 } },
+  { name: 'Pineapple', color: '#ffc52c', shape: { path: sphere }, art: { file: 'tropical/7.webp', w: 238, h: 428, cx: 0.5021, cy: 0.5000, span: 317.5, reach: 1.285 } },
+];
+
+const CANDY_ART: readonly Rung[] = [
+  { name: 'Peppermint', color: '#ff7d84', shape: { path: sphere }, art: { file: 'candy/0.webp', w: 264, h: 292, cx: 0.5019, cy: 0.4914, span: 267, reach: 1.028 } },
+  { name: 'Gumball', color: '#2a97ff', shape: { path: sphere }, art: { file: 'candy/1.webp', w: 250, h: 282, cx: 0.5040, cy: 0.4787, span: 252, reach: 1.065 } },
+  { name: 'Lemon drop', color: '#ffda2c', shape: { path: sphere }, art: { file: 'candy/2.webp', w: 266, h: 258, cx: 0.5038, cy: 0.4864, span: 249.5, reach: 1.073 } },
+  { name: 'Apple sweet', color: '#9bff3e', shape: { path: sphere }, art: { file: 'candy/3.webp', w: 254, h: 308, cx: 0.5039, cy: 0.4854, span: 269.5, reach: 1.237 } },
+  { name: 'Grapes', color: '#be5bff', shape: { path: sphere }, art: { file: 'candy/4.webp', w: 254, h: 296, cx: 0.5020, cy: 0.4865, span: 263.5, reach: 1.191 } },
+  { name: 'Orange swirl', color: '#ff9648', shape: { path: sphere }, art: { file: 'candy/5.webp', w: 258, h: 288, cx: 0.5039, cy: 0.4878, span: 260.5, reach: 1.086 } },
+  { name: 'Heart', color: '#ff72a8', shape: { path: sphere }, art: { file: 'candy/6.webp', w: 262, h: 270, cx: 0.5019, cy: 0.4833, span: 253, reach: 1.180 } },
+  { name: 'Star', color: '#2ee3ff', shape: { path: sphere }, art: { file: 'candy/7.webp', w: 270, h: 288, cx: 0.5037, cy: 0.4809, span: 266.5, reach: 1.165 } },
+];
+
+const HATS_ART: readonly Rung[] = [
+  { name: 'Cap', color: '#ff2e30', shape: { path: sphere }, art: { file: 'hats/0.webp', w: 278, h: 308, cx: 0.5036, cy: 0.5081, span: 272.5, reach: 1.216 } },
+  { name: 'Wizard hat', color: '#257eff', shape: { path: sphere }, art: { file: 'hats/1.webp', w: 276, h: 364, cx: 0.5036, cy: 0.5014, span: 299.5, reach: 1.221 } },
+  { name: 'Top hat', color: '#ffd31a', shape: { path: sphere }, art: { file: 'hats/2.webp', w: 254, h: 314, cx: 0.5020, cy: 0.5143, span: 264, reach: 1.176 } },
+  { name: 'Beret', color: '#59ff36', shape: { path: sphere }, art: { file: 'hats/3.webp', w: 260, h: 248, cx: 0.5019, cy: 0.5141, span: 238, reach: 1.179 } },
+  { name: 'Crown', color: '#b040ff', shape: { path: sphere }, art: { file: 'hats/4.webp', w: 276, h: 294, cx: 0.5000, cy: 0.5017, span: 267.5, reach: 1.145 } },
+  { name: 'Cowboy hat', color: '#ff7726', shape: { path: sphere }, art: { file: 'hats/5.webp', w: 306, h: 300, cx: 0.5016, cy: 0.5067, span: 283.5, reach: 1.136 } },
+  { name: 'Party hat', color: '#34ebff', shape: { path: sphere }, art: { file: 'hats/6.webp', w: 202, h: 370, cx: 0.5050, cy: 0.4946, span: 268, reach: 1.317 } },
+  { name: 'Sun hat', color: '#ff41ae', shape: { path: sphere }, art: { file: 'hats/7.webp', w: 340, h: 298, cx: 0.5015, cy: 0.5134, span: 300.5, reach: 1.195 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -771,6 +807,9 @@ export const THEMES: Record<ThemeName, Theme> = {
   space: { key: 'space', label: 'Space', ladder: SPACE_ART },
   fantasy: { key: 'fantasy', label: 'Fantasy', ladder: FANTASY_ART },
   flowers: { key: 'flowers', label: 'Flowers', ladder: FLOWERS_ART },
+  tropical: { key: 'tropical', label: 'Tropical', ladder: TROPICAL_ART },
+  candy: { key: 'candy', label: 'Candy', ladder: CANDY_ART },
+  hats: { key: 'hats', label: 'Hats', ladder: HATS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -795,6 +834,9 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'space',
   'fantasy',
   'flowers',
+  'tropical',
+  'candy',
+  'hats',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
