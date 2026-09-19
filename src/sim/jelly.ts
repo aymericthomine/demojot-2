@@ -470,8 +470,16 @@ export function generateJelly(seed: number): JellyRound {
   // from the top of the frame down into the bowl — the stream has been going for
   // about four seconds before the first frame — and starting it empty gives the
   // video a slow, wrong first few seconds that none of them have.
+  //
+  // It starts at the same place a dropped object is made, not one space below
+  // it. Starting at one left a hole in the stream: the topmost object it made
+  // sat a space under where the first real drop would appear, and that drop is
+  // not due until a whole interval has passed, by which time the column has
+  // moved on a space of its own. So the two of them ended up two spaces apart
+  // — one missing rose, made at the top of the chute in the first frame and
+  // carried all the way down through the bowl in plain view.
   const spacing = FALL * EVERY;
-  for (let k = 1; (SPAWN + k * spacing) < 0.3; k += 1) {
+  for (let k = 0; (SPAWN + k * spacing) < 0.3; k += 1) {
     bodies.push({
       x: lean,
       y: SPAWN + k * spacing,
