@@ -509,8 +509,8 @@ that reach further than that are scaled back to it.
 
 ### The objects
 
-A hundred and sixty pictures, eight to a theme, cut out of four sheets supplied
-for this mode.
+A hundred and sixty-eight pictures, eight to a theme, cut out of five sheets
+supplied for this mode.
 They were sliced off them by finding each cell's body, filling its holes and
 closing its gaps, keeping the one blob nearest the middle of the cell, and gating the glow to a dilation of
 that blob — which is what stops a neighbour's bloom and the odd speck of JPEG
@@ -529,8 +529,8 @@ a pear's speckle survive the draw now instead of smearing.
 
 **They are files rather than data.** The flags in this project are carried as
 base64 inside a module, because twelve small icons come to ninety kilobytes and
-data cannot fail to arrive. A hundred and sixty of these come to megabytes that
-way, which is
+data cannot fail to arrive. All of them together come to megabytes that way,
+which is
 a page that will not load on a phone, so they are fetched as WebP — and only the
 eight belonging to the theme being made, which is about two hundred kilobytes of
 the two and a bit megabytes on disk. The paths
@@ -552,11 +552,11 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Twenty ladders of eight.** Fruit, planets, gems, sweets and sea creatures came
-first; then animals, vegetables, magic, insects and weather; then vehicles,
+**Twenty-one ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
-and fantasy creatures. Only the eight belonging to the theme being made are ever
-fetched.
+and fantasy creatures; and flowers on their own. Only the eight belonging to the
+theme being made are ever fetched.
 
 The later sheets carry their names down the left in neon type, close enough to
 the first object that closing an object's own gaps swallows the label with it.

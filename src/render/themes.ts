@@ -72,7 +72,8 @@ export type ThemeName =
   | 'music'
   | 'sports'
   | 'space'
-  | 'fantasy';
+  | 'fantasy'
+  | 'flowers';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -737,6 +738,17 @@ const FANTASY_ART: readonly Rung[] = [
   { name: 'Sphinx', color: '#ffba21', shape: { path: sphere }, art: { file: 'fantasy/7.webp', w: 240, h: 300, cx: 0.5000, cy: 0.4933, span: 239, reach: 1.310 } },
 ];
 
+const FLOWERS_ART: readonly Rung[] = [
+  { name: 'Rose', color: '#ff76bc', shape: { path: sphere }, art: { file: 'flowers/0.webp', w: 274, h: 324, cx: 0.4982, cy: 0.4969, span: 281.5, reach: 1.145 } },
+  { name: 'Sunflower', color: '#ffbf20', shape: { path: sphere }, art: { file: 'flowers/1.webp', w: 288, h: 340, cx: 0.4983, cy: 0.4897, span: 297, reach: 1.049 } },
+  { name: 'Tulip', color: '#b969ff', shape: { path: sphere }, art: { file: 'flowers/2.webp', w: 214, h: 334, cx: 0.5047, cy: 0.5060, span: 253, reach: 1.253 } },
+  { name: 'Hydrangea', color: '#4296ff', shape: { path: sphere }, art: { file: 'flowers/3.webp', w: 288, h: 340, cx: 0.5017, cy: 0.4897, span: 293, reach: 1.096 } },
+  { name: 'Gerbera', color: '#ff831b', shape: { path: sphere }, art: { file: 'flowers/4.webp', w: 272, h: 326, cx: 0.4982, cy: 0.4985, span: 279, reach: 1.054 } },
+  { name: 'Poppy', color: '#ff373a', shape: { path: sphere }, art: { file: 'flowers/5.webp', w: 274, h: 332, cx: 0.5000, cy: 0.5045, span: 284.5, reach: 1.126 } },
+  { name: 'Orchid', color: '#3ce0ff', shape: { path: sphere }, art: { file: 'flowers/6.webp', w: 284, h: 330, cx: 0.5018, cy: 0.4924, span: 288, reach: 1.234 } },
+  { name: 'Lily', color: '#fffbeb', shape: { path: sphere }, art: { file: 'flowers/7.webp', w: 290, h: 352, cx: 0.5017, cy: 0.5014, span: 307, reach: 1.080 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -758,6 +770,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   sports: { key: 'sports', label: 'Sports', ladder: SPORTS_ART },
   space: { key: 'space', label: 'Space', ladder: SPACE_ART },
   fantasy: { key: 'fantasy', label: 'Fantasy', ladder: FANTASY_ART },
+  flowers: { key: 'flowers', label: 'Flowers', ladder: FLOWERS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -781,6 +794,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'sports',
   'space',
   'fantasy',
+  'flowers',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
