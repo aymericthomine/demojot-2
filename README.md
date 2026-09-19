@@ -334,6 +334,18 @@ full**: every reference opens on a column already running into the bowl, about
 four seconds of stream, and starting it empty gives the video a slow wrong
 opening that none of them have.
 
+**It has to start where a dropped object is made, not one space below it**, and
+getting that wrong put a hole in the stream visible for the first few seconds of
+every video. The pre-filled column began one space under the point a real drop
+appears, and the first real drop is not due for a whole interval, by which time
+the column has moved on a space of its own — so the two ended up two spaces
+apart. One missing object, made at the top of the chute in the very first frame
+and carried all the way down through the bowl in plain view. Measured before and
+after on the seed it was reported in: a worst gap of exactly twice the spacing,
+and none at all now. Across twelve seeds no gap in the falling column has
+nothing sitting in it, and the gaps that do open are objects that met the pile
+and stopped, which is the mechanic rather than a fault.
+
 **The ladder is eight rungs and that is arithmetic, not taste.** Each rung is
 two of the one below, so the last needs 128 of the smallest — and the stream
 delivers about 200 over a video. Nine rungs would need 512 and could never be
