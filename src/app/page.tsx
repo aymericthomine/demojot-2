@@ -11,6 +11,14 @@
  * Three games and five casts, and the two are independent: the seed plays the
  * same round whichever cast is wearing it, so what is picked here is a dress
  * rather than a mode. A seed is the video.
+ *
+ * Which is why **the seed rolls itself after every finished video**. It used to
+ * be rolled once when the page opened and then never again unless somebody
+ * thought to press Roll, so pressing the button twice made the same video
+ * twice. It is still a plain field: type a number to play that exact round
+ * again, and the seed of a video that has just been made is in the file's own
+ * name. Only a finished video rolls it, so a cancelled or failed attempt can be
+ * retried exactly as it was.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -338,6 +346,15 @@ export default function HomePage() {
             codec: result.codec,
             silent: result.silent,
           });
+
+          // A fresh seed for whatever is made next. The field is rolled once
+          // when the page opens and again on every finished video, so pressing
+          // the button twice gives two different rounds rather than the same
+          // one twice — which is what it used to do unless somebody thought to
+          // hit Roll in between. The seed of the video just made is not lost:
+          // it is in the file's own name. Only a finished video rolls it, so a
+          // cancelled or failed attempt can be retried exactly as it was.
+          setSeed(randomSeed());
         } catch (cause) {
           setStage(
             cause instanceof EncodeCancelled

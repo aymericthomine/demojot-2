@@ -29,6 +29,16 @@ Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
 wearing it.
 
+**A seed is the video, and it rolls itself after every finished one.** It used
+to be rolled when the page opened and then never again unless somebody pressed
+Roll, so pressing the button twice made the same video twice. It is still a
+plain field — type a number to play that exact round again, and the seed of a
+video just made is in the file's own name — but two presses now give two
+different rounds. Measured on a pair of Jelly seeds: identical for the first
+second, because the chute is a conveyor and nothing random has happened yet, and
+from the first merge onwards a different video, ending 60 to 74 seconds later on
+a different arrangement.
+
 All of it is computed frame by frame in the browser: no footage, no rendering
 service, nothing uploaded anywhere.
 
