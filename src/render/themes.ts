@@ -76,7 +76,8 @@ export type ThemeName =
   | 'flowers'
   | 'tropical'
   | 'candy'
-  | 'hats';
+  | 'hats'
+  | 'monsters';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -785,6 +786,17 @@ const HATS_ART: readonly Rung[] = [
   { name: 'Sun hat', color: '#ff41ae', shape: { path: sphere }, art: { file: 'hats/7.webp', w: 340, h: 298, cx: 0.5015, cy: 0.5134, span: 300.5, reach: 1.195 } },
 ];
 
+const MONSTERS_ART: readonly Rung[] = [
+  { name: 'Cyclops', color: '#3588ff', shape: { path: sphere }, art: { file: 'monsters/0.webp', w: 284, h: 332, cx: 0.4912, cy: 0.4895, span: 278, reach: 1.222 } },
+  { name: 'Fluffball', color: '#ff97bd', shape: { path: sphere }, art: { file: 'monsters/1.webp', w: 268, h: 362, cx: 0.5000, cy: 0.5014, span: 290.5, reach: 1.282 } },
+  { name: 'Spikeball', color: '#ffd02b', shape: { path: sphere }, art: { file: 'monsters/2.webp', w: 294, h: 336, cx: 0.5034, cy: 0.4955, span: 297.5, reach: 1.141 } },
+  { name: 'Blob', color: '#76ff3e', shape: { path: sphere }, art: { file: 'monsters/3.webp', w: 290, h: 312, cx: 0.4914, cy: 0.4952, span: 282, reach: 1.191 } },
+  { name: 'Fangs', color: '#a142ff', shape: { path: sphere }, art: { file: 'monsters/4.webp', w: 280, h: 340, cx: 0.4946, cy: 0.5029, span: 286.5, reach: 1.300 } },
+  { name: 'Antennae', color: '#ff8b24', shape: { path: sphere }, art: { file: 'monsters/5.webp', w: 266, h: 344, cx: 0.4981, cy: 0.5000, span: 282.5, reach: 1.284 } },
+  { name: 'Squidlet', color: '#39f8ff', shape: { path: sphere }, art: { file: 'monsters/6.webp', w: 236, h: 344, cx: 0.5169, cy: 0.5000, span: 272, reach: 1.340 } },
+  { name: 'Imp', color: '#ff292d', shape: { path: sphere }, art: { file: 'monsters/7.webp', w: 380, h: 332, cx: 0.5013, cy: 0.5000, span: 342.5, reach: 1.126 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -810,6 +822,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   tropical: { key: 'tropical', label: 'Tropical', ladder: TROPICAL_ART },
   candy: { key: 'candy', label: 'Candy', ladder: CANDY_ART },
   hats: { key: 'hats', label: 'Hats', ladder: HATS_ART },
+  monsters: { key: 'monsters', label: 'Monsters', ladder: MONSTERS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -837,6 +850,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'tropical',
   'candy',
   'hats',
+  'monsters',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */

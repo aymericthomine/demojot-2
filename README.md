@@ -531,8 +531,8 @@ that reach further than that are scaled back to it.
 
 ### The objects
 
-A hundred and ninety-two pictures, eight to a theme, cut off eight sheets
-supplied for this mode.
+Two hundred pictures, eight to a theme, cut off nine sheets supplied for this
+mode.
 They were sliced off them by finding each cell's body, filling its holes and
 closing its gaps, keeping the one blob nearest the middle of the cell, and gating the glow to a dilation of
 that blob — which is what stops a neighbour's bloom and the odd speck of JPEG
@@ -574,11 +574,15 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Twenty-four ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+**Twenty-five ladders of eight.** Fruit, planets, gems, sweets and sea creatures
 came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
-and fantasy creatures; then flowers, tropical fruit, candy and hats. Only the
-eight belonging to the theme being made are ever fetched.
+and fantasy creatures; then flowers, tropical fruit, candy, hats and monsters.
+Only the eight belonging to the theme being made are ever fetched.
+
+Where two objects on a strip touch — the squid and the imp on the monsters one
+are four pixels apart at the glow and nowhere apart at all in the projection —
+the columns are given explicitly rather than found. Everything else is found.
 
 The later sheets carry their names down the left in neon type, close enough to
 the first object that closing an object's own gaps swallows the label with it.
