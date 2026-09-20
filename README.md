@@ -532,22 +532,62 @@ that reach further than that are scaled back to it.
 ### The objects
 
 Two hundred pictures, eight to a theme, cut off nine sheets supplied for this
-mode.
-They were sliced off them by finding each cell's body, filling its holes and
-closing its gaps, keeping the one blob nearest the middle of the cell, and gating the glow to a dilation of
-that blob — which is what stops a neighbour's bloom and the odd speck of JPEG
-noise being cut out along with the object. The alpha is a ramp off the
-luminance, so the neon halo the artwork came with survives instead of getting a
-hard edge.
+mode. They are sliced off by finding each cell's body, keeping the one blob nearest
+the middle of the cell, and reading the alpha off the luminance so the neon halo
+the artwork came with survives instead of getting a hard edge. Five things about
+that were wrong for a long time, and all five were visible in finished videos.
 
-**They are stored at twice the size they came at, sharpened.** The sheets give
-about 130 pixels an object and the top of the ladder is drawn at 620, so the
-canvas was stretching every large object four or five times and the climax — the
-one thing the video is about — was the softest thing on screen. Doubling them
-with a Lanczos resample and an unsharp mask over the colour only, leaving the
-alpha alone so the neon edge does not ring, halves that stretch and puts the
-texture back. It cannot invent detail the sheet never had, but a lemon's skin and
-a pear's speckle survive the draw now instead of smearing.
+**The glow is tapered, not gated.** A binary gate around the body leaves the halo
+at whatever strength it had when the cell's edge arrived, so wherever a boundary
+crossed one the sprite was sliced off square: the squid on the monsters strip had
+a hard vertical edge at a third of full alpha, and it read in the video as a
+straight line beside it. The alpha now falls to nothing within a fixed distance
+of the body, so it is always nought before the crop reaches it.
+
+**The paper is subtracted, not ramped from nearly nothing.** These sheets are
+JPEGs and their black is not black — the dark's 99th percentile is 26 and its
+brightest pixel 39. A ramp starting at 12 turned that into alpha as high as 0.47
+across a whole cell, which is why four fifths of a finished sprite carried some
+alpha and why a faint box followed each object about.
+
+**The colour is unpremultiplied.** Art drawn as glow on black is premultiplied by
+construction: a pixel at half strength carries half-strength colour. Kept as it
+was and composited normally it is darkened twice, so a halo came out as a dark
+smear rather than as light. Dividing the colour back out by the alpha makes a
+sprite composite to exactly what the sheet shows.
+
+**Only enclosed holes are filled.** The opaque part of an object used to be its
+outline closed up and filled, which is black between a squid's tentacles and
+through a donut's middle. It is now the lit pixels with their own enclosed holes
+filled — a bus's windows are inside the bus, a squid's gaps open to the outside.
+Where an object is genuinely mostly black, a tractor's tyres against a black
+sheet, no matte can tell it from the paper; those give themselves away by falling
+into three or more separate lit pieces, and for them the closed outline is taken
+as solid, with anything under the paper's own level painted true black.
+
+**The columns are worked out rather than assumed.** The objects are not on a grid
+— the spacing wanders — so each row's runs are found and then forced to eight:
+the widest run is split at the quietest column inside it, and the closest pair is
+joined. That finds the squid and the imp's own boundary at 986, where measuring
+the trough by hand had put it. A few pixels of a neighbour still land on the
+wrong side of any straight cut, so only the largest piece of an object is kept.
+
+**They are stored at twice the size they came at, sharpened in linear light.**
+The sheets give about 130 pixels an object and the top of the ladder is drawn at
+620, so the canvas was stretching every large object four or five times and the
+climax — the one thing the video is about — was the softest thing on screen.
+Doubling them with a Lanczos resample and an unsharp mask over the colour only,
+leaving the alpha alone so the neon edge does not ring, halves that stretch and
+puts the texture back.
+
+Sharpening in linear rather than in sRGB was measured rather than assumed: at any
+given sharpness it blows fewer pixels out to white, because an unsharp mask on
+gamma-encoded values overshoots hardest exactly where the art is already bright.
+Against the pass before it, the mean edge gradient over all two hundred pictures
+goes from 18.6 to 24.2 — thirty per cent — with slightly less of the picture
+clipped. A Richardson-Lucy deconvolution was tried in its place and is worse
+here: the best of it reaches the same sharpness only by clipping a ninth of the
+picture.
 
 **They are files rather than data.** The flags in this project are carried as
 base64 inside a module, because twelve small icons come to ninety kilobytes and
@@ -602,7 +642,25 @@ the older version of this mode rather than coming out broken.
 
 ### The sound
 
-The one thing on this site that is not borrowed — not for want of trying. **No
+**The recording, supplied afterwards.** Everything below this paragraph describes
+the soundtrack that was synthesised before it arrived, and that synthesis is
+still in the build: it plays if the file does not. But the sound of a Jelly video
+is now the recording itself, 61.6 seconds of it, which makes this mode borrowed
+like the other four rather than the exception it used to be — the same trade as
+the rest of the site, made deliberately.
+
+A round runs 60 to 74 seconds and the recording is 61.6, so the tail has to come
+from somewhere. It cannot simply loop: it opens on silence and ends mid-ring, so
+a seam would land as a hole. A second copy starts nine tenths of a second before
+the first ends, from eight seconds in — past the silent opening — and fades up
+underneath it, which puts a crossfade where a gap would be. Checked on a
+seventy-second round: 0.9999 correlation with the supplied track over its first
+fifty-five seconds, and no quarter-second anywhere that is quieter than the
+track's own quiet moments.
+
+#### What it replaced
+
+The one thing on this site that was not borrowed — not for want of trying. **No
 note in any of the seven references can be cut out and reused.** Their ring is so
 long that every onset lands on top of the ones before it: across all seven, not
 one of six hundred onsets has even three hundredths of a second of true silence
