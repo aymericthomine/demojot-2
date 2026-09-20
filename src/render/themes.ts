@@ -77,7 +77,8 @@ export type ThemeName =
   | 'tropical'
   | 'candy'
   | 'hats'
-  | 'monsters';
+  | 'monsters'
+  | 'instruments';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -797,6 +798,17 @@ const MONSTERS_ART: readonly Rung[] = [
   { name: 'Imp', color: '#ff2226', shape: { path: sphere }, art: { file: 'monsters/7.webp', w: 370, h: 318, cx: 0.4986, cy: 0.4969, span: 327.5, reach: 1.120 } },
 ];
 
+const INSTRUMENTS_ART: readonly Rung[] = [
+  { name: 'Electric guitar', color: '#ff676b', shape: { path: sphere }, art: { file: 'instruments/0.webp', w: 242, h: 616, cx: 0.4938, cy: 0.4959, span: 408, reach: 1.481 } },
+  { name: 'Acoustic guitar', color: '#2971ff', shape: { path: sphere }, art: { file: 'instruments/1.webp', w: 256, h: 604, cx: 0.4961, cy: 0.4934, span: 403, reach: 1.457 } },
+  { name: 'Saxophone', color: '#ffcd27', shape: { path: sphere }, art: { file: 'instruments/2.webp', w: 288, h: 530, cx: 0.5052, cy: 0.4972, span: 390, reach: 1.406 } },
+  { name: 'Snare drum', color: '#7bff60', shape: { path: sphere }, art: { file: 'instruments/3.webp', w: 298, h: 296, cx: 0.5017, cy: 0.4932, span: 279.5, reach: 1.145 } },
+  { name: 'Keyboard', color: '#b15fff', shape: { path: sphere }, art: { file: 'instruments/4.webp', w: 360, h: 294, cx: 0.4792, cy: 0.4881, span: 307, reach: 1.197 } },
+  { name: 'Trumpet', color: '#ff7021', shape: { path: sphere }, art: { file: 'instruments/5.webp', w: 342, h: 410, cx: 0.4927, cy: 0.4976, span: 347.5, reach: 1.394 } },
+  { name: 'Violin', color: '#2bd1ff', shape: { path: sphere }, art: { file: 'instruments/6.webp', w: 246, h: 594, cx: 0.4858, cy: 0.4975, span: 399, reach: 1.468 } },
+  { name: 'Microphone', color: '#ff4dba', shape: { path: sphere }, art: { file: 'instruments/7.webp', w: 184, h: 482, cx: 0.4973, cy: 0.5031, span: 312, reach: 1.479 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -823,6 +835,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   candy: { key: 'candy', label: 'Candy', ladder: CANDY_ART },
   hats: { key: 'hats', label: 'Hats', ladder: HATS_ART },
   monsters: { key: 'monsters', label: 'Monsters', ladder: MONSTERS_ART },
+  instruments: { key: 'instruments', label: 'Instruments', ladder: INSTRUMENTS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -851,6 +864,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'candy',
   'hats',
   'monsters',
+  'instruments',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
