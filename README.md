@@ -531,7 +531,7 @@ that reach further than that are scaled back to it.
 
 ### The objects
 
-Two hundred and sixteen pictures, eight to a theme, cut off eleven sheets
+Two hundred and twenty-four pictures, eight to a theme, cut off twelve sheets
 supplied for this mode. They are sliced off by finding each cell's body, keeping the one blob nearest
 the middle of the cell, and reading the alpha off the luminance so the neon halo
 the artwork came with survives instead of getting a hard edge. Five things about
@@ -544,11 +544,17 @@ a hard vertical edge at a third of full alpha, and it read in the video as a
 straight line beside it. The alpha now falls to nothing within a fixed distance
 of the body, so it is always nought before the crop reaches it.
 
-**The paper is subtracted, not ramped from nearly nothing.** These sheets are
-JPEGs and their black is not black — the dark's 99th percentile is 26 and its
-brightest pixel 39. A ramp starting at 12 turned that into alpha as high as 0.47
-across a whole cell, which is why four fifths of a finished sprite carried some
-alpha and why a faint box followed each object about.
+**The paper is subtracted, and measured per sheet.** A ramp starting at nothing
+turns a JPEG's noise into alpha as high as 0.47 across a whole cell, which is why
+four fifths of a finished sprite once carried some and why a faint box followed
+each object about. It was then fixed at 34 for a while, from reading the dark's
+99th percentile as 26 — but that reading was taken over every pixel under 40,
+which is mostly the glow skirt around the objects rather than the paper.
+Measured properly, away from the ink, every sheet's paper is 0 with a brightest
+pixel under 11. Thirty-four was cutting real glow off everything, and on a clear
+crystal — bright facets over a body that sits below it — it took the body away
+and left an arc. Each sheet's own paper is now read off it, which comes to 4 to
+6.
 
 **The colour is unpremultiplied.** Art drawn as glow on black is premultiplied by
 construction: a pixel at half strength carries half-strength colour. Kept as it
@@ -614,12 +620,12 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Twenty-seven ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+**Twenty-eight ladders of eight.** Fruit, planets, gems, sweets and sea creatures
 came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
 and fantasy creatures; then flowers, tropical fruit, candy, hats, monsters,
-instruments and the solar system. Only the eight belonging to the theme being
-made are ever fetched.
+instruments, the solar system and minerals. Only the eight belonging to the
+theme being made are ever fetched.
 
 Where two objects on a strip touch — the squid and the imp on the monsters one
 are four pixels apart at the glow and nowhere apart at all in the projection —
