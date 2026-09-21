@@ -531,8 +531,8 @@ that reach further than that are scaled back to it.
 
 ### The objects
 
-Two hundred and eight pictures, eight to a theme, cut off ten sheets supplied
-for this mode. They are sliced off by finding each cell's body, keeping the one blob nearest
+Two hundred and sixteen pictures, eight to a theme, cut off eleven sheets
+supplied for this mode. They are sliced off by finding each cell's body, keeping the one blob nearest
 the middle of the cell, and reading the alpha off the luminance so the neon halo
 the artwork came with survives instead of getting a hard edge. Five things about
 that were wrong for a long time, and all five were visible in finished videos.
@@ -614,11 +614,12 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Twenty-six ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+**Twenty-seven ladders of eight.** Fruit, planets, gems, sweets and sea creatures
 came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
-and fantasy creatures; then flowers, tropical fruit, candy, hats, monsters and
-instruments. Only the eight belonging to the theme being made are ever fetched.
+and fantasy creatures; then flowers, tropical fruit, candy, hats, monsters,
+instruments and the solar system. Only the eight belonging to the theme being
+made are ever fetched.
 
 Where two objects on a strip touch — the squid and the imp on the monsters one
 are four pixels apart at the glow and nowhere apart at all in the projection —

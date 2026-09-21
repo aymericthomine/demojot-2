@@ -78,7 +78,8 @@ export type ThemeName =
   | 'candy'
   | 'hats'
   | 'monsters'
-  | 'instruments';
+  | 'instruments'
+  | 'solar';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -809,6 +810,17 @@ const INSTRUMENTS_ART: readonly Rung[] = [
   { name: 'Microphone', color: '#ff4dba', shape: { path: sphere }, art: { file: 'instruments/7.webp', w: 184, h: 482, cx: 0.4973, cy: 0.5031, span: 312, reach: 1.479 } },
 ];
 
+const SOLAR_ART: readonly Rung[] = [
+  { name: 'Moon', color: '#fffaf7', shape: { path: sphere }, art: { file: 'solar/0.webp', w: 252, h: 262, cx: 0.4901, cy: 0.5019, span: 236, reach: 1.033 } },
+  { name: 'Mars', color: '#ff472e', shape: { path: sphere }, art: { file: 'solar/1.webp', w: 268, h: 282, cx: 0.4981, cy: 0.5000, span: 249.5, reach: 1.049 } },
+  { name: 'Earth', color: '#7de9ff', shape: { path: sphere }, art: { file: 'solar/2.webp', w: 292, h: 308, cx: 0.4932, cy: 0.5016, span: 271.5, reach: 1.054 } },
+  { name: 'Saturn', color: '#ffad44', shape: { path: sphere }, art: { file: 'solar/3.webp', w: 388, h: 250, cx: 0.4781, cy: 0.5020, span: 294, reach: 1.292 } },
+  { name: 'Jupiter', color: '#ffcc91', shape: { path: sphere }, art: { file: 'solar/4.webp', w: 290, h: 298, cx: 0.5034, cy: 0.5000, span: 265, reach: 1.043 } },
+  { name: 'Neptune', color: '#286fff', shape: { path: sphere }, art: { file: 'solar/5.webp', w: 280, h: 292, cx: 0.5018, cy: 0.4983, span: 254, reach: 1.058 } },
+  { name: 'Venus', color: '#ff7e1d', shape: { path: sphere }, art: { file: 'solar/6.webp', w: 284, h: 292, cx: 0.4754, cy: 0.4966, span: 256, reach: 1.051 } },
+  { name: 'Sun', color: '#ffc71e', shape: { path: sphere }, art: { file: 'solar/7.webp', w: 320, h: 336, cx: 0.5047, cy: 0.4985, span: 292, reach: 1.049 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -836,6 +848,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   hats: { key: 'hats', label: 'Hats', ladder: HATS_ART },
   monsters: { key: 'monsters', label: 'Monsters', ladder: MONSTERS_ART },
   instruments: { key: 'instruments', label: 'Instruments', ladder: INSTRUMENTS_ART },
+  solar: { key: 'solar', label: 'Solar system', ladder: SOLAR_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -865,6 +878,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'hats',
   'monsters',
   'instruments',
+  'solar',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
