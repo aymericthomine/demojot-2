@@ -571,6 +571,21 @@ sheet, no matte can tell it from the paper; those give themselves away by fallin
 into three or more separate lit pieces, and for them the closed outline is taken
 as solid, with anything under the paper's own level painted true black.
 
+**A sheet whose paper is not black is matted differently.** Everything above
+rests on the paper being nothing and the art being above it, and the deep-sea
+sheet arrived a second time with each creature on a wash of its own colour — a
+green octopus on green paper has no luminance edge at all. What it does have is
+*local contrast*: the background is smooth over tens of pixels and a creature is
+not, anywhere, so subtracting a wide blur leaves the paper at nothing and every
+edge and scale of the art standing out of it. That gives exactly eight blobs at
+any threshold between 12 and 26.
+
+The halo is dropped on those sheets rather than kept, and that is deliberate: a
+glow over coloured paper is the glow's colour mixed with the paper's, and no
+arithmetic gets one back out of the other. Cut out and laid on the flask it would
+carry a wash of the sheet's background with it. Only the creature is taken, and
+the bloom the painter casts from the picture's own alpha does the glowing.
+
 **The columns are worked out rather than assumed.** The objects are not on a grid
 — the spacing wanders — so each row's runs are found and then forced to eight:
 the widest run is split at the quietest column inside it, and the closest pair is

@@ -835,14 +835,14 @@ const MINERALS_ART: readonly Rung[] = [
 ];
 
 const ABYSS_ART: readonly Rung[] = [
-  { name: 'Anglerfish', color: '#1f7bff', shape: { path: sphere }, art: { file: 'abyss/0.webp', w: 348, h: 320, cx: 0.4828, cy: 0.5094, span: 297, reach: 1.194 } },
-  { name: 'Jellyfish', color: '#ff71ce', shape: { path: sphere }, art: { file: 'abyss/1.webp', w: 280, h: 370, cx: 0.4625, cy: 0.5162, span: 289.5, reach: 1.260 } },
-  { name: 'Squid', color: '#ac5dff', shape: { path: sphere }, art: { file: 'abyss/2.webp', w: 320, h: 380, cx: 0.5109, cy: 0.4987, span: 312, reach: 1.380 } },
-  { name: 'Octopus', color: '#60ff49', shape: { path: sphere }, art: { file: 'abyss/3.webp', w: 320, h: 374, cx: 0.4922, cy: 0.5067, span: 316, reach: 1.163 } },
-  { name: 'Lionfish', color: '#ff6520', shape: { path: sphere }, art: { file: 'abyss/4.webp', w: 338, h: 312, cx: 0.5000, cy: 0.4840, span: 295, reach: 1.206 } },
-  { name: 'Shark', color: '#2fdcff', shape: { path: sphere }, art: { file: 'abyss/5.webp', w: 352, h: 318, cx: 0.5156, cy: 0.5000, span: 298.5, reach: 1.217 } },
-  { name: 'Vampire squid', color: '#ff363f', shape: { path: sphere }, art: { file: 'abyss/6.webp', w: 264, h: 334, cx: 0.4943, cy: 0.5135, span: 265, reach: 1.220 } },
-  { name: 'Isopod', color: '#ffca1d', shape: { path: sphere }, art: { file: 'abyss/7.webp', w: 324, h: 264, cx: 0.5201, cy: 0.5057, span: 257, reach: 1.276 } },
+  { name: 'Anglerfish', color: '#239bff', shape: { path: sphere }, art: { file: 'abyss/0.webp', w: 784, h: 734, cx: 0.4994, cy: 0.4993, span: 733, reach: 1.176 } },
+  { name: 'Jellyfish', color: '#ff6de2', shape: { path: sphere }, art: { file: 'abyss/1.webp', w: 582, h: 908, cx: 0.4991, cy: 0.4994, span: 719, reach: 1.235 } },
+  { name: 'Squid', color: '#c44eff', shape: { path: sphere }, art: { file: 'abyss/2.webp', w: 734, h: 906, cx: 0.4993, cy: 0.4994, span: 794, reach: 1.330 } },
+  { name: 'Octopus', color: '#77ff40', shape: { path: sphere }, art: { file: 'abyss/3.webp', w: 796, h: 896, cx: 0.4994, cy: 0.4994, span: 820, reach: 1.174 } },
+  { name: 'Lionfish', color: '#ff8d1d', shape: { path: sphere }, art: { file: 'abyss/4.webp', w: 760, h: 776, cx: 0.4993, cy: 0.4994, span: 742, reach: 1.197 } },
+  { name: 'Shark', color: '#2eebff', shape: { path: sphere }, art: { file: 'abyss/5.webp', w: 824, h: 684, cx: 0.4994, cy: 0.4993, span: 728, reach: 1.254 } },
+  { name: 'Vampire squid', color: '#ff2833', shape: { path: sphere }, art: { file: 'abyss/6.webp', w: 610, h: 738, cx: 0.4992, cy: 0.4993, span: 648, reach: 1.204 } },
+  { name: 'Isopod', color: '#ffe028', shape: { path: sphere }, art: { file: 'abyss/7.webp', w: 716, h: 576, cx: 0.4993, cy: 0.4991, span: 620, reach: 1.266 } },
 ];
 
 export const THEMES: Record<ThemeName, Theme> = {
