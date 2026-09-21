@@ -285,61 +285,41 @@ export function renderWiresAudio(round: WiresRound): Promise<AudioBuffer> {
  * a rattle, and the references have nothing like it.
  */
 /**
- * Jelly's soundtrack: the recording, laid over the round.
+ * Jelly's soundtrack.
  *
- * It was synthesised for a while, and the synthesis was measured rather than
- * guessed — the pitches, the near-pure sine, the two-and-a-half-second ring.
- * The recording was supplied afterwards, so it is what plays now, and the
- * synthesis is kept underneath it for the case where the file does not arrive.
+ * **A note a merge, and the pitch is the rung.** Which means the sound is the
+ * video's own progress: the opening is low notes coming thick and fast, and by
+ * the end the few notes left are the high ones.
  *
- * **It is borrowed, like the other four modes' sound and unlike what it
- * replaced.** That is the same trade as the rest of the site and it is worth
- * knowing it is being made.
+ * A recording was supplied and was laid over the round whole for a version. It
+ * was the wrong reading of the instruction and it showed at once: a recording
+ * carries *its* video's merges, so its notes fall where that round's objects
+ * met, not where this one's do. Measured on a sixty-six second round, the
+ * distance from each of its notes to the nearest merge here came to 136
+ * milliseconds at the median — against 122 for notes scattered at random. It
+ * was no better than chance, because it could not be.
  *
- * The recording is 61.6 seconds and a round is 60 to 74, so the tail has to
- * come from somewhere. It cannot simply loop: it opens on silence and ends
- * mid-ring, so a seam would land as a hole. A second copy is started before the
- * first has finished, from eight seconds in — past the silent opening — and
- * faded up underneath it, which puts a crossfade where a gap would be.
+ * The obvious repair is to cut the recording into single notes and fire those
+ * on the merges. It cannot be done, and the reason is in the recording: the
+ * ring is two and a half seconds and the notes come nearly twice a second, so
+ * every note sits on two or three others. Lifting a pitch out by its own
+ * harmonic comb works — the notes come back with no trace of a foreign pitch —
+ * but only for pitches that are sometimes left alone. D4 is a third of all the
+ * onsets in the track and is never clear for two seconds together; four of the
+ * nine cannot be had at all, and the five that can decay two to three times too
+ * fast because the only clean instances are the quiet ones.
+ *
+ * So what plays is the synthesis below, which was measured off these same
+ * recordings before one was supplied: their pitch set, their almost-pure sine,
+ * their 23.5 dB a second ring with the strike's knock on the front of it.
+ * Checked against the supplied track over two rounds: peak 0.59 and 0.67
+ * against its 0.69, RMS 0.059 and 0.061 against its 0.060, and a decay of −2.7,
+ * −5.9, −9.2 and −11.0 dB at a tenth, a fifth, two fifths and seven tenths of a
+ * second against the originals' −4.4, −9.0, −10.5 and −8.9. It is their sound
+ * on this video's timing, which is the thing that was actually wanted.
  */
-async function jellyRecording(round: JellyRound): Promise<AudioBuffer> {
-  const answer = await fetch('jelly/song.mp3');
-  if (!answer.ok) throw new Error(`jelly song: ${answer.status}`);
-  const length = Math.round(round.duration * SAMPLE_RATE);
-  const ctx = new OfflineAudioContext(2, length, SAMPLE_RATE);
-  const song = await ctx.decodeAudioData(await answer.arrayBuffer());
-
-  const master = ctx.createGain();
-  master.gain.value = 1;
-  master.connect(ctx.destination);
-
-  const first = ctx.createBufferSource();
-  first.buffer = song;
-  first.connect(master);
-  first.start(0);
-
-  const LAP = 0.9;
-  const INTO = 8;
-  for (let at = song.duration - LAP; at < round.duration; at += song.duration - INTO - LAP) {
-    const more = ctx.createBufferSource();
-    more.buffer = song;
-    const fade = ctx.createGain();
-    fade.gain.setValueAtTime(0.0001, at);
-    fade.gain.exponentialRampToValueAtTime(1, at + LAP);
-    more.connect(fade).connect(master);
-    more.start(at, INTO);
-  }
-
-  // Out on the ending rather than cut off mid-ring.
-  const end = Math.max(0, round.duration - 0.45);
-  master.gain.setValueAtTime(1, end);
-  master.gain.exponentialRampToValueAtTime(0.0001, round.duration);
-
-  return ctx.startRendering();
-}
-
 export function renderJellyAudio(round: JellyRound): Promise<AudioBuffer> {
-  return jellyRecording(round).catch(() => synthesisedJellyAudio(round));
+  return synthesisedJellyAudio(round);
 }
 
 function synthesisedJellyAudio(round: JellyRound): Promise<AudioBuffer> {

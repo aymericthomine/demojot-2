@@ -649,25 +649,31 @@ the older version of this mode rather than coming out broken.
 
 ### The sound
 
-**The recording, supplied afterwards.** Everything below this paragraph describes
-the soundtrack that was synthesised before it arrived, and that synthesis is
-still in the build: it plays if the file does not. But the sound of a Jelly video
-is now the recording itself, 61.6 seconds of it, which makes this mode borrowed
-like the other four rather than the exception it used to be — the same trade as
-the rest of the site, made deliberately.
+**A recording was supplied, and laying it over the round whole was the wrong
+reading of that.** A recording carries *its* video's merges, so its notes fall
+where that round's objects met and not where this one's do. Measured on a
+sixty-six second round, the distance from each of its notes to the nearest merge
+here came to 136 milliseconds at the median — against 122 for notes scattered at
+random. It was no better than chance, because it could not be.
 
-A round runs 60 to 74 seconds and the recording is 61.6, so the tail has to come
-from somewhere. It cannot simply loop: it opens on silence and ends mid-ring, so
-a seam would land as a hole. A second copy starts nine tenths of a second before
-the first ends, from eight seconds in — past the silent opening — and fades up
-underneath it, which puts a crossfade where a gap would be. Checked on a
-seventy-second round: 0.9999 correlation with the supplied track over its first
-fifty-five seconds, and no quarter-second anywhere that is quieter than the
-track's own quiet moments.
+The obvious repair is to cut the recording into single notes and fire those on
+the merges. **It cannot be done, and the reason is in the recording**: the ring
+is two and a half seconds and the notes come nearly twice a second, so every note
+sits on two or three others. Lifting a pitch out by its own harmonic comb works —
+each note comes back with no trace of a foreign pitch — but only for pitches that
+are sometimes left alone. D4 is a third of all the onsets in the track and is
+never clear for two seconds together; four of the nine cannot be had at all, and
+the five that can decay two to three times too fast, because the only instances
+nothing else is sitting on are the quiet ones.
 
-#### What it replaced
+So what plays is the synthesis, which was measured off these same recordings
+before one was supplied. Checked against the supplied track over two rounds:
+peak 0.59 and 0.67 against its 0.69, RMS 0.059 and 0.061 against its 0.060, and
+the decay below. Their sound on this video's timing, which is what was wanted.
 
-The one thing on this site that was not borrowed — not for want of trying. **No
+#### How it is made
+
+The one thing on this site that is not borrowed — not for want of trying. **No
 note in any of the seven references can be cut out and reused.** Their ring is so
 long that every onset lands on top of the ones before it: across all seven, not
 one of six hundred onsets has even three hundredths of a second of true silence
