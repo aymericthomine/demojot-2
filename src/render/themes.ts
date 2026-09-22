@@ -83,7 +83,8 @@ export type ThemeName =
   | 'minerals'
   | 'abyss'
   | 'gummies'
-  | 'crystals';
+  | 'crystals'
+  | 'elements';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -869,6 +870,17 @@ const CRYSTALS_ART: readonly Rung[] = [
   { name: 'Sapphire', color: '#4776ff', shape: { path: sphere }, art: { file: 'crystals/7.webp', w: 668, h: 708, cx: 0.4940, cy: 0.4993, span: 657.5, reach: 1.188 } },
 ];
 
+const ELEMENTS_ART: readonly Rung[] = [
+  { name: 'Magma', color: '#ff4f1a', shape: { path: sphere }, art: { file: 'elements/0.webp', w: 778, h: 792, cx: 0.5032, cy: 0.4981, span: 731, reach: 1.148 } },
+  { name: 'Water', color: '#2facff', shape: { path: sphere }, art: { file: 'elements/1.webp', w: 732, h: 852, cx: 0.4829, cy: 0.5006, span: 763, reach: 1.129 } },
+  { name: 'Wind', color: '#8de0ff', shape: { path: sphere }, art: { file: 'elements/2.webp', w: 754, h: 888, cx: 0.5086, cy: 0.4972, span: 782, reach: 1.132 } },
+  { name: 'Nature', color: '#adff2b', shape: { path: sphere }, art: { file: 'elements/3.webp', w: 730, h: 750, cx: 0.5171, cy: 0.4940, span: 703, reach: 1.181 } },
+  { name: 'Lightning', color: '#653dff', shape: { path: sphere }, art: { file: 'elements/4.webp', w: 798, h: 838, cx: 0.4956, cy: 0.4982, span: 762, reach: 1.145 } },
+  { name: 'Sun', color: '#ffb02b', shape: { path: sphere }, art: { file: 'elements/5.webp', w: 794, h: 788, cx: 0.5006, cy: 0.4994, span: 730, reach: 1.120 } },
+  { name: 'Void', color: '#5923ff', shape: { path: sphere }, art: { file: 'elements/6.webp', w: 796, h: 758, cx: 0.4981, cy: 0.5007, span: 719, reach: 1.099 } },
+  { name: 'Ice', color: '#44a4ff', shape: { path: sphere }, art: { file: 'elements/7.webp', w: 796, h: 918, cx: 0.5082, cy: 0.4984, span: 823, reach: 1.095 } },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -901,6 +913,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   abyss: { key: 'abyss', label: 'Deep sea', ladder: ABYSS_ART },
   gummies: { key: 'gummies', label: 'Gummies', ladder: GUMMIES_ART },
   crystals: { key: 'crystals', label: 'Crystals', ladder: CRYSTALS_ART },
+  elements: { key: 'elements', label: 'Elements', ladder: ELEMENTS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -935,6 +948,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'abyss',
   'gummies',
   'crystals',
+  'elements',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
