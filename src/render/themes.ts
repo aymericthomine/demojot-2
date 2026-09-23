@@ -84,7 +84,9 @@ export type ThemeName =
   | 'abyss'
   | 'gummies'
   | 'crystals'
-  | 'elements';
+  | 'elements'
+  | 'bakery'
+  | 'jellies';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -881,6 +883,27 @@ const ELEMENTS_ART: readonly Rung[] = [
   { name: 'Ice', color: '#44a4ff', shape: { path: sphere }, art: { file: 'elements/7.webp', w: 796, h: 918, cx: 0.5082, cy: 0.4984, span: 823, reach: 1.095 } },
 ];
 
+const BAKERY_ART: readonly Rung[] = [
+  { name: 'Cookie', color: '#ffc167', shape: { path: sphere }, art: { file: 'bakery/0.webp', w: 748, h: 794, cx: 0.4993, cy: 0.4994, span: 745, reach: 1.248 } },
+  { name: 'Cupcake', color: '#ffa49f', shape: { path: sphere }, art: { file: 'bakery/1.webp', w: 706, h: 990, cx: 0.4993, cy: 0.4995, span: 822, reach: 1.306 } },
+  { name: 'Donut', color: '#ff9299', shape: { path: sphere }, art: { file: 'bakery/2.webp', w: 742, h: 738, cx: 0.4993, cy: 0.4993, span: 714, reach: 1.068 } },
+  { name: 'Pretzel', color: '#ffa958', shape: { path: sphere }, art: { file: 'bakery/3.webp', w: 766, h: 774, cx: 0.4993, cy: 0.4994, span: 744, reach: 1.169 } },
+  { name: 'Cake slice', color: '#ffba8a', shape: { path: sphere }, art: { file: 'bakery/4.webp', w: 734, h: 952, cx: 0.4993, cy: 0.4995, span: 817, reach: 1.371 } },
+  { name: 'Croissant', color: '#ffa94c', shape: { path: sphere }, art: { file: 'bakery/5.webp', w: 728, h: 860, cx: 0.4993, cy: 0.4994, span: 768, reach: 1.277 } },
+  { name: 'Waffle', color: '#ffb583', shape: { path: sphere }, art: { file: 'bakery/6.webp', w: 792, h: 890, cx: 0.4994, cy: 0.5000, span: 814.5, reach: 1.066 } },
+  { name: 'Brownie', color: '#ff8563', shape: { path: sphere }, art: { file: 'bakery/7.webp', w: 762, h: 818, cx: 0.4993, cy: 0.4994, span: 764, reach: 1.039 } },
+];
+
+const JELLIES_ART: readonly Rung[] = [
+  { name: 'Gummy bear', color: '#ff4c56', shape: { path: sphere }, art: { file: 'jellies/0.webp', w: 528, h: 788, cx: 0.4991, cy: 0.4994, span: 632, reach: 1.306 } },
+  { name: 'Gumdrops', color: '#ff955c', shape: { path: sphere }, art: { file: 'jellies/1.webp', w: 726, h: 728, cx: 0.4993, cy: 0.4993, span: 701, reach: 1.243 } },
+  { name: 'Watermelon', color: '#ff3037', shape: { path: sphere }, art: { file: 'jellies/2.webp', w: 738, h: 728, cx: 0.4993, cy: 0.4993, span: 707, reach: 1.154 } },
+  { name: 'Jelly mould', color: '#ff8a2f', shape: { path: sphere }, art: { file: 'jellies/3.webp', w: 664, h: 666, cx: 0.4992, cy: 0.4992, span: 639, reach: 1.120 } },
+  { name: 'Gummy worms', color: '#ff7738', shape: { path: sphere }, art: { file: 'jellies/4.webp', w: 610, h: 800, cx: 0.4992, cy: 0.4994, span: 679, reach: 1.359 } },
+  { name: 'Grapes', color: '#ffa4ba', shape: { path: sphere }, art: { file: 'jellies/5.webp', w: 578, h: 826, cx: 0.4991, cy: 0.4994, span: 676, reach: 1.264 } },
+  { name: 'Strawberries', color: '#ff3942', shape: { path: sphere }, art: { file: 'jellies/6.webp', w: 620, h: 714, cx: 0.4992, cy: 0.4993, span: 641, reach: 1.167 } },
+  { name: 'Dolphin', color: '#2fc7ff', shape: { path: sphere }, art: { file: 'jellies/7.webp', w: 662, h: 716, cx: 0.4992, cy: 0.4993, span: 663, reach: 1.362 } },
+];
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -914,6 +937,8 @@ export const THEMES: Record<ThemeName, Theme> = {
   gummies: { key: 'gummies', label: 'Gummies', ladder: GUMMIES_ART },
   crystals: { key: 'crystals', label: 'Crystals', ladder: CRYSTALS_ART },
   elements: { key: 'elements', label: 'Elements', ladder: ELEMENTS_ART },
+  bakery: { key: 'bakery', label: 'Bakery', ladder: BAKERY_ART },
+  jellies: { key: 'jellies', label: 'Jellies', ladder: JELLIES_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -949,6 +974,8 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'gummies',
   'crystals',
   'elements',
+  'bakery',
+  'jellies',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */

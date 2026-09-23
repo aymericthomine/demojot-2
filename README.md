@@ -635,12 +635,12 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Thirty-two ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+**Thirty-four ladders of eight.** Fruit, planets, gems, sweets and sea creatures
 came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
 and fantasy creatures; then flowers, tropical fruit, candy, hats, monsters,
-instruments, the solar system, minerals, the deep sea, gummies, crystals and
-the elements. Only the eight belonging to the theme being made are ever fetched.
+instruments, the solar system, minerals, the deep sea, gummies, crystals,
+the elements, bakery goods and jelly sweets. Only the eight belonging to the theme being made are ever fetched.
 
 Where two objects on a strip touch — the squid and the imp on the monsters one
 are four pixels apart at the glow and nowhere apart at all in the projection —
