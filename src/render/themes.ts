@@ -86,7 +86,8 @@ export type ThemeName =
   | 'crystals'
   | 'elements'
   | 'bakery'
-  | 'jellies';
+  | 'jellies'
+  | 'gadgets';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -904,6 +905,16 @@ const JELLIES_ART: readonly Rung[] = [
   { name: 'Strawberries', color: '#ff3942', shape: { path: sphere }, art: { file: 'jellies/6.webp', w: 620, h: 714, cx: 0.4992, cy: 0.4993, span: 641, reach: 1.167 } },
   { name: 'Dolphin', color: '#2fc7ff', shape: { path: sphere }, art: { file: 'jellies/7.webp', w: 662, h: 716, cx: 0.4992, cy: 0.4993, span: 663, reach: 1.362 } },
 ];
+const GADGETS_ART: readonly Rung[] = [
+  { name: 'Phone', color: '#28bcff', shape: { path: sphere }, art: { file: 'gadgets/0.webp', w: 656, h: 924, cx: 0.4992, cy: 0.4995, span: 764, reach: 1.207 } },
+  { name: 'Controller', color: '#d661ff', shape: { path: sphere }, art: { file: 'gadgets/1.webp', w: 768, h: 700, cx: 0.4993, cy: 0.4993, span: 708, reach: 1.262 } },
+  { name: 'Headphones', color: '#ff61b6', shape: { path: sphere }, art: { file: 'gadgets/2.webp', w: 680, h: 844, cx: 0.4993, cy: 0.4994, span: 736, reach: 1.147 } },
+  { name: 'Watch', color: '#92ff41', shape: { path: sphere }, art: { file: 'gadgets/3.webp', w: 670, h: 802, cx: 0.4993, cy: 0.4994, span: 710, reach: 1.157 } },
+  { name: 'Key', color: '#ffd936', shape: { path: sphere }, art: { file: 'gadgets/4.webp', w: 642, h: 810, cx: 0.4992, cy: 0.4994, span: 700, reach: 1.371 } },
+  { name: 'Sunglasses', color: '#ff564d', shape: { path: sphere }, art: { file: 'gadgets/5.webp', w: 792, h: 710, cx: 0.4994, cy: 0.5000, span: 724.5, reach: 1.394 } },
+  { name: 'Disc', color: '#ecd9ff', shape: { path: sphere }, art: { file: 'gadgets/6.webp', w: 714, h: 758, cx: 0.4993, cy: 0.4993, span: 710, reach: 1.167 } },
+  { name: 'Bulb', color: '#ffe632', shape: { path: sphere }, art: { file: 'gadgets/7.webp', w: 560, h: 868, cx: 0.4991, cy: 0.4994, span: 688, reach: 1.260 } },
+];
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -939,6 +950,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   elements: { key: 'elements', label: 'Elements', ladder: ELEMENTS_ART },
   bakery: { key: 'bakery', label: 'Bakery', ladder: BAKERY_ART },
   jellies: { key: 'jellies', label: 'Jellies', ladder: JELLIES_ART },
+  gadgets: { key: 'gadgets', label: 'Gadgets', ladder: GADGETS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -976,6 +988,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'elements',
   'bakery',
   'jellies',
+  'gadgets',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
