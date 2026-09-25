@@ -31,9 +31,9 @@ export interface Rung {
   name: string;
   /** What its sparks and its ring are coloured, taken off the picture itself. */
   color: string;
-  /** The picture, which is what is actually drawn. */
-  art: Art;
-  /** What is drawn if the picture has not arrived. */
+  /** The picture, which is what is actually drawn — where there is one. */
+  art?: Art;
+  /** What is drawn if the picture has not arrived, or if there is no picture. */
   shape?: JellyShape;
 }
 
@@ -88,7 +88,8 @@ export type ThemeName =
   | 'bakery'
   | 'jellies'
   | 'gadgets'
-  | 'reef';
+  | 'reef'
+  | 'sushi';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -283,6 +284,66 @@ const appleWithStalk = (ctx: Ctx, x: number, y: number, r: number): void => {
   ctx.closePath();
 };
 
+/** A rice cushion with room for a slab over it: a nigiri. */
+const nigiri = (ctx: Ctx, x: number, y: number, r: number): void => {
+  const w = r * 1.08;
+  const h = r * 0.62;
+  ctx.beginPath();
+  ctx.moveTo(x - w, y + h * 0.35);
+  ctx.bezierCurveTo(x - w * 1.02, y - h * 0.72, x - w * 0.55, y - h * 1.38, x, y - h * 1.38);
+  ctx.bezierCurveTo(x + w * 0.55, y - h * 1.38, x + w * 1.02, y - h * 0.72, x + w, y + h * 0.35);
+  ctx.bezierCurveTo(x + w * 0.92, y + h * 1.22, x - w * 0.92, y + h * 1.22, x - w, y + h * 0.35);
+  ctx.closePath();
+};
+
+/** A triangle with its corners taken off: an onigiri. */
+const riceball = (ctx: Ctx, x: number, y: number, r: number): void => {
+  const pts: [number, number][] = [
+    [x, y - r * 1.04],
+    [x + r * 0.98, y + r * 0.7],
+    [x - r * 0.98, y + r * 0.7],
+  ];
+  const mid = (a: number, b: number): number => (a + b) / 2;
+  ctx.beginPath();
+  ctx.moveTo(mid(pts[0][0], pts[1][0]), mid(pts[0][1], pts[1][1]));
+  for (let i = 0; i < 3; i += 1) {
+    const a = pts[(i + 1) % 3];
+    const b = pts[(i + 2) % 3];
+    ctx.arcTo(a[0], a[1], mid(a[0], b[0]), mid(a[1], b[1]), r * 0.34);
+  }
+  ctx.closePath();
+};
+
+/** A crescent lying on its back, which is a gyoza. */
+const dumpling = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.beginPath();
+  ctx.moveTo(x - r * 1.04, y + r * 0.34);
+  ctx.bezierCurveTo(x - r * 0.98, y - r * 0.82, x + r * 0.98, y - r * 0.82, x + r * 1.04, y + r * 0.34);
+  ctx.bezierCurveTo(x + r * 0.86, y + r * 0.78, x - r * 0.86, y + r * 0.78, x - r * 1.04, y + r * 0.34);
+  ctx.closePath();
+};
+
+/** A cone held point down, open at the top: a hand roll. */
+const handRoll = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.beginPath();
+  ctx.moveTo(x - r * 0.86, y - r * 0.92);
+  ctx.quadraticCurveTo(x, y - r * 0.6, x + r * 0.86, y - r * 0.92);
+  ctx.bezierCurveTo(x + r * 0.64, y + r * 0.2, x + r * 0.3, y + r * 0.86, x, y + r * 1.14);
+  ctx.bezierCurveTo(x - r * 0.3, y + r * 0.86, x - r * 0.64, y + r * 0.2, x - r * 0.86, y - r * 0.92);
+  ctx.closePath();
+};
+
+/** A wide shallow bowl, flat across the broth. */
+const bowl = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.beginPath();
+  ctx.moveTo(x - r * 1.12, y - r * 0.46);
+  ctx.lineTo(x + r * 1.12, y - r * 0.46);
+  ctx.bezierCurveTo(x + r * 1.0, y + r * 0.58, x + r * 0.54, y + r * 0.94, x + r * 0.3, y + r * 0.94);
+  ctx.lineTo(x - r * 0.3, y + r * 0.94);
+  ctx.bezierCurveTo(x - r * 0.54, y + r * 0.94, x - r * 1.0, y + r * 0.58, x - r * 1.12, y - r * 0.46);
+  ctx.closePath();
+};
+
 /* ----------------------------------------------------------------- marks -- */
 
 /** Scattered dots, laid out the same way every time so they do not crawl. */
@@ -455,6 +516,132 @@ const eye =
     ctx.fill();
     ctx.restore();
   };
+
+/** The beans showing through a pod. */
+const podBumps = (ctx: Ctx, x: number, y: number, r: number, color: string): void => {
+  ctx.save();
+  ctx.fillStyle = fade(lift(color, 0.5), 0.45);
+  for (let i = -1; i <= 1; i += 1) {
+    ctx.beginPath();
+    ctx.ellipse(x + i * r * 0.52, y + i * r * 0.1, r * 0.24, r * 0.2, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+};
+
+/** Nori, then rice, then the filling: a maki seen end on. */
+const makiRings = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.save();
+  ctx.fillStyle = 'rgba(248,244,228,0.8)';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(70,200,160,0.55)';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.42, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,112,78,0.95)';
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+/** The slab laid over a nigiri's rice, and the grain in it. */
+const fishSlab = (ctx: Ctx, x: number, y: number, r: number, color: string): void => {
+  ctx.save();
+  ctx.fillStyle = 'rgba(250,246,232,0.8)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * 0.26, r * 0.92, r * 0.32, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = fade(lift(color, 0.3), 0.85);
+  ctx.beginPath();
+  ctx.ellipse(x, y - r * 0.3, r * 0.96, r * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = fade(lift(color, 0.75), 0.7);
+  ctx.lineWidth = Math.max(0.7, r * 0.05);
+  for (let i = -1; i <= 1; i += 1) {
+    const at = y - r * 0.28 + i * r * 0.15;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.78, at);
+    ctx.quadraticCurveTo(x, at - r * 0.12, x + r * 0.78, at);
+    ctx.stroke();
+  }
+  ctx.restore();
+};
+
+/** A band of nori across the foot of a rice ball. */
+const noriBand = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.save();
+  ctx.fillStyle = 'rgba(32,74,64,0.88)';
+  ctx.beginPath();
+  ctx.rect(x - r * 0.62, y + r * 0.14, r * 1.24, r * 0.56);
+  ctx.fill();
+  ctx.restore();
+};
+
+/** The pleats along a dumpling's seam. */
+const pleats = (ctx: Ctx, x: number, y: number, r: number, color: string): void => {
+  ctx.save();
+  ctx.strokeStyle = fade(sink(color, 0.4), 0.4);
+  ctx.lineWidth = Math.max(0.8, r * 0.08);
+  ctx.lineCap = 'round';
+  for (let i = -2; i <= 2; i += 1) {
+    const at = x + i * r * 0.34;
+    const top = y - r * 0.62 + (i * i) * r * 0.09;
+    ctx.beginPath();
+    ctx.moveTo(at, top);
+    ctx.lineTo(at, top + r * 0.3);
+    ctx.stroke();
+  }
+  ctx.restore();
+};
+
+/** What is sticking out of a hand roll. */
+const fillings = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.save();
+  ctx.fillStyle = 'rgba(255,122,92,0.92)';
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.26, y - r * 0.46, r * 0.17, r * 0.26, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(126,222,92,0.92)';
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.3, y - r * 0.5, r * 0.14, r * 0.24, 0.35, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(250,246,230,0.9)';
+  ctx.beginPath();
+  ctx.ellipse(x + r * 0.02, y - r * 0.44, r * 0.12, r * 0.22, 0.05, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
+
+/** Noodles, half an egg and a sheet of nori, floating. */
+const ramenTop = (ctx: Ctx, x: number, y: number, r: number): void => {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,233,168,0.85)';
+  ctx.lineWidth = Math.max(0.8, r * 0.07);
+  ctx.lineCap = 'round';
+  for (let i = -2; i <= 2; i += 1) {
+    const at = y - r * 0.2 + i * r * 0.12;
+    ctx.beginPath();
+    ctx.moveTo(x - r * 0.72, at);
+    ctx.bezierCurveTo(x - r * 0.2, at - r * 0.14, x + r * 0.2, at + r * 0.14, x + r * 0.72, at);
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(38,84,72,0.85)';
+  ctx.beginPath();
+  ctx.rect(x + r * 0.28, y - r * 0.4, r * 0.4, r * 0.64);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(250,246,235,0.95)';
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.5, y + r * 0.22, r * 0.26, r * 0.2, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,170,40,0.95)';
+  ctx.beginPath();
+  ctx.arc(x - r * 0.5, y + r * 0.22, r * 0.11, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+};
 
 /** Two marks, one over the other. */
 const both =
@@ -926,6 +1113,49 @@ const REEF_ART: readonly Rung[] = [
   { name: 'Crab', color: '#ff643e', shape: { path: sphere }, art: { file: 'reef/6.webp', w: 786, h: 784, cx: 0.4994, cy: 0.4994, span: 759, reach: 1.279 } },
   { name: 'Conch', color: '#ff8882', shape: { path: sphere }, art: { file: 'reef/7.webp', w: 636, h: 806, cx: 0.4992, cy: 0.4994, span: 695, reach: 1.407 } },
 ];
+/**
+ * The one ladder nobody sent a sheet for.
+ *
+ * Every other theme here is eight pictures off a strip. This one is eight
+ * silhouettes and a handful of marks, poured through the same five washes the
+ * drawn fallbacks have always used — which is what this mode did before any
+ * sheet arrived, and what it can still do without anybody's artwork.
+ *
+ * So the rungs carry no `art`, and the painter finds nothing to draw the
+ * picture from and draws the gel instead. Nothing else in the pipeline knows
+ * the difference.
+ */
+const SUSHI_ART: readonly Rung[] = [
+  { name: 'Salmon roe', color: '#ff7a14', shape: { path: sphere } },
+  { name: 'Edamame', color: '#8ef02a', shape: { path: bean, marks: podBumps, reach: 1.15 } },
+  { name: 'Maki', color: '#1fd6a0', shape: { path: sphere, marks: makiRings } },
+  {
+    name: 'Nigiri',
+    color: '#ff6a5a',
+    shape: { path: nigiri, marks: fishSlab, reach: 1.12, upright: true },
+  },
+  {
+    name: 'Onigiri',
+    color: '#ded6ff',
+    shape: { path: riceball, marks: noriBand, reach: 1.06, upright: true },
+  },
+  {
+    name: 'Gyoza',
+    color: '#ffc24a',
+    shape: { path: dumpling, marks: pleats, reach: 1.08, upright: true },
+  },
+  {
+    name: 'Hand roll',
+    color: '#ff4fa8',
+    shape: { path: handRoll, marks: fillings, reach: 1.18, upright: true },
+  },
+  {
+    name: 'Ramen',
+    color: '#ff3326',
+    shape: { path: bowl, marks: ramenTop, reach: 1.15, upright: true },
+  },
+];
+
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
   planets: { key: 'planets', label: 'Planets', ladder: pair(PLANETS_ART, PLANETS_DRAWN) },
@@ -963,6 +1193,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   jellies: { key: 'jellies', label: 'Jellies', ladder: JELLIES_ART },
   gadgets: { key: 'gadgets', label: 'Gadgets', ladder: GADGETS_ART },
   reef: { key: 'reef', label: 'Reef', ladder: REEF_ART },
+  sushi: { key: 'sushi', label: 'Sushi', ladder: SUSHI_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1002,6 +1233,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'jellies',
   'gadgets',
   'reef',
+  'sushi',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */

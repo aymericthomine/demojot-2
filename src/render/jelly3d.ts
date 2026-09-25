@@ -76,9 +76,26 @@ type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
 const clamp = (v: number, lo = 0, hi = 255): number => Math.max(lo, Math.min(hi, v));
 
-/** Pull a hex colour apart. */
-const parts = (hex: string): [number, number, number] => {
-  const n = Number.parseInt(hex.slice(1), 16);
+/**
+ * Pull a colour apart, hex or `rgb(...)`.
+ *
+ * The `rgb(...)` half is not decoration. These helpers return `rgb(...)`
+ * strings, so composing them — `fade(sink(colour, 0.4), 0.2)`, which is how a
+ * mark asks for a darker version of its object at partial strength — hands the
+ * next one its own output. Parsing that as hex gives NaN, which canvas answers
+ * by *keeping the style it already had*: the mark comes out in whatever was set
+ * last, usually black, with nothing thrown. The pineapple's crosshatch drew
+ * black for as long as it has existed.
+ */
+const parts = (color: string): [number, number, number] => {
+  if (color.startsWith('rgb')) {
+    const [r, g, b] = color
+      .slice(color.indexOf('(') + 1)
+      .split(',')
+      .map((v) => Number.parseFloat(v));
+    return [clamp(r), clamp(g), clamp(b)];
+  }
+  const n = Number.parseInt(color.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 };
 

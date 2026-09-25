@@ -635,7 +635,7 @@ so it takes the object's shape and lands behind it. A disc of colour laid
 underneath was the first try and it showed: a pineapple is tall and narrow, and
 the parts of the disc it did not cover read as a dull smear around its foot.
 
-**Thirty-six ladders of eight.** Fruit, planets, gems, sweets and sea creatures
+**Thirty-seven ladders of eight.** Fruit, planets, gems, sweets and sea creatures
 came first; then animals, vegetables, magic, insects and weather; then vehicles,
 dessert, tools, ocean life and mythology; then dinosaurs, music, sports, space
 and fantasy creatures; then flowers, tropical fruit, candy, hats, monsters,
@@ -653,6 +653,21 @@ what takes them off before anything else is looked at. And the body is found at
 four brightnesses rather than one, keeping the highest that has most of the
 object: a chocolate cake is bands of dark sponge between lighter cream, and at
 the brightness that suits a neon object only one of the cream lines survives.
+
+**One ladder is drawn rather than photographed.** Sushi is eight silhouettes
+and a handful of marks poured through the washes below, with no pictures behind
+it at all — the rungs simply carry no `art`, the painter finds nothing to draw
+from, and the gel is what comes out. Nothing else in the pipeline knows the
+difference. It is the one cast in the mode that belongs to this project outright
+rather than to whoever made a sprite sheet.
+
+Drawing it turned up a bug the photographed themes had hidden. `fade`, `lift`
+and `sink` all return `rgb(...)` strings, and a mark that wants a darker version
+of its object at partial strength composes them — `fade(sink(colour, 0.4), 0.2)`.
+The colour parser read hex only, so that came back `rgb(NaN,NaN,NaN)`, which
+canvas answers by keeping the style it already had, with nothing thrown. Every
+composed mark drew black. The pineapple's crosshatch had done it since the day
+it was written, and nobody had looked at a pineapple on the fallback path.
 
 **The drawn gels are still in the build.** Before the sheet arrived, each object
 was a silhouette with five washes laid inside its own clip — body, depth,
