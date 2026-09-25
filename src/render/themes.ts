@@ -87,7 +87,8 @@ export type ThemeName =
   | 'elements'
   | 'bakery'
   | 'jellies'
-  | 'gadgets';
+  | 'gadgets'
+  | 'reef';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -908,12 +909,22 @@ const JELLIES_ART: readonly Rung[] = [
 const GADGETS_ART: readonly Rung[] = [
   { name: 'Phone', color: '#28bcff', shape: { path: sphere }, art: { file: 'gadgets/0.webp', w: 656, h: 924, cx: 0.4992, cy: 0.4995, span: 764, reach: 1.207 } },
   { name: 'Controller', color: '#d661ff', shape: { path: sphere }, art: { file: 'gadgets/1.webp', w: 768, h: 700, cx: 0.4993, cy: 0.4993, span: 708, reach: 1.262 } },
-  { name: 'Headphones', color: '#ff61b6', shape: { path: sphere }, art: { file: 'gadgets/2.webp', w: 680, h: 844, cx: 0.4993, cy: 0.4994, span: 736, reach: 1.147 } },
-  { name: 'Watch', color: '#92ff41', shape: { path: sphere }, art: { file: 'gadgets/3.webp', w: 670, h: 802, cx: 0.4993, cy: 0.4994, span: 710, reach: 1.157 } },
+  { name: 'Headphones', color: '#ff66b8', shape: { path: sphere }, art: { file: 'gadgets/2.webp', w: 680, h: 844, cx: 0.4993, cy: 0.4994, span: 736, reach: 1.147 } },
+  { name: 'Watch', color: '#95ff45', shape: { path: sphere }, art: { file: 'gadgets/3.webp', w: 670, h: 802, cx: 0.4993, cy: 0.4994, span: 710, reach: 1.157 } },
   { name: 'Key', color: '#ffd936', shape: { path: sphere }, art: { file: 'gadgets/4.webp', w: 642, h: 810, cx: 0.4992, cy: 0.4994, span: 700, reach: 1.371 } },
   { name: 'Sunglasses', color: '#ff564d', shape: { path: sphere }, art: { file: 'gadgets/5.webp', w: 792, h: 710, cx: 0.4994, cy: 0.5000, span: 724.5, reach: 1.394 } },
   { name: 'Disc', color: '#ecd9ff', shape: { path: sphere }, art: { file: 'gadgets/6.webp', w: 714, h: 758, cx: 0.4993, cy: 0.4993, span: 710, reach: 1.167 } },
-  { name: 'Bulb', color: '#ffe632', shape: { path: sphere }, art: { file: 'gadgets/7.webp', w: 560, h: 868, cx: 0.4991, cy: 0.4994, span: 688, reach: 1.260 } },
+  { name: 'Bulb', color: '#ffe738', shape: { path: sphere }, art: { file: 'gadgets/7.webp', w: 560, h: 868, cx: 0.4991, cy: 0.4994, span: 688, reach: 1.260 } },
+];
+const REEF_ART: readonly Rung[] = [
+  { name: 'Turtle', color: '#3de7ff', shape: { path: sphere }, art: { file: 'reef/0.webp', w: 746, h: 752, cx: 0.4993, cy: 0.4993, span: 723, reach: 1.372 } },
+  { name: 'Starfish', color: '#ff9c37', shape: { path: sphere }, art: { file: 'reef/1.webp', w: 696, h: 768, cx: 0.4993, cy: 0.4993, span: 706, reach: 1.251 } },
+  { name: 'Jellyfish', color: '#e69aff', shape: { path: sphere }, art: { file: 'reef/2.webp', w: 664, h: 936, cx: 0.4992, cy: 0.4995, span: 774, reach: 1.281 } },
+  { name: 'Seahorse', color: '#99ff7c', shape: { path: sphere }, art: { file: 'reef/3.webp', w: 536, h: 946, cx: 0.4991, cy: 0.4995, span: 715, reach: 1.316 } },
+  { name: 'Coral', color: '#ff6b8a', shape: { path: sphere }, art: { file: 'reef/4.webp', w: 670, h: 842, cx: 0.4993, cy: 0.4994, span: 730, reach: 1.131 } },
+  { name: 'Pearl shell', color: '#b89bff', shape: { path: sphere }, art: { file: 'reef/5.webp', w: 738, h: 780, cx: 0.4993, cy: 0.4994, span: 733, reach: 1.049 } },
+  { name: 'Crab', color: '#ff643e', shape: { path: sphere }, art: { file: 'reef/6.webp', w: 786, h: 784, cx: 0.4994, cy: 0.4994, span: 759, reach: 1.279 } },
+  { name: 'Conch', color: '#ff8882', shape: { path: sphere }, art: { file: 'reef/7.webp', w: 636, h: 806, cx: 0.4992, cy: 0.4994, span: 695, reach: 1.407 } },
 ];
 export const THEMES: Record<ThemeName, Theme> = {
   fruit: { key: 'fruit', label: 'Fruit', ladder: pair(FRUIT_ART, FRUIT_DRAWN) },
@@ -951,6 +962,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   bakery: { key: 'bakery', label: 'Bakery', ladder: BAKERY_ART },
   jellies: { key: 'jellies', label: 'Jellies', ladder: JELLIES_ART },
   gadgets: { key: 'gadgets', label: 'Gadgets', ladder: GADGETS_ART },
+  reef: { key: 'reef', label: 'Reef', ladder: REEF_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -989,6 +1001,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'bakery',
   'jellies',
   'gadgets',
+  'reef',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
