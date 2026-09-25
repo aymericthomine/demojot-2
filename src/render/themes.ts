@@ -299,9 +299,9 @@ const nigiri = (ctx: Ctx, x: number, y: number, r: number): void => {
 /** A triangle with its corners taken off: an onigiri. */
 const riceball = (ctx: Ctx, x: number, y: number, r: number): void => {
   const pts: [number, number][] = [
-    [x, y - r * 1.04],
-    [x + r * 0.98, y + r * 0.7],
-    [x - r * 0.98, y + r * 0.7],
+    [x, y - r * 1.42],
+    [x + r * 1.23, y + r * 0.9],
+    [x - r * 1.23, y + r * 0.9],
   ];
   const mid = (a: number, b: number): number => (a + b) / 2;
   ctx.beginPath();
@@ -309,7 +309,7 @@ const riceball = (ctx: Ctx, x: number, y: number, r: number): void => {
   for (let i = 0; i < 3; i += 1) {
     const a = pts[(i + 1) % 3];
     const b = pts[(i + 2) % 3];
-    ctx.arcTo(a[0], a[1], mid(a[0], b[0]), mid(a[1], b[1]), r * 0.34);
+    ctx.arcTo(a[0], a[1], mid(a[0], b[0]), mid(a[1], b[1]), r * 0.46);
   }
   ctx.closePath();
 };
@@ -326,21 +326,20 @@ const dumpling = (ctx: Ctx, x: number, y: number, r: number): void => {
 /** A cone held point down, open at the top: a hand roll. */
 const handRoll = (ctx: Ctx, x: number, y: number, r: number): void => {
   ctx.beginPath();
-  ctx.moveTo(x - r * 0.86, y - r * 0.92);
-  ctx.quadraticCurveTo(x, y - r * 0.6, x + r * 0.86, y - r * 0.92);
-  ctx.bezierCurveTo(x + r * 0.64, y + r * 0.2, x + r * 0.3, y + r * 0.86, x, y + r * 1.14);
-  ctx.bezierCurveTo(x - r * 0.3, y + r * 0.86, x - r * 0.64, y + r * 0.2, x - r * 0.86, y - r * 0.92);
+  ctx.moveTo(x - r * 0.78, y - r * 0.76);
+  ctx.quadraticCurveTo(x, y - r * 0.46, x + r * 0.78, y - r * 0.76);
+  ctx.bezierCurveTo(x + r * 0.6, y + r * 0.24, x + r * 0.3, y + r * 0.82, x, y + r * 1.08);
+  ctx.bezierCurveTo(x - r * 0.3, y + r * 0.82, x - r * 0.6, y + r * 0.24, x - r * 0.78, y - r * 0.76);
   ctx.closePath();
 };
 
 /** A wide shallow bowl, flat across the broth. */
 const bowl = (ctx: Ctx, x: number, y: number, r: number): void => {
   ctx.beginPath();
-  ctx.moveTo(x - r * 1.12, y - r * 0.46);
-  ctx.lineTo(x + r * 1.12, y - r * 0.46);
-  ctx.bezierCurveTo(x + r * 1.0, y + r * 0.58, x + r * 0.54, y + r * 0.94, x + r * 0.3, y + r * 0.94);
-  ctx.lineTo(x - r * 0.3, y + r * 0.94);
-  ctx.bezierCurveTo(x - r * 0.54, y + r * 0.94, x - r * 1.0, y + r * 0.58, x - r * 1.12, y - r * 0.46);
+  ctx.moveTo(x - r * 0.9, y - r * 0.5);
+  ctx.quadraticCurveTo(x, y - r * 0.64, x + r * 0.9, y - r * 0.5);
+  ctx.bezierCurveTo(x + r * 0.96, y + r * 0.4, x + r * 0.56, y + r * 0.9, x, y + r * 0.9);
+  ctx.bezierCurveTo(x - r * 0.56, y + r * 0.9, x - r * 0.96, y + r * 0.4, x - r * 0.9, y - r * 0.5);
   ctx.closePath();
 };
 
@@ -1127,32 +1126,32 @@ const REEF_ART: readonly Rung[] = [
  */
 const SUSHI_ART: readonly Rung[] = [
   { name: 'Salmon roe', color: '#ff7a14', shape: { path: sphere } },
-  { name: 'Edamame', color: '#8ef02a', shape: { path: bean, marks: podBumps, reach: 1.15 } },
+  { name: 'Edamame', color: '#8ef02a', shape: { path: bean, marks: podBumps, reach: 1.09 } },
   { name: 'Maki', color: '#1fd6a0', shape: { path: sphere, marks: makiRings } },
   {
     name: 'Nigiri',
     color: '#ff6a5a',
-    shape: { path: nigiri, marks: fishSlab, reach: 1.12, upright: true },
+    shape: { path: nigiri, marks: fishSlab, reach: 1.11, upright: true },
   },
   {
     name: 'Onigiri',
     color: '#ded6ff',
-    shape: { path: riceball, marks: noriBand, reach: 1.06, upright: true },
+    shape: { path: riceball, marks: noriBand, reach: 1.12, upright: true },
   },
   {
     name: 'Gyoza',
     color: '#ffc24a',
-    shape: { path: dumpling, marks: pleats, reach: 1.08, upright: true },
+    shape: { path: dumpling, marks: pleats, reach: 1.1, upright: true },
   },
   {
     name: 'Hand roll',
     color: '#ff4fa8',
-    shape: { path: handRoll, marks: fillings, reach: 1.18, upright: true },
+    shape: { path: handRoll, marks: fillings, reach: 1.09, upright: true },
   },
   {
     name: 'Ramen',
     color: '#ff3326',
-    shape: { path: bowl, marks: ramenTop, reach: 1.15, upright: true },
+    shape: { path: bowl, marks: ramenTop, reach: 1.04, upright: true },
   },
 ];
 

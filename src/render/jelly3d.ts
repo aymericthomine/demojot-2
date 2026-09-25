@@ -180,13 +180,20 @@ export function drawJelly(
   const turn = shape.upright ? 0 : (options.turn ?? 0);
   if (r <= 0.4 || alpha <= 0.01) return;
 
-  // A merge's swell: the new object arrives a little over size and settles. It
-  // is done here rather than in the simulation because it is a look, not a
-  // physics — the body it collides with is always its true size.
-  const swell = 1 + 0.28 * (1 - pop) ** 2;
+  // A merge's swell: the new object arrives small and springs open past its own
+  // size. It is done here rather than in the simulation because it is a look,
+  // not a physics — the body it collides with is always its true size.
+  //
+  // The same curve the pictures use, measured off a reference frame by frame:
+  // 0.42 at the frame it appears, full at fifty milliseconds, a peak of 1.06 at
+  // a hundred, settled by two hundred. This path kept the first guess long
+  // after that measurement was made — a quarter too big, shrinking to fit,
+  // which is the one thing the reference certainly does not do. Nothing drawn
+  // had been watched closely enough to catch it.
+  const swell = 1 - 0.58 * Math.exp(-4.5 * pop) * Math.cos(2 * Math.PI * pop);
   const reach = shape.reach ?? 1;
   const bloom = r * 0.75 * glow;
-  const half = Math.ceil(r * reach * swell + bloom + 4);
+  const half = Math.ceil(r * reach * Math.max(swell, 1.06) + bloom + 4);
   const size = half * 2;
   const { canvas, ctx } = board(size);
 
