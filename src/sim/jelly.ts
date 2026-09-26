@@ -677,7 +677,16 @@ export function generateJelly(seed: number): JellyRound {
       // Two of a kind that touch become one of the next kind up. Only settled
       // bodies merge: a parcel still coming down the chute passes through the
       // column above it, and merging on the way down would empty the chute.
-      let merged = true;
+      //
+      // And nothing merges once the ending has fired. The outro is a held shot
+      // of what the video was climbing towards, and the simulation used to keep
+      // playing through it: on a seed that ran out of time at seventy-one
+      // seconds with a camera at the top, the butterfly arrived at seventy-three
+      // — on screen, under a caption that had already said Camera, and in the
+      // file's name, which reads the round's best rather than its ending. The
+      // caption was not wrong about the moment it was written. The moment
+      // should not have kept moving.
+      let merged = decidedAt < 0;
       while (merged) {
         merged = false;
         for (let i = 0; i < bodies.length && !merged; i += 1) {
