@@ -89,7 +89,9 @@ export type ThemeName =
   | 'jellies'
   | 'gadgets'
   | 'reef'
-  | 'sushi';
+  | 'sushi'
+  | 'cosmos'
+  | 'charms';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1112,6 +1114,28 @@ const REEF_ART: readonly Rung[] = [
   { name: 'Crab', color: '#ff643e', shape: { path: sphere }, art: { file: 'reef/6.webp', w: 786, h: 784, cx: 0.4994, cy: 0.4994, span: 759, reach: 1.279 } },
   { name: 'Conch', color: '#ff8882', shape: { path: sphere }, art: { file: 'reef/7.webp', w: 636, h: 806, cx: 0.4992, cy: 0.4994, span: 695, reach: 1.407 } },
 ];
+const COSMOS_ART: readonly Rung[] = [
+  { name: 'Astronaut', color: '#24c3ff', shape: { path: sphere }, art: { file: 'cosmos/0.webp', w: 720, h: 942, cx: 0.4993, cy: 0.4995, span: 805, reach: 1.160 } },
+  { name: 'Saturn', color: '#dd69ff', shape: { path: sphere }, art: { file: 'cosmos/1.webp', w: 904, h: 622, cx: 0.4994, cy: 0.4992, span: 737, reach: 1.272 } },
+  { name: 'Alien', color: '#b4ff43', shape: { path: sphere }, art: { file: 'cosmos/2.webp', w: 560, h: 906, cx: 0.5000, cy: 0.4994, span: 706.5, reach: 1.358 } },
+  { name: 'Rocket', color: '#ff8140', shape: { path: sphere }, art: { file: 'cosmos/3.webp', w: 714, h: 862, cx: 0.4993, cy: 0.4994, span: 762, reach: 1.361 } },
+  { name: 'UFO', color: '#d9ff9f', shape: { path: sphere }, art: { file: 'cosmos/4.webp', w: 834, h: 826, cx: 0.4994, cy: 0.4994, span: 804, reach: 1.116 } },
+  { name: 'Star', color: '#ffd025', shape: { path: sphere }, art: { file: 'cosmos/5.webp', w: 734, h: 756, cx: 0.5000, cy: 0.4993, span: 718.5, reach: 1.142 } },
+  { name: 'Moon', color: '#c96aff', shape: { path: sphere }, art: { file: 'cosmos/6.webp', w: 680, h: 738, cx: 0.4993, cy: 0.4993, span: 683, reach: 1.083 } },
+  { name: 'Satellite', color: '#5da1ff', shape: { path: sphere }, art: { file: 'cosmos/7.webp', w: 790, h: 702, cx: 0.4987, cy: 0.4993, span: 719.5, reach: 1.177 } },
+];
+
+const CHARMS_ART: readonly Rung[] = [
+  { name: 'Rain cloud', color: '#3bd1ff', shape: { path: sphere }, art: { file: 'charms/0.webp', w: 772, h: 846, cx: 0.4994, cy: 0.4994, span: 783, reach: 1.069 } },
+  { name: 'Saturn', color: '#ff8de1', shape: { path: sphere }, art: { file: 'charms/1.webp', w: 914, h: 628, cx: 0.5000, cy: 0.4992, span: 744.5, reach: 1.311 } },
+  { name: 'Rocket', color: '#ff7033', shape: { path: sphere }, art: { file: 'charms/2.webp', w: 680, h: 844, cx: 0.4993, cy: 0.5000, span: 735.5, reach: 1.337 } },
+  { name: 'Star', color: '#ffc61a', shape: { path: sphere }, art: { file: 'charms/3.webp', w: 698, h: 720, cx: 0.4993, cy: 0.4979, span: 682, reach: 1.139 } },
+  { name: 'Mushroom', color: '#ff6e7f', shape: { path: sphere }, art: { file: 'charms/4.webp', w: 726, h: 730, cx: 0.4993, cy: 0.4986, span: 701.5, reach: 1.013 } },
+  { name: 'Cactus', color: '#9cff3c', shape: { path: sphere }, art: { file: 'charms/5.webp', w: 744, h: 842, cx: 0.5000, cy: 0.4988, span: 766, reach: 1.076 } },
+  { name: 'Camera', color: '#3aaaff', shape: { path: sphere }, art: { file: 'charms/6.webp', w: 844, h: 702, cx: 0.5000, cy: 0.4986, span: 746, reach: 1.169 } },
+  { name: 'Butterfly', color: '#f062ff', shape: { path: sphere }, art: { file: 'charms/7.webp', w: 784, h: 730, cx: 0.4994, cy: 0.4993, span: 731, reach: 1.311 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1193,6 +1217,8 @@ export const THEMES: Record<ThemeName, Theme> = {
   gadgets: { key: 'gadgets', label: 'Gadgets', ladder: GADGETS_ART },
   reef: { key: 'reef', label: 'Reef', ladder: REEF_ART },
   sushi: { key: 'sushi', label: 'Sushi', ladder: SUSHI_ART },
+  cosmos: { key: 'cosmos', label: 'Cosmos', ladder: COSMOS_ART },
+  charms: { key: 'charms', label: 'Charms', ladder: CHARMS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1233,6 +1259,8 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'gadgets',
   'reef',
   'sushi',
+  'cosmos',
+  'charms',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
