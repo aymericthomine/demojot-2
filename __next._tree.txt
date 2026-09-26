@@ -1,0 +1,2 @@
+:HL["/demojot-2/_next/static/chunks/2ur-jqpr_71hf.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}},"staleTime":300,"buildId":"jJFNZCEw1EDVfz7EoS3EV"}
