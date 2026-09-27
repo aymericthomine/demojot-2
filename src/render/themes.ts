@@ -91,7 +91,8 @@ export type ThemeName =
   | 'reef'
   | 'sushi'
   | 'cosmos'
-  | 'charms';
+  | 'charms'
+  | 'arcane';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1136,6 +1137,17 @@ const CHARMS_ART: readonly Rung[] = [
   { name: 'Butterfly', color: '#f062ff', shape: { path: sphere }, art: { file: 'charms/7.webp', w: 784, h: 730, cx: 0.4994, cy: 0.4993, span: 731, reach: 1.311 } },
 ];
 
+const ARCANE_ART: readonly Rung[] = [
+  { name: 'Dragon', color: '#42b3ff', shape: { path: sphere }, art: { file: 'arcane/0.webp', w: 760, h: 948, cx: 0.4993, cy: 0.4995, span: 828, reach: 1.167 } },
+  { name: 'Potion', color: '#ff81e7', shape: { path: sphere }, art: { file: 'arcane/1.webp', w: 598, h: 880, cx: 0.4992, cy: 0.4994, span: 713, reach: 1.202 } },
+  { name: 'Witch hat', color: '#c8a6ff', shape: { path: sphere }, art: { file: 'arcane/2.webp', w: 834, h: 764, cx: 0.4994, cy: 0.4993, span: 773, reach: 1.222 } },
+  { name: 'Crystals', color: '#54ccff', shape: { path: sphere }, art: { file: 'arcane/3.webp', w: 628, h: 920, cx: 0.4992, cy: 0.5000, span: 747.5, reach: 1.208 } },
+  { name: 'Treasure', color: '#ff9b3f', shape: { path: sphere }, art: { file: 'arcane/4.webp', w: 778, h: 806, cx: 0.4994, cy: 0.4994, span: 766, reach: 1.199 } },
+  { name: 'Ghost', color: '#47e0ff', shape: { path: sphere }, art: { file: 'arcane/5.webp', w: 644, h: 746, cx: 0.4992, cy: 0.4993, span: 669, reach: 1.146 } },
+  { name: 'Spellbook', color: '#ff8e9f', shape: { path: sphere }, art: { file: 'arcane/6.webp', w: 746, h: 732, cx: 0.4993, cy: 0.4993, span: 713, reach: 1.172 } },
+  { name: 'Phoenix', color: '#ff8f2d', shape: { path: sphere }, art: { file: 'arcane/7.webp', w: 802, h: 922, cx: 0.5000, cy: 0.4984, span: 834.5, reach: 1.284 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1219,6 +1231,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   sushi: { key: 'sushi', label: 'Sushi', ladder: SUSHI_ART },
   cosmos: { key: 'cosmos', label: 'Cosmos', ladder: COSMOS_ART },
   charms: { key: 'charms', label: 'Charms', ladder: CHARMS_ART },
+  arcane: { key: 'arcane', label: 'Arcane', ladder: ARCANE_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1261,6 +1274,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'sushi',
   'cosmos',
   'charms',
+  'arcane',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
