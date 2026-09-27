@@ -3,7 +3,7 @@
 /**
  * The themes' artwork.
  *
- * Three hundred and twelve pictures, eight to a theme, cut off twenty-three
+ * Three hundred and twenty pictures, eight to a theme, cut off twenty-four
  * sheets
  * that were supplied for this mode. They replace the drawn gels that were here first — those were made
  * because there was nothing else, and the note in the README at the time said

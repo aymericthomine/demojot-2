@@ -92,7 +92,8 @@ export type ThemeName =
   | 'sushi'
   | 'cosmos'
   | 'charms'
-  | 'arcane';
+  | 'arcane'
+  | 'orbit';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1148,6 +1149,17 @@ const ARCANE_ART: readonly Rung[] = [
   { name: 'Phoenix', color: '#ff8f2d', shape: { path: sphere }, art: { file: 'arcane/7.webp', w: 802, h: 922, cx: 0.5000, cy: 0.4984, span: 834.5, reach: 1.284 } },
 ];
 
+const ORBIT_ART: readonly Rung[] = [
+  { name: 'Astronaut', color: '#b9cbff', shape: { path: sphere }, art: { file: 'orbit/0.webp', w: 758, h: 902, cx: 0.4993, cy: 0.4989, span: 802.5, reach: 1.167 } },
+  { name: 'Planet', color: '#cb8aff', shape: { path: sphere }, art: { file: 'orbit/1.webp', w: 890, h: 646, cx: 0.4989, cy: 0.4992, span: 741.5, reach: 1.307 } },
+  { name: 'Rocket', color: '#ff9b68', shape: { path: sphere }, art: { file: 'orbit/2.webp', w: 700, h: 832, cx: 0.4993, cy: 0.4988, span: 739.5, reach: 1.356 } },
+  { name: 'Star', color: '#ffc91b', shape: { path: sphere }, art: { file: 'orbit/3.webp', w: 720, h: 730, cx: 0.4993, cy: 0.4993, span: 699, reach: 1.135 } },
+  { name: 'UFO', color: '#47beff', shape: { path: sphere }, art: { file: 'orbit/4.webp', w: 854, h: 612, cx: 0.4994, cy: 0.4992, span: 706, reach: 1.304 } },
+  { name: 'Asteroid', color: '#ffa278', shape: { path: sphere }, art: { file: 'orbit/5.webp', w: 662, h: 700, cx: 0.4992, cy: 0.4993, span: 655, reach: 1.201 } },
+  { name: 'Satellite', color: '#85aeff', shape: { path: sphere }, art: { file: 'orbit/6.webp', w: 790, h: 736, cx: 0.4994, cy: 0.4993, span: 737, reach: 1.202 } },
+  { name: 'Galaxy', color: '#b07dff', shape: { path: sphere }, art: { file: 'orbit/7.webp', w: 724, h: 726, cx: 0.4993, cy: 0.4993, span: 699, reach: 1.176 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1232,6 +1244,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   cosmos: { key: 'cosmos', label: 'Cosmos', ladder: COSMOS_ART },
   charms: { key: 'charms', label: 'Charms', ladder: CHARMS_ART },
   arcane: { key: 'arcane', label: 'Arcane', ladder: ARCANE_ART },
+  orbit: { key: 'orbit', label: 'Orbit', ladder: ORBIT_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1275,6 +1288,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'cosmos',
   'charms',
   'arcane',
+  'orbit',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
