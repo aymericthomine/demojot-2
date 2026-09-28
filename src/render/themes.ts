@@ -93,7 +93,8 @@ export type ThemeName =
   | 'cosmos'
   | 'charms'
   | 'arcane'
-  | 'orbit';
+  | 'orbit'
+  | 'pirate';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1160,6 +1161,17 @@ const ORBIT_ART: readonly Rung[] = [
   { name: 'Galaxy', color: '#b07dff', shape: { path: sphere }, art: { file: 'orbit/7.webp', w: 724, h: 726, cx: 0.4993, cy: 0.4993, span: 699, reach: 1.176 } },
 ];
 
+const PIRATE_ART: readonly Rung[] = [
+  { name: 'Message bottle', color: '#9affca', shape: { path: sphere }, art: { file: 'pirate/0.webp', w: 634, h: 886, cx: 0.5000, cy: 0.4994, span: 733.5, reach: 1.290 } },
+  { name: 'Compass', color: '#ffd444', shape: { path: sphere }, art: { file: 'pirate/1.webp', w: 618, h: 766, cx: 0.4992, cy: 0.4993, span: 666, reach: 1.173 } },
+  { name: 'Pearl shell', color: '#ff908e', shape: { path: sphere }, art: { file: 'pirate/2.webp', w: 742, h: 752, cx: 0.4993, cy: 0.4993, span: 721, reach: 1.076 } },
+  { name: 'Pirate ship', color: '#7cc0ff', shape: { path: sphere }, art: { file: 'pirate/3.webp', w: 732, h: 926, cx: 0.4993, cy: 0.4995, span: 803, reach: 1.153 } },
+  { name: 'Treasure chest', color: '#ffad37', shape: { path: sphere }, art: { file: 'pirate/4.webp', w: 790, h: 862, cx: 0.5000, cy: 0.4983, span: 797.5, reach: 1.232 } },
+  { name: 'Anchor', color: '#f370ff', shape: { path: sphere }, art: { file: 'pirate/5.webp', w: 670, h: 852, cx: 0.4993, cy: 0.4994, span: 735, reach: 1.159 } },
+  { name: 'Seahorse', color: '#c2ff24', shape: { path: sphere }, art: { file: 'pirate/6.webp', w: 522, h: 920, cx: 0.4990, cy: 0.4995, span: 695, reach: 1.297 } },
+  { name: 'Diving helmet', color: '#ff803e', shape: { path: sphere }, art: { file: 'pirate/7.webp', w: 726, h: 836, cx: 0.4993, cy: 0.4994, span: 755, reach: 1.102 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1245,6 +1257,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   charms: { key: 'charms', label: 'Charms', ladder: CHARMS_ART },
   arcane: { key: 'arcane', label: 'Arcane', ladder: ARCANE_ART },
   orbit: { key: 'orbit', label: 'Orbit', ladder: ORBIT_ART },
+  pirate: { key: 'pirate', label: 'Pirates', ladder: PIRATE_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1289,6 +1302,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'charms',
   'arcane',
   'orbit',
+  'pirate',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
