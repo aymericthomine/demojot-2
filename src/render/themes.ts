@@ -94,7 +94,10 @@ export type ThemeName =
   | 'charms'
   | 'arcane'
   | 'orbit'
-  | 'pirate';
+  | 'pirate'
+  | 'nebula'
+  | 'beach'
+  | 'holiday';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1172,6 +1175,39 @@ const PIRATE_ART: readonly Rung[] = [
   { name: 'Diving helmet', color: '#ff803e', shape: { path: sphere }, art: { file: 'pirate/7.webp', w: 726, h: 836, cx: 0.4993, cy: 0.4994, span: 755, reach: 1.102 } },
 ];
 
+const NEBULA_ART: readonly Rung[] = [
+  { name: 'Saturn', color: '#9993ff', shape: { path: sphere }, art: { file: 'nebula/0.webp', w: 854, h: 634, cx: 0.5000, cy: 0.4992, span: 717.5, reach: 1.216 } },
+  { name: 'Rocket', color: '#ff9871', shape: { path: sphere }, art: { file: 'nebula/1.webp', w: 578, h: 770, cx: 0.4991, cy: 0.4994, span: 648, reach: 1.374 } },
+  { name: 'Moon', color: '#99d0ff', shape: { path: sphere }, art: { file: 'nebula/2.webp', w: 638, h: 724, cx: 0.4992, cy: 0.4993, span: 655, reach: 1.109 } },
+  { name: 'UFO', color: '#b5bdff', shape: { path: sphere }, art: { file: 'nebula/3.webp', w: 752, h: 710, cx: 0.5000, cy: 0.4993, span: 704.5, reach: 1.061 } },
+  { name: 'Comet', color: '#ff9562', shape: { path: sphere }, art: { file: 'nebula/4.webp', w: 656, h: 670, cx: 0.4992, cy: 0.4993, span: 637, reach: 1.390 } },
+  { name: 'Helmet', color: '#c2a8ff', shape: { path: sphere }, art: { file: 'nebula/5.webp', w: 706, h: 720, cx: 0.4993, cy: 0.4986, span: 686.5, reach: 1.083 } },
+  { name: 'Crystals', color: '#dabfff', shape: { path: sphere }, art: { file: 'nebula/6.webp', w: 618, h: 802, cx: 0.4992, cy: 0.4994, span: 684, reach: 1.172 } },
+  { name: 'Ringed world', color: '#ffc593', shape: { path: sphere }, art: { file: 'nebula/7.webp', w: 812, h: 656, cx: 0.4994, cy: 0.4992, span: 708, reach: 1.186 } },
+];
+
+const BEACH_ART: readonly Rung[] = [
+  { name: 'Jellyfish', color: '#5d92ff', shape: { path: sphere }, art: { file: 'beach/0.webp', w: 760, h: 886, cx: 0.5007, cy: 0.4994, span: 796, reach: 1.129 } },
+  { name: 'Cocktail', color: '#ff9370', shape: { path: sphere }, art: { file: 'beach/1.webp', w: 608, h: 940, cx: 0.5000, cy: 0.4995, span: 747.5, reach: 1.423 } },
+  { name: 'Turtle', color: '#42d5ff', shape: { path: sphere }, art: { file: 'beach/2.webp', w: 882, h: 770, cx: 0.4994, cy: 0.5000, span: 799.5, reach: 1.266 } },
+  { name: 'Pineapple', color: '#ffaa2e', shape: { path: sphere }, art: { file: 'beach/3.webp', w: 664, h: 976, cx: 0.5000, cy: 0.5000, span: 793, reach: 1.227 } },
+  { name: 'Starfish', color: '#ff873e', shape: { path: sphere }, art: { file: 'beach/4.webp', w: 730, h: 752, cx: 0.4993, cy: 0.4973, span: 713.5, reach: 1.214 } },
+  { name: 'Sandcastle', color: '#ffb249', shape: { path: sphere }, art: { file: 'beach/5.webp', w: 758, h: 824, cx: 0.4993, cy: 0.4994, span: 765, reach: 1.265 } },
+  { name: 'Surfboard', color: '#88a6ff', shape: { path: sphere }, art: { file: 'beach/6.webp', w: 480, h: 906, cx: 0.4990, cy: 0.4994, span: 667, reach: 1.410 } },
+  { name: 'Dolphin', color: '#459eff', shape: { path: sphere }, art: { file: 'beach/7.webp', w: 744, h: 904, cx: 0.4993, cy: 0.4994, span: 798, reach: 1.143 } },
+];
+
+const HOLIDAY_ART: readonly Rung[] = [
+  { name: 'Sun', color: '#ffb426', shape: { path: sphere }, art: { file: 'holiday/0.webp', w: 804, h: 798, cx: 0.4994, cy: 0.4994, span: 775, reach: 1.043 } },
+  { name: 'Coconut', color: '#ff977b', shape: { path: sphere }, art: { file: 'holiday/1.webp', w: 670, h: 860, cx: 0.4993, cy: 0.4994, span: 739, reach: 1.270 } },
+  { name: 'Camper van', color: '#c1fff5', shape: { path: sphere }, art: { file: 'holiday/2.webp', w: 798, h: 844, cx: 0.4987, cy: 0.4994, span: 794.5, reach: 1.209 } },
+  { name: 'Flip-flops', color: '#ffacd9', shape: { path: sphere }, art: { file: 'holiday/3.webp', w: 698, h: 780, cx: 0.4993, cy: 0.4994, span: 713, reach: 1.148 } },
+  { name: 'Suitcase', color: '#ffdf83', shape: { path: sphere }, art: { file: 'holiday/4.webp', w: 736, h: 734, cx: 0.4986, cy: 0.4993, span: 708.5, reach: 1.202 } },
+  { name: 'Camera', color: '#ff94f5', shape: { path: sphere }, art: { file: 'holiday/5.webp', w: 764, h: 684, cx: 0.4993, cy: 0.4985, span: 697.5, reach: 1.281 } },
+  { name: 'Map', color: '#c6ffe5', shape: { path: sphere }, art: { file: 'holiday/6.webp', w: 770, h: 678, cx: 0.4994, cy: 0.4993, span: 698, reach: 1.201 } },
+  { name: 'Palm island', color: '#ffe99a', shape: { path: sphere }, art: { file: 'holiday/7.webp', w: 740, h: 852, cx: 0.4993, cy: 0.4994, span: 770, reach: 1.240 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1258,6 +1294,9 @@ export const THEMES: Record<ThemeName, Theme> = {
   arcane: { key: 'arcane', label: 'Arcane', ladder: ARCANE_ART },
   orbit: { key: 'orbit', label: 'Orbit', ladder: ORBIT_ART },
   pirate: { key: 'pirate', label: 'Pirates', ladder: PIRATE_ART },
+  nebula: { key: 'nebula', label: 'Nebula', ladder: NEBULA_ART },
+  beach: { key: 'beach', label: 'Beach', ladder: BEACH_ART },
+  holiday: { key: 'holiday', label: 'Holiday', ladder: HOLIDAY_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1303,6 +1342,9 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'arcane',
   'orbit',
   'pirate',
+  'nebula',
+  'beach',
+  'holiday',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
