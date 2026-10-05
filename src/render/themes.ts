@@ -97,7 +97,8 @@ export type ThemeName =
   | 'pirate'
   | 'nebula'
   | 'beach'
-  | 'holiday';
+  | 'holiday'
+  | 'storybook';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1208,6 +1209,17 @@ const HOLIDAY_ART: readonly Rung[] = [
   { name: 'Palm island', color: '#ffe99a', shape: { path: sphere }, art: { file: 'holiday/7.webp', w: 740, h: 852, cx: 0.4993, cy: 0.4994, span: 770, reach: 1.240 } },
 ];
 
+const STORYBOOK_ART: readonly Rung[] = [
+  { name: 'Fox', color: '#ff9345', shape: { path: sphere }, art: { file: 'storybook/0.webp', w: 756, h: 936, cx: 0.4993, cy: 0.4995, span: 820, reach: 1.217 } },
+  { name: 'Potion', color: '#c49dff', shape: { path: sphere }, art: { file: 'storybook/1.webp', w: 632, h: 908, cx: 0.4992, cy: 0.5006, span: 743, reach: 1.209 } },
+  { name: 'Turtle', color: '#52feff', shape: { path: sphere }, art: { file: 'storybook/2.webp', w: 752, h: 764, cx: 0.4993, cy: 0.4993, span: 732, reach: 1.285 } },
+  { name: 'Books', color: '#ffd1ba', shape: { path: sphere }, art: { file: 'storybook/3.webp', w: 750, h: 812, cx: 0.4993, cy: 0.4994, span: 755, reach: 1.101 } },
+  { name: 'Camera', color: '#42b2ff', shape: { path: sphere }, art: { file: 'storybook/4.webp', w: 766, h: 688, cx: 0.4993, cy: 0.4985, span: 700.5, reach: 1.244 } },
+  { name: 'Cloud', color: '#b3beff', shape: { path: sphere }, art: { file: 'storybook/5.webp', w: 780, h: 818, cx: 0.4994, cy: 0.4994, span: 772, reach: 1.051 } },
+  { name: 'Castle', color: '#ffb192', shape: { path: sphere }, art: { file: 'storybook/6.webp', w: 710, h: 920, cx: 0.4993, cy: 0.4995, span: 789, reach: 1.252 } },
+  { name: 'Lantern', color: '#ffadb5', shape: { path: sphere }, art: { file: 'storybook/7.webp', w: 492, h: 832, cx: 0.4990, cy: 0.4994, span: 636, reach: 1.272 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1297,6 +1309,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   nebula: { key: 'nebula', label: 'Nebula', ladder: NEBULA_ART },
   beach: { key: 'beach', label: 'Beach', ladder: BEACH_ART },
   holiday: { key: 'holiday', label: 'Holiday', ladder: HOLIDAY_ART },
+  storybook: { key: 'storybook', label: 'Storybook', ladder: STORYBOOK_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1345,6 +1358,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'nebula',
   'beach',
   'holiday',
+  'storybook',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
