@@ -100,7 +100,8 @@ export type ThemeName =
   | 'holiday'
   | 'storybook'
   | 'jewels'
-  | 'icons';
+  | 'icons'
+  | 'blooms';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1244,6 +1245,17 @@ const ICONS_ART: readonly Rung[] = [
   { name: 'Trophy', color: '#ffc934', shape: { path: sphere }, art: { file: 'icons/7.webp', w: 496, h: 462, cx: 0.4990, cy: 0.4989, span: 453, reach: 1.194 } },
 ];
 
+const BLOOMS_ART: readonly Rung[] = [
+  { name: 'Tulip', color: '#ff768e', shape: { path: sphere }, art: { file: 'blooms/0.webp', w: 540, h: 906, cx: 0.4991, cy: 0.4989, span: 696.5, reach: 1.308 } },
+  { name: 'Forget-me-not', color: '#5ec4ff', shape: { path: sphere }, art: { file: 'blooms/1.webp', w: 722, h: 888, cx: 0.4993, cy: 0.4989, span: 778.5, reach: 1.108 } },
+  { name: 'Daisy', color: '#fde6ff', shape: { path: sphere }, art: { file: 'blooms/2.webp', w: 766, h: 918, cx: 0.4993, cy: 0.4989, span: 815.5, reach: 1.118 } },
+  { name: 'Sunflower', color: '#ffba1d', shape: { path: sphere }, art: { file: 'blooms/3.webp', w: 798, h: 958, cx: 0.5000, cy: 0.5000, span: 851, reach: 1.097 } },
+  { name: 'Water lily', color: '#ff9bb9', shape: { path: sphere }, art: { file: 'blooms/4.webp', w: 824, h: 786, cx: 0.4994, cy: 0.4994, span: 779, reach: 1.139 } },
+  { name: 'Hydrangea', color: '#a889ff', shape: { path: sphere }, art: { file: 'blooms/5.webp', w: 720, h: 840, cx: 0.4993, cy: 0.4988, span: 753.5, reach: 1.203 } },
+  { name: 'Lily', color: '#ffa4c6', shape: { path: sphere }, art: { file: 'blooms/6.webp', w: 772, h: 864, cx: 0.4994, cy: 0.4994, span: 792, reach: 1.206 } },
+  { name: 'Bird of paradise', color: '#ffa440', shape: { path: sphere }, art: { file: 'blooms/7.webp', w: 748, h: 932, cx: 0.4987, cy: 0.4995, span: 813.5, reach: 1.210 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1336,6 +1348,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   storybook: { key: 'storybook', label: 'Storybook', ladder: STORYBOOK_ART },
   jewels: { key: 'jewels', label: 'Jewels', ladder: JEWELS_ART },
   icons: { key: 'icons', label: 'Icons', ladder: ICONS_ART },
+  blooms: { key: 'blooms', label: 'Blooms', ladder: BLOOMS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1387,6 +1400,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'storybook',
   'jewels',
   'icons',
+  'blooms',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
