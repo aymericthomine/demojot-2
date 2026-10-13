@@ -101,7 +101,8 @@ export type ThemeName =
   | 'storybook'
   | 'jewels'
   | 'icons'
-  | 'blooms';
+  | 'blooms'
+  | 'twinkle';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1256,6 +1257,17 @@ const BLOOMS_ART: readonly Rung[] = [
   { name: 'Bird of paradise', color: '#ffa440', shape: { path: sphere }, art: { file: 'blooms/7.webp', w: 748, h: 932, cx: 0.4987, cy: 0.4995, span: 813.5, reach: 1.210 } },
 ];
 
+const TWINKLE_ART: readonly Rung[] = [
+  { name: 'Star', color: '#ffb356', shape: { path: sphere }, art: { file: 'twinkle/0.webp', w: 756, h: 762, cx: 0.4993, cy: 0.4993, span: 733, reach: 1.123 } },
+  { name: 'Moon', color: '#8295ff', shape: { path: sphere }, art: { file: 'twinkle/1.webp', w: 708, h: 784, cx: 0.4993, cy: 0.4994, span: 720, reach: 1.089 } },
+  { name: 'Saturn', color: '#ffabae', shape: { path: sphere }, art: { file: 'twinkle/2.webp', w: 874, h: 686, cx: 0.5000, cy: 0.4993, span: 753.5, reach: 1.198 } },
+  { name: 'Astronaut', color: '#b8a1ff', shape: { path: sphere }, art: { file: 'twinkle/3.webp', w: 704, h: 878, cx: 0.5000, cy: 0.4994, span: 764.5, reach: 1.133 } },
+  { name: 'Rocket', color: '#ffb6d8', shape: { path: sphere }, art: { file: 'twinkle/4.webp', w: 706, h: 874, cx: 0.4993, cy: 0.4994, span: 764, reach: 1.326 } },
+  { name: 'Cloud', color: '#c5b2ff', shape: { path: sphere }, art: { file: 'twinkle/5.webp', w: 750, h: 870, cx: 0.4993, cy: 0.4994, span: 784, reach: 1.085 } },
+  { name: 'Sun', color: '#ffb439', shape: { path: sphere }, art: { file: 'twinkle/6.webp', w: 780, h: 814, cx: 0.4994, cy: 0.4994, span: 771, reach: 1.086 } },
+  { name: 'Galaxy', color: '#ce9fff', shape: { path: sphere }, art: { file: 'twinkle/7.webp', w: 720, h: 764, cx: 0.4993, cy: 0.4987, span: 715.5, reach: 1.138 } },
+];
+
 /**
  * The one ladder nobody sent a sheet for.
  *
@@ -1349,6 +1361,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   jewels: { key: 'jewels', label: 'Jewels', ladder: JEWELS_ART },
   icons: { key: 'icons', label: 'Icons', ladder: ICONS_ART },
   blooms: { key: 'blooms', label: 'Blooms', ladder: BLOOMS_ART },
+  twinkle: { key: 'twinkle', label: 'Twinkle', ladder: TWINKLE_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1401,6 +1414,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'jewels',
   'icons',
   'blooms',
+  'twinkle',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
