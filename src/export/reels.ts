@@ -22,6 +22,8 @@ import type { PachinkoRound } from '../sim/pachinko';
 import type { PotatoRound } from '../sim/potato';
 import type { JellyRound } from '../sim/jelly';
 import { HEIGHT, WIDTH } from '../sim/style';
+import type { ChartRound } from '../sim/chart';
+import { drawChartFrame } from '../render/drawChart';
 
 export interface Dress {
   /** White ground and complementary colours instead of the usual black. */
@@ -157,6 +159,34 @@ export function jellyReel(round: JellyRound, dress: Dress = {}): Reel {
     paint(ctx, index) {
       drawJellyFrame(ctx, round.frames[index], { width: WIDTH, height: HEIGHT, theme });
       release(round.frames, index);
+    },
+  };
+}
+
+/**
+ * A chart, painted from its data rather than from frames.
+ *
+ * Every other reel here hands back a snapshot the simulation took and then
+ * drops it. This one has nothing stored: a line chart is a function of the
+ * clock, so the painter is given the round itself and works the frame out. It
+ * is also the one mode with nothing to listen to — a chart that ticked would be
+ * a chart with a gimmick on it — so it says so rather than reporting a
+ * soundtrack it failed to build.
+ */
+export function chartReel(round: ChartRound, dress: Dress = {}): Reel {
+  const slug =
+    round.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 40) || 'chart';
+  return {
+    durationInFrames: round.durationInFrames,
+    duration: round.duration,
+    name: `chart-${slug}-${Math.round(round.duration)}s${dress.invert ? '-dark' : ''}`,
+    mute: true,
+    paint(ctx, index) {
+      drawChartFrame(ctx, round, index, { width: WIDTH, height: HEIGHT, invert: dress.invert });
     },
   };
 }

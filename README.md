@@ -1,7 +1,8 @@
 # Twelve
 
-Four generators for vertical 9:16 videos, in one page. They share the twelve,
-the seed, the clock, the sound and the encoder, and nothing else.
+Six generators for vertical 9:16 videos, in one page. Five of them share the
+twelve, the seed, the clock, the sound and the encoder, and nothing else; the
+sixth shares only the frame and the encoder, because it is not a game.
 
 **Month** — twelve balls loose in a ring. While exactly one of them is in the
 zone in the middle, it banks the seconds; the video ends the moment one of the
@@ -24,6 +25,11 @@ holding none is out.
 object coming down for ever. Two of anything that touch become one of the next
 thing up, eight rungs of it, and the video ends when the top is reached. The odd
 one out: no cast of twelve, a theme instead, and a soundtrack of its own.
+
+**Chart** — not a game at all: a line chart that races. Paste a table and the
+curves draw themselves left to right while a scrubber walks the steps and a
+column of labels re-sorts itself as the lines cross. No twelve, no seed, no
+sound.
 
 Who the twelve *are* is a separate choice — months, star signs, countries,
 sports or fruit — and the same seed plays the same round whichever of them is
@@ -749,6 +755,53 @@ their −4.4, −9.0, −10.5 and −8.9.
 
 Every other mode here plays a recording lifted from its reference, which is the
 one thing a platform could recognise and mute. This mode owes nobody anything.
+
+## Chart
+
+The one mode with no simulation behind it. A line chart over time is a pure
+function of the data and the clock, so there is no frame array, no physics and
+no seed: the same table makes the same video every time, and the painter works
+each frame out from the round rather than from a snapshot.
+
+It is cut to a reference measured at 720 by 1280 — its title block, its
+scrubber, its plot and its label column all sit at fractions of the frame taken
+off that, so a chart made here lands where one made there does. Three things in
+it are the whole look, and none of them is the line.
+
+**The axis grows.** Sized for the final maximum from the first frame, the
+opening of any chart worth animating is a flat mat along the bottom. The
+ceiling is taken over the data seen so far and eased between steps, so the early
+years fill the plot and the lines settle downwards as the scale opens out.
+
+Rounding that maximum up to a nice number is the obvious way to pick the
+ceiling and it is the wrong one: fifty-eight rounds to a hundred, and the chart
+then plays out in the bottom half of a plot whose top half is empty. The tick is
+chosen first, at about a quarter of the maximum, and the axis stops at the first
+whole tick above it. Fifty-eight gives a tick of twenty and an axis of sixty.
+
+**The labels sort themselves.** Each sits at its own line's height; a pass down
+the stack opens every gap to a whole entry, and when that runs past the foot of
+the plot — six series inside two points of each other need more room than there
+is below them — a pass back up pushes the overflow into the space above instead
+of off the frame. Without it the frame is unreadable exactly when the race is
+closest.
+
+**The curve is sampled, not fitted.** A Catmull-Rom spline through the values at
+uniform x, taken at twelve points a step and stroked as a polyline. At a
+thousand pixels across that is the curve, and it makes a half-drawn segment
+free: the sweep stops sampling where it has got to rather than needing the curve
+split at an arbitrary parameter.
+
+That spline overshoots, which is most of what makes these curves pleasant, and
+which put **minus nought point one percent** under a series whose every value is
+zero or more. The sample is held inside the range the series actually covers —
+local overshoot between two neighbours survives, a number the data never reaches
+does not.
+
+An empty cell is a gap rather than a zero, so a series that starts late is drawn
+from where its numbers start. The table is read before the encoder is reserved:
+a missing comma is a typo, and a typo should not take a phone's hardware encoder
+and hand it straight back.
 
 ## Who is playing
 

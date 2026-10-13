@@ -41,6 +41,7 @@ import {
 } from "../export/encodeVideo";
 import {
   wiresReel,
+  chartReel,
   jellyReel,
   monthsReel,
   pachinkoReel,
@@ -55,16 +56,20 @@ import { generatePotato } from "../sim/potato";
 import { CAST_LABEL, castFor, type CastName } from "../render/cast";
 import { loadFlags } from "../render/flags";
 import { loadArt } from "../render/jellyArt";
+import { generateChart, parseChart } from "../sim/chart";
 import { FPS, HEIGHT, WIDTH } from "../sim/style";
 
 /**
- * The four games.
+ * The five games, and the one thing that is not a game.
  *
- * They share the twelve, the seed, the clock, the sound and the encoder, and
- * nothing else: one is about holding a place, one about not holding a thing,
- * one about where a ball lands, and one about taking everybody else's.
+ * The games share the twelve, the seed, the clock, the sound and the encoder,
+ * and nothing else: one is about holding a place, one about not holding a
+ * thing, one about where a ball lands, and one about taking everybody else's.
+ *
+ * Chart shares the frame and the encoder and none of the rest. It has no cast,
+ * no seed and no sound, because a chart is not played: it is read.
  */
-type Mode = "month" | "potato" | "pachinko" | "wires" | "jelly";
+type Mode = "month" | "potato" | "pachinko" | "wires" | "jelly" | "chart";
 
 const MODES: readonly Mode[] = [
   "month",
@@ -72,6 +77,7 @@ const MODES: readonly Mode[] = [
   "pachinko",
   "wires",
   "jelly",
+  "chart",
 ];
 
 const MODE_NAME: Record<Mode, string> = {
@@ -80,6 +86,7 @@ const MODE_NAME: Record<Mode, string> = {
   pachinko: "Pachinko",
   wires: "Keep The Wires",
   jelly: "Jelly",
+  chart: "Chart",
 };
 
 const MODE_BUTTON: Record<Mode, string> = {
@@ -88,6 +95,7 @@ const MODE_BUTTON: Record<Mode, string> = {
   pachinko: "Pachinko",
   wires: "Keep the wires",
   jelly: "Jelly",
+  chart: "Chart",
 };
 
 const MODE_BUSY: Record<Mode, string> = {
@@ -96,6 +104,7 @@ const MODE_BUSY: Record<Mode, string> = {
   pachinko: "Dropping them…",
   wires: "Cutting it up…",
   jelly: "Dropping them in…",
+  chart: "Reading the table…",
 };
 
 const MODE_ABOUT: Record<Mode, string> = {
@@ -109,6 +118,8 @@ const MODE_ABOUT: Record<Mode, string> = {
     "Twelve balls in the ring, and a hundred and eighty wires pinned to it — fifteen a side, each running from its own point on the rim to the ball that owns it. Run through a wire and it comes away with you, pin and all: the ball is not turned by it, it cuts and carries on, and it takes every wire it passed through. Because it takes what it touches it is never on the far side of one, so no two wires ever overlap. A ball holds ninety at most and a full one breaks the wire instead of taking it, which is what keeps the ring emptying — set high, so the fight is still close when the whistle goes. No wires means out.",
   jelly:
     "A flask with a chute running into it, and a stream of the smallest thing coming down for ever. Two of anything that touch become one of the next thing up, which is bigger, so the bowl fills with small things that keep turning into fewer large ones. Eight rungs of ladder, and the video ends when the top of it is reached. The theme picks what is falling — fifty ladders of eight, from fruit and planets to dinosaurs, monsters, instruments, minerals, the deep sea, the elements and a bakery — and every object is shaded rather than drawn flat, so it reads as a solid of coloured gel.",
+  chart:
+    "A line chart that races. Paste a table — a step column and a column per series — and the curves draw themselves left to right while a scrubber walks the steps and a column of labels down the right-hand side re-sorts itself as the lines cross. The vertical axis grows with the data rather than being set to the final maximum, which is what keeps the opening from being a flat mat at the bottom of the frame. No sound: a chart that ticked would be a chart with a gimmick on it."
 };
 
 /** Everything a press of the button needs. */
@@ -118,6 +129,11 @@ interface Job {
   invert: boolean;
   cast: CastName;
   theme: ThemeName;
+  /** What Chart is told to draw. The other five modes ignore all four. */
+  title: string;
+  unit: string;
+  seconds: number;
+  table: string;
 }
 
 type Stage =
@@ -167,6 +183,21 @@ const STEP_LABEL: Record<EncodeStage, string> = {
 
 const randomSeed = (): number => Math.floor(Math.random() * 1_000_000);
 
+/**
+ * What Chart draws before anybody has pasted anything.
+ *
+ * Made up, and said so under the box. A default of real figures would be a
+ * default that somebody publishes by accident, and the point of the example is
+ * only to show the shape a table has to be.
+ */
+const SAMPLE_TABLE = `Year,Radio,CD,Download,Streaming,Vinyl
+1995,58,31,0,0,11
+2000,49,42,1,0,8
+2005,41,33,18,1,7
+2010,33,19,34,8,6
+2015,24,8,27,33,8
+2020,16,3,9,61,11`;
+
 export default function HomePage() {
   const [mode, setMode] = useState<Mode>("month");
   const [seed, setSeed] = useState(() => randomSeed());
@@ -175,6 +206,10 @@ export default function HomePage() {
   // whichever cast is wearing it.
   const [cast, setCast] = useState<CastName>("months");
   const [theme, setTheme] = useState<ThemeName>("fruit");
+  const [title, setTitle] = useState("Where We Listen To Music");
+  const [unit, setUnit] = useState("%");
+  const [span, setSpan] = useState(30);
+  const [table, setTable] = useState(SAMPLE_TABLE);
   const [stage, setStage] = useState<Stage>({ kind: "idle" });
   const [support, setSupport] = useState<string | null>(null);
 
@@ -241,6 +276,12 @@ export default function HomePage() {
           };
           show(null);
 
+          // Read before anything is reserved. A bad table is a typo, and a
+          // typo asking a phone for its hardware encoder — and then handing it
+          // back — is a round trip nobody needs to take to be told about a
+          // missing comma.
+          const table = job.mode === "chart" ? parseChart(job.table) : null;
+
           // The encoder is reserved before the round exists. Asking a phone for
           // a hardware encoder once twenty-five thousand snapshots and a
           // soundtrack are already resident is asking under memory pressure, and
@@ -297,6 +338,18 @@ export default function HomePage() {
             audio = await renderPachinkoAudio(round).catch(() => null);
             reel = pachinkoReel(round, dress);
             summary = `${round.duration.toFixed(1)}s · ${who[round.winner].key.toUpperCase()} on ${round.best} · ${round.waves} waves`;
+          } else if (job.mode === "chart") {
+            // Nothing is played: the numbers and the clock are the whole round.
+            const round = generateChart(
+              table!,
+              job.title.trim() || "Untitled",
+              job.unit,
+              job.seconds,
+            );
+            total = round.durationInFrames;
+            audio = null;
+            reel = chartReel(round, dress);
+            summary = `${round.duration.toFixed(1)}s · ${round.data.series.length} series · ${round.data.steps.length} steps`;
           } else if (job.mode === "jelly") {
             // No whistle and no winner: the stream is constant, and the video is
             // over when the ladder's last rung is made — held to the minute if
@@ -406,7 +459,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${mode === "chart" ? "hidden" : ""}`}>
           <label className="flex flex-1 items-center gap-2 rounded-xl border border-[#23262f] bg-black/40 px-3 py-2">
             <span className="text-xs text-[#8b90a0]">Seed</span>
             <input
@@ -430,7 +483,11 @@ export default function HomePage() {
           </button>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        <div
+          className={`mt-3 flex-wrap items-center gap-1.5 ${
+            mode === "chart" ? "hidden" : "flex"
+          }`}
+        >
           {mode === "jelly" ? (
             <>
               <span className="px-1 text-sm text-[#8b90a0]">Theme</span>
@@ -474,6 +531,61 @@ export default function HomePage() {
           )}
         </div>
 
+        {mode === "chart" ? (
+          <div className="mt-3 flex flex-col gap-2">
+            <label className="flex items-center gap-2 rounded-xl border border-[#23262f] bg-black/40 px-3 py-2">
+              <span className="text-xs text-[#8b90a0]">Title</span>
+              <input
+                type="text"
+                value={title}
+                disabled={busy}
+                onChange={(event) => setTitle(event.target.value)}
+                className="w-full bg-transparent text-sm outline-none disabled:opacity-50"
+              />
+            </label>
+            <div className="flex gap-2">
+              <label className="flex flex-1 items-center gap-2 rounded-xl border border-[#23262f] bg-black/40 px-3 py-2">
+                <span className="text-xs text-[#8b90a0]">Unit</span>
+                <input
+                  type="text"
+                  value={unit}
+                  disabled={busy}
+                  onChange={(event) => setUnit(event.target.value)}
+                  className="w-full bg-transparent font-mono text-sm outline-none disabled:opacity-50"
+                />
+              </label>
+              <label className="flex flex-1 items-center gap-2 rounded-xl border border-[#23262f] bg-black/40 px-3 py-2">
+                <span className="text-xs text-[#8b90a0]">Seconds</span>
+                <input
+                  type="number"
+                  min={6}
+                  max={120}
+                  value={span}
+                  disabled={busy}
+                  onChange={(event) =>
+                    setSpan(Math.max(6, Math.min(120, Math.floor(Number(event.target.value)))))
+                  }
+                  className="w-full bg-transparent font-mono text-sm outline-none disabled:opacity-50"
+                />
+              </label>
+            </div>
+            <textarea
+              value={table}
+              disabled={busy}
+              rows={8}
+              spellCheck={false}
+              onChange={(event) => setTable(event.target.value)}
+              className="w-full rounded-xl border border-[#23262f] bg-black/40 px-3 py-2 font-mono text-xs leading-relaxed outline-none disabled:opacity-50"
+            />
+            <p className="text-xs leading-relaxed text-[#8b90a0]">
+              A header row, then one row per step: the first column is what the
+              scrubber shows, every column after it is a line. Commas, semicolons
+              or tabs. An empty cell is a gap, so a series can start late. The
+              numbers above are made up — paste your own.
+            </p>
+          </div>
+        ) : null}
+
         <label className="mt-3 flex items-center gap-2 text-sm text-[#8b90a0]">
           <input
             type="checkbox"
@@ -487,7 +599,9 @@ export default function HomePage() {
 
         <button
           type="button"
-          onClick={() => run({ mode, seed, invert, cast, theme })}
+          onClick={() =>
+            run({ mode, seed, invert, cast, theme, title, unit, seconds: span, table })
+          }
           disabled={busy}
           className="mt-3 w-full rounded-xl border border-emerald-400/40 bg-emerald-400/15 px-3 py-3 text-sm font-medium text-emerald-200 transition-colors hover:bg-emerald-400/25 disabled:opacity-40"
         >
