@@ -3,8 +3,7 @@
 /**
  * The themes' artwork.
  *
- * Three hundred and ninety-two pictures, eight to a theme, cut off
- * thirty-three sheets
+ * Four hundred pictures, eight to a theme, cut off thirty-four sheets
  * that were supplied for this mode. They replace the drawn gels that were here first — those were made
  * because there was nothing else, and the note in the README at the time said
  * plainly that they were drawn gels rather than rendered assets and nobody would
