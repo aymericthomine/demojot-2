@@ -103,7 +103,8 @@ export type ThemeName =
   | 'icons'
   | 'blooms'
   | 'twinkle'
-  | 'petals';
+  | 'petals'
+  | 'motors';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
@@ -1270,14 +1271,25 @@ const TWINKLE_ART: readonly Rung[] = [
 ];
 
 const PETALS_ART: readonly Rung[] = [
-  { name: 'Daisy', color: '#ffecbb', shape: { path: sphere }, art: { file: 'petals/0.webp', w: 852, h: 1038, cx: 0.4959, cy: 0.4990, span: 921.5, reach: 1.099 } },
+  { name: 'Daisy', color: '#ffecbb', shape: { path: sphere }, art: { file: 'petals/0.webp', w: 852, h: 1038, cx: 0.4994, cy: 0.4990, span: 918.5, reach: 1.103 } },
   { name: 'Tulip', color: '#ff7c5e', shape: { path: sphere }, art: { file: 'petals/1.webp', w: 646, h: 1048, cx: 0.4992, cy: 0.4995, span: 821, reach: 1.248 } },
-  { name: 'Sunflower', color: '#ffc21b', shape: { path: sphere }, art: { file: 'petals/2.webp', w: 846, h: 1054, cx: 0.4988, cy: 0.4957, span: 925.5, reach: 1.123 } },
-  { name: 'Hydrangea', color: '#688bff', shape: { path: sphere }, art: { file: 'petals/3.webp', w: 754, h: 1016, cx: 0.5033, cy: 0.5000, span: 860.5, reach: 1.181 } },
-  { name: 'Lily', color: '#ffb1c9', shape: { path: sphere }, art: { file: 'petals/4.webp', w: 838, h: 1000, cx: 0.4988, cy: 0.4995, span: 892.5, reach: 1.162 } },
+  { name: 'Sunflower', color: '#ffc21b', shape: { path: sphere }, art: { file: 'petals/2.webp', w: 850, h: 1054, cx: 0.4994, cy: 0.4991, span: 925.5, reach: 1.124 } },
+  { name: 'Hydrangea', color: '#688bff', shape: { path: sphere }, art: { file: 'petals/3.webp', w: 758, h: 1016, cx: 0.4993, cy: 0.5000, span: 859.5, reach: 1.179 } },
+  { name: 'Lily', color: '#ffb1c9', shape: { path: sphere }, art: { file: 'petals/4.webp', w: 838, h: 1000, cx: 0.4994, cy: 0.4995, span: 893, reach: 1.160 } },
   { name: 'Water lily', color: '#ffa2c6', shape: { path: sphere }, art: { file: 'petals/5.webp', w: 832, h: 870, cx: 0.4994, cy: 0.4994, span: 825, reach: 1.139 } },
-  { name: 'Bird of paradise', color: '#ff9e53', shape: { path: sphere }, art: { file: 'petals/6.webp', w: 788, h: 1012, cx: 0.4994, cy: 0.4995, span: 874, reach: 1.258 } },
+  { name: 'Bird of paradise', color: '#ff9e56', shape: { path: sphere }, art: { file: 'petals/6.webp', w: 794, h: 1012, cx: 0.4987, cy: 0.4995, span: 876.5, reach: 1.252 } },
   { name: 'Blossom', color: '#ffa4b2', shape: { path: sphere }, art: { file: 'petals/7.webp', w: 754, h: 992, cx: 0.4993, cy: 0.4995, span: 847, reach: 1.383 } },
+];
+
+const MOTORS_ART: readonly Rung[] = [
+  { name: 'Beetle', color: '#54c1ff', shape: { path: sphere }, art: { file: 'motors/0.webp', w: 780, h: 642, cx: 0.5000, cy: 0.4992, span: 683.5, reach: 1.164 } },
+  { name: 'Sports car', color: '#ff776a', shape: { path: sphere }, art: { file: 'motors/1.webp', w: 868, h: 656, cx: 0.4994, cy: 0.4992, span: 736, reach: 1.293 } },
+  { name: 'Camper van', color: '#ffead5', shape: { path: sphere }, art: { file: 'motors/2.webp', w: 702, h: 790, cx: 0.4986, cy: 0.4994, span: 719.5, reach: 1.259 } },
+  { name: 'Monster truck', color: '#a1fffd', shape: { path: sphere }, art: { file: 'motors/3.webp', w: 808, h: 804, cx: 0.5031, cy: 0.4994, span: 783, reach: 1.139 } },
+  { name: 'Convertible', color: '#ff9fdf', shape: { path: sphere }, art: { file: 'motors/4.webp', w: 816, h: 618, cx: 0.4994, cy: 0.4984, span: 690.5, reach: 1.205 } },
+  { name: 'Police car', color: '#b1d3ff', shape: { path: sphere }, art: { file: 'motors/5.webp', w: 774, h: 646, cx: 0.5000, cy: 0.4977, span: 682.5, reach: 1.167 } },
+  { name: 'Bulldozer', color: '#ffc02a', shape: { path: sphere }, art: { file: 'motors/6.webp', w: 760, h: 796, cx: 0.5000, cy: 0.4987, span: 751, reach: 1.258 } },
+  { name: 'Fire engine', color: '#ff6c6b', shape: { path: sphere }, art: { file: 'motors/7.webp', w: 764, h: 756, cx: 0.4993, cy: 0.4993, span: 734, reach: 1.211 } },
 ];
 
 /**
@@ -1375,6 +1387,7 @@ export const THEMES: Record<ThemeName, Theme> = {
   blooms: { key: 'blooms', label: 'Blooms', ladder: BLOOMS_ART },
   twinkle: { key: 'twinkle', label: 'Twinkle', ladder: TWINKLE_ART },
   petals: { key: 'petals', label: 'Petals', ladder: PETALS_ART },
+  motors: { key: 'motors', label: 'Motors', ladder: MOTORS_ART },
 };
 
 export const THEME_NAMES: readonly ThemeName[] = [
@@ -1429,6 +1442,7 @@ export const THEME_NAMES: readonly ThemeName[] = [
   'blooms',
   'twinkle',
   'petals',
+  'motors',
 ];
 
 /** The theme a video is dressed in, defaulting to the one the references open with. */
